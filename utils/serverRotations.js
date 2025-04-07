@@ -1,5 +1,4 @@
 import { debugMessage, chat } from "./utils"
-import Settings from "../config"
 import { sendAirClick } from "./autop3utils"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")

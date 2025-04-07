@@ -1,7 +1,9 @@
 import Settings from "../config"
+import nodeCreation from "../nodeCreation"
+
 import { playerCoords } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
-
+import { getDistance3D } from "../../BloomCore/utils/Utils"
 class AutoP3Config {
     constructor() {
         // this.yawRequiredTypes = ["look", "useitem", "walk", "superboom"]
@@ -12,7 +14,7 @@ class AutoP3Config {
             this.config = []
         }
         this.saveConfig()
-        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo"]
+        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip"]
         this.availableArgs = new Map([
             ["look", ["yaw", "pitch"]],
             ["walk", ["yaw", "pitch"]],
@@ -22,13 +24,79 @@ class AutoP3Config {
             ["stopvelocity", []],
             ["fullstop", []],
             ["blink", ["blinkroute"]],
-            ["blinkvelo", ["ticks"]]
+            ["blinkvelo", ["ticks"]],
+            ["jump", []],
+            ["hclip", ["yaw"]]
         ])
+        this.nodeCoords = null
+        this.editingNodeIndex = null
+        this.editing = false
+        this.dependencyChecks = { // sigma
+            showBlinkRoute: data => data.type === 7,
+            showTicks: data => data.type === 8,
+            showItemName: data => data.type === 3,
+            showYaw: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("yaw") || data.look,
+            showPitch: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.look,
+            showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch")
+        }
+
+        register("guiClosed", (gui) => {
+            if (!this.editing) return
+            if (!(gui instanceof Java.type("gg.essential.vigilance.gui.SettingsGui"))) return
+            this.editing = false
+            this.addNode(nodeCreation, this.nodeCoords)
+        })
+
+        register("tick", () => {
+            if (!this.editing) return
+            let reopen = false
+            Object.getOwnPropertyNames(this.dependencyChecks).forEach(value => {
+                const state = this.dependencyChecks[value](nodeCreation)
+                if (nodeCreation[value] !== state) {
+                    reopen = true
+                    nodeCreation[value] = state
+                }
+            })
+            if (reopen) {
+                this.editing = false
+                nodeCreation.openGUI()
+                Client.scheduleTask(1, () => this.editing = true)
+            }
+        })
+
+        register("command", (...args) => {
+            let nearestNodeIndex
+            if (args && args.length) {
+                const index = args.shift()
+                if (!isNaN(index)) nearestNodeIndex = parseInt(index)
+                else if (args.some(arg => arg.includes("resetrot"))) yaw = Player.getYaw().toString()
+            }
+            if (!nearestNodeIndex) nearestNodeIndex = this.getNearestNodeIndex()
+            const node = this.config[nearestNodeIndex]
+            if (!node) return chat("Node doesn't exist!")
+            this.editingNodeIndex = nearestNodeIndex
+            this.nodeCoords = node.position
+
+            nodeCreation.blinkroute = node.blinkroute ?? ""
+            nodeCreation.ticks = node.ticks?.toString() ?? "15"
+            nodeCreation.center = node.center
+            nodeCreation.stop = node.stop
+            nodeCreation.radius = node.radius.toString()
+            nodeCreation.height = node.height.toString()
+            nodeCreation.type = this.nodeTypes.indexOf(node.type)
+            nodeCreation.itemName = node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting()
+            nodeCreation.yaw = node.yaw?.toString() ?? Player.getYaw().toFixed(3)
+            nodeCreation.pitch = node.pitch?.toString() ?? Player.getPitch().toFixed(3)
+            nodeCreation.delay = node.delay.toString()
+            nodeCreation.look = node.look ?? false
+            nodeCreation.openGUI()
+            Client.scheduleTask(1, () => this.editing = true)
+        }).setName("editnode").setAliases(["en"])
 
         register("command", (...args) => { // this is terrible
             if (!args.length || !args[0]) return chat([
                 `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
-                `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop`,
+                `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, blinkvelo, jump, hclip`,
                 `§0-§r List of args you can use:`,
                 `§0-§r §rdelay §0<§fnumber§0>`,
                 `§0-§r stop`,
@@ -43,8 +111,8 @@ class AutoP3Config {
             const type = args.shift()
             const argsObject = {
                 type: this.nodeTypes.indexOf(type),
-                yaw: Player.getYaw(),
-                pitch: Player.getPitch(),
+                yaw: Player.getYaw().toFixed(3),
+                pitch: Player.getPitch().toFixed(3),
                 radius: 0.5,
                 height: 0.1,
                 delay: 0,
@@ -74,10 +142,10 @@ class AutoP3Config {
                         argsObject.height = parseFloat(args[i + 1])
                         break
                     case "yaw":
-                        argsObject.yaw = parseFloat(args[i + 1])
+                        argsObject.yaw = parseFloat(args[i + 1].toFixed(3))
                         break
                     case "pitch":
-                        argsObject.pitch = parseFloat(args[i + 1])
+                        argsObject.pitch = parseFloat(args[i + 1]).toFixed(3)
                         break
                     case "look":
                         argsObject.look = true
@@ -91,9 +159,28 @@ class AutoP3Config {
                         break
                 }
             }
-
+            this.editingNodeIndex = null
             this.addNode(argsObject, playerCoords().camera)
         }).setName("addnode").setAliases("an")
+
+        register("command", (index) => {
+            if (!this.config.length) return chat("No nodes found!")
+            let indexToDelete
+            if (index) {
+                if (isNaN(index)) return chat("Not a number!")
+                indexToDelete = parseInt(index)
+            }
+            else {
+                indexToDelete = this.getNearestNodeIndex()
+            }
+            if (!this.config[indexToDelete]) return chat("Node doesn't exist!")
+            let nodeString = "Deleted node: "
+            const propertyNames = Object.getOwnPropertyNames(this.config[indexToDelete])
+            propertyNames.forEach((arg, index) => nodeString += `§b${arg}: §c${this.config[indexToDelete][arg]}${index === propertyNames.length - 1 ? "." : ", "}§f`)
+            chat(nodeString)
+            this.config.splice(indexToDelete, 1)
+            this.saveConfig()
+        }).setName("deletenode").setAliases(["dn", "delnode", "deln"])
     }
 
     addNode(args, pos) {
@@ -106,12 +193,13 @@ class AutoP3Config {
         const nodeSpecificArgs = this.availableArgs.get(nodeType) // Args specific to the current node type
 
 
-        let node = { type: nodeType, position: pos, radius: args.radius, height: args.height, delay: args.delay, stop: args.stop, center: args.center, lastTriggered: 0, triggered: false }
+        let node = { type: nodeType, position: pos, radius: parseFloat(args.radius), height: parseFloat(args.height), delay: parseInt(args.delay), stop: args.stop, center: args.center, lastTriggered: Date.now(), triggered: false }
         for (let i = 0; i < nodeSpecificArgs.length; i++) {
             node[nodeSpecificArgs[i]] = args[nodeSpecificArgs[i]]
         }
         if (args.look) node.yaw = args.yaw, node.pitch = args.pitch, node.look = true
-        this.config.push(node)
+        if (this.editingNodeIndex === null) this.config.push(node)
+        else this.config[this.editingNodeIndex] = node
         this.saveConfig()
         let nodeString = "Added node: "
         const propertyNames = Object.getOwnPropertyNames(node)
@@ -120,8 +208,16 @@ class AutoP3Config {
         ChatLib.command("updateroutes", true)
     }
 
-    getConfig() {
-        return this.config
+    getNearestNodeIndex() {
+        let nodeDistances = []
+        for (let i = 0; i < this.config.length; i++) {
+            nodeDistances.push({
+                distance: getDistance3D(...this.config[i].position, ...playerCoords().camera),
+                nodeIndex: i
+            })
+        }
+        const sortedNodeDistances = nodeDistances.sort((a, b) => a.distance - b.distance)
+        return sortedNodeDistances[0].nodeIndex
     }
 
     saveConfig() {
@@ -144,3 +240,16 @@ class AutoP3Config {
 }
 
 export default new AutoP3Config()
+
+nodeCreation.blinkroute = ""
+nodeCreation.ticks = "15"
+nodeCreation.center = false
+nodeCreation.stop = false
+nodeCreation.radius = "0.5"
+nodeCreation.height = "0.1"
+nodeCreation.type = 5
+nodeCreation.itemName = "a"
+nodeCreation.yaw = "0"
+nodeCreation.pitch = "0"
+nodeCreation.delay = "0"
+nodeCreation.look = false

@@ -12,6 +12,13 @@ config
         value: false
     })
     .addSwitch({
+        configName: "editMode",
+        title: "Edit Mode",
+        description: "",
+        category: "AutoP3",
+        value: false
+    })
+    .addSwitch({
         configName: "centerNodes",
         title: "Center nodes",
         description: "Places all nodes that you create in the center of a block.",
@@ -44,6 +51,20 @@ config
         title: "Toggle Packet Charging",
         description: "",
         category: "Blink"
+    })
+    .addSwitch({
+        configName: "simulateSpeed",
+        title: "Simulate Speed In Singleplayer",
+        description: "",
+        category: "AutoP3",
+        subcategory: "Simulation",
+    })
+    .addSwitch({
+        configName: "simulateLavaBounce",
+        title: "Simulate Lava Bounce In Singleplayer",
+        description: "",
+        category: "AutoP3",
+        subcategory: "Simulation",
     })
 
 

@@ -5,6 +5,11 @@
             {
                 "type": 6,
                 "name": "autoP3Enabled",
+                "value": true
+            },
+            {
+                "type": 6,
+                "name": "editMode",
                 "value": false
             },
             {
@@ -20,7 +25,7 @@
             {
                 "type": 6,
                 "name": "displayIndex",
-                "value": false
+                "value": true
             },
             {
                 "type": 5,
@@ -31,6 +36,16 @@
                     255,
                     255
                 ]
+            },
+            {
+                "type": 6,
+                "name": "simulateSpeed",
+                "value": true
+            },
+            {
+                "type": 6,
+                "name": "simulateLavaBounce",
+                "value": true
             }
         ]
     },
@@ -40,7 +55,7 @@
             {
                 "type": 10,
                 "name": "packetChargeKeybind",
-                "value": 0
+                "value": 49
             }
         ]
     }

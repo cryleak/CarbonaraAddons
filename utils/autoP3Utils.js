@@ -246,3 +246,42 @@ export function onMotionUpdate(yaw) {
         }
     }
 }
+
+let direction = Player.getYaw()
+
+export function hclip(dir) {
+
+    direction = dir
+    const hclip = () => {
+        releaseMovementKeys()
+        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+        movementPacketListener.register()
+        Client.scheduleTask(0, repressMovementKeys)
+    }
+    if (Player.getPlayer().field_70122_E) {
+        jump()
+        Client.scheduleTask(1, hclip)
+        Client.scheduleTask(2, repressMovementKeys)
+    } else {
+        hclip()
+        Client.scheduleTask(0, repressMovementKeys)
+    }
+}
+
+const movementPacketListener = register("packetSent", () => {
+    movementPacketListener.unregister()
+
+    const movementSpeed = Player.getPlayer().field_71075_bZ.func_75094_b()
+    const speed = movementSpeed * 2.806
+    const radians = direction * Math.PI / 180
+    Player.getPlayer().field_70159_w = -Math.sin(radians) * speed
+    Player.getPlayer().field_70179_y = Math.cos(radians) * speed
+
+}).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer).unregister()
+
+export function jump() {
+    KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), true)
+    scheduleTask(1, () => {
+        KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), false)
+    })
+}

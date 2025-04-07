@@ -4,17 +4,14 @@ import AutoP3Config from "./AutoP3Management"
 import fakeKeybinds from "../utils/fakeKeybinds"
 
 import { clickAt } from "../utils/serverRotations"
-import { onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName } from "../utils/autoP3Utils"
-import { chat, scheduleTask } from "../utils/utils"
+import { hclip, jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName } from "../utils/autoP3Utils"
+import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
+const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 let motionRunning = false
 let motionYaw = Player.getYaw()
-let movementPacketsSent = 0
-let missingPackets = 0
-let blinkEnabled = false
-let awaitingMotionUpdate = false
 
 register("renderWorld", () => {
     const settings = Settings()
@@ -27,14 +24,20 @@ register("renderWorld", () => {
         if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...position, 16777215, true, 0.02, false)
 
 
-        if (AutoP3Config.config.triggered || Date.now() - AutoP3Config.config.lastTriggered < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
-        if (AutoP3Config.config.triggered || Date.now() - AutoP3Config.config.lastTriggered < 1000) color = [1, 0, 0, 1]
+        if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
+        if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
         RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, 60, 1, 90, 0, 0, ...color, false, true)
     }
 })
 
-register("step", () => {
+register("renderWorld", () => {
+    if (!Settings().autoP3Enabled) return
+    if (Settings().editMode) return
+    executeNodes(false)
+})
+
+function executeNodes(blinking) {
     const playerPosition = playerCoords().camera
     for (let i = 0; i < AutoP3Config.config.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
         let node = AutoP3Config.config[i]
@@ -44,6 +47,8 @@ register("step", () => {
         if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
             if (node.triggered) continue
             if (Date.now() - node.lastTriggered < 1000) continue
+            if (blinking && node.delay) continue
+            if (blinking && ["blink", "blinkvelo", "superboom", "useitem"].includes(node.type)) continue
             node.triggered = true
             if (node.center) {
                 debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
@@ -57,10 +62,8 @@ register("step", () => {
             }
             let performNode = () => {
                 node.lastTriggered = Date.now()
-                scheduleTask(0, () => {
-                    if (node.look) rotate(node.yaw, node.pitch)
-                    nodeTypes[node.type](node)
-                })
+                if (node.look) rotate(node.yaw, node.pitch)
+                nodeTypes[node.type](node)
             }
             if (node.delay) {
                 let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
@@ -70,10 +73,13 @@ register("step", () => {
                     let yDistance = playerPosition[1] - nodePosition[1]
                     if (distance < node.radius && yDistance <= node.height && yDistance >= 0) performNode()
                 })
-            } else performNode()
+            } else {
+                if (blinking) performNode()
+                else scheduleTask(0, performNode)
+            }
         } else node.triggered = false
     }
-}).setFps(200)
+}
 
 const nodeTypes = {
     look: args => {
@@ -117,20 +123,42 @@ const nodeTypes = {
         return
     },
     blinkvelo: args => {
-        const awaitVeloPacket = register("packetReceived", (packet, event) => {
-            if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
-            if (packet.func_149410_e() !== 28000) return
-            awaitVeloPacket.unregister()
-            blink = true
-        }).setFilteredClass(S12PacketEntityVelocity)
-
-        const awaitLivingUpdate = register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
-            if (event.entity !== Player.getPlayer()) return
-
-            awaitLivingUpdate.unregister()
-        })
+        blinkVeloTicks = args.ticks
+        awaitVelocity.register()
+    },
+    jump: args => {
+        jump()
+    },
+    hclip: args => {
+        hclip(args.yaw)
     }
 }
+
+register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
+    if (!motionRunning) return
+    if (Client.isInGui() || !World.isLoaded()) return
+    if (!Keyboard.getEventKeyState()) return
+    const keyCode = Keyboard.getEventKey()
+    if (!keyCode) return
+
+    if (!movementKeys.includes(keyCode)) return
+    motionRunning = false
+})
+
+// Blink shit
+
+const lastPacketState = {
+    pos: { x: null, y: null, z: null },
+    onGround: null,
+    rotation: { yaw: null, pitch: null }
+}
+let movementPacketsSent = 0
+let missingPackets = 0
+let blinkEnabled = false
+let awaitingMotionUpdate = false
+let blinkVelo = false
+let blinkVeloTicks = 0
+let blinking = false
 
 fakeKeybinds.onKeyPress("packetChargeKeybind", () => {
     blinkEnabled = !blinkEnabled
@@ -144,8 +172,8 @@ fakeKeybinds.onKeyPress("packetChargeKeybind", () => {
 })
 
 register("tick", (ticks) => {
-    if (ticks % 20 !== 0) return
-    missingPackets += 20 - movementPacketsSent
+    if (ticks % 10 !== 0) return
+    missingPackets += 10 - movementPacketsSent
     movementPacketsSent = 0
 })
 
@@ -165,7 +193,7 @@ const renderText = register("renderOverlay", () => {
     Renderer.drawString(text, Renderer.screen.getWidth() / 2, Renderer.screen.getHeight() / 2)
 }).unregister()
 
-const packetCollector = register("packetSent", (packet, event) => {
+const packetCollector = register("packetSent", (packet, event) => { // This only triggers on C03's sent from a Motion Update.
     if (!awaitingMotionUpdate) return
     awaitingMotionUpdate = false
 
@@ -188,8 +216,8 @@ const packetCollector = register("packetSent", (packet, event) => {
         lastPacketState.pos.z = currentPosition.z
     }
 
-    if (!cancelPacket) return
-    cancel(event)
+    if (cancelPacket) cancel(event)
+    if (blinking) executeNodes(true)
 }).setFilteredClass(C03PacketPlayer).unregister()
 
 register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
@@ -197,4 +225,27 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     awaitingMotionUpdate = true
     if (!motionRunning) return
     onMotionUpdate(motionYaw)
+})
+
+const awaitVelocity = register("packetReceived", (packet) => {
+    if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
+    if (packet.func_149410_e() !== 28000) return
+    awaitVelocity.unregister()
+
+    blinkVelo = true
+}).setFilteredClass(S12PacketEntityVelocity).unregister()
+
+register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => { // The game fucking crashes if i don't perform this in a fresh scope, no idea why???
+    if (event.entity !== Player.getPlayer()) return
+    if (!blinkVelo) return
+
+    cancel(event)
+    blinkVelo = false
+    blinking = true
+    for (let i = 0; i < blinkVeloTicks; i++) {
+        if (motionRunning) onMotionUpdate(motionYaw)
+        Player.getPlayer().func_70636_d()
+        Player.getPlayer().func_175161_p()
+    }
+    blinking = false
 })
