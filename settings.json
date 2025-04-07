@@ -1,0 +1,47 @@
+[
+    {
+        "category": "AutoP3",
+        "settings": [
+            {
+                "type": 6,
+                "name": "autoP3Enabled",
+                "value": false
+            },
+            {
+                "type": 6,
+                "name": "centerNodes",
+                "value": false
+            },
+            {
+                "type": 4,
+                "name": "configName",
+                "value": "Blink"
+            },
+            {
+                "type": 6,
+                "name": "displayIndex",
+                "value": false
+            },
+            {
+                "type": 5,
+                "name": "nodeColor",
+                "value": [
+                    0,
+                    255,
+                    255,
+                    255
+                ]
+            }
+        ]
+    },
+    {
+        "category": "Blink",
+        "settings": [
+            {
+                "type": 10,
+                "name": "packetChargeKeybind",
+                "value": 0
+            }
+        ]
+    }
+]

@@ -1,0 +1,13 @@
+{
+    "name": "CarbonaraAddons",
+    "creator": "ITheSerenity",
+    "version": "0.0.1",
+    "description": "denmark mod",
+    "entry": "index.js",
+	"requires": [
+        "PogData",
+        "Amaterasu",
+		"BloomCore",
+		"RenderLibV2"
+    ]
+}
