@@ -4,6 +4,7 @@ import { debugMessage, chat, scheduleTask } from "./utils"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
+const File = Java.type("java.io.File")
 
 /**
  * Swaps to an item in your hotbar with the specified name.
@@ -247,41 +248,92 @@ export function onMotionUpdate(yaw) {
     }
 }
 
-let direction = Player.getYaw()
-
-export function hclip(dir) {
-
-    direction = dir
-    const hclip = () => {
+export function hclip(direction) {
+    const clip = () => {
         releaseMovementKeys()
-        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-        movementPacketListener.register()
-        Client.scheduleTask(0, repressMovementKeys)
+        Player.getPlayer().field_70159_w = 0
+        Player.getPlayer().field_70179_y = 0
+        livingUpdate.scheduleExec(1, () => {
+            const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * 2.806
+            const radians = direction * Math.PI / 180
+            Player.getPlayer().field_70159_w = -Math.sin(radians) * speed
+            Player.getPlayer().field_70179_y = Math.cos(radians) * speed
+        })
+        livingUpdate.scheduleExec(2, repressMovementKeys)
     }
-    if (Player.getPlayer().field_70122_E) {
+
+    if (Player.getPlayer().field_70122_E === "adhjskh") {
         jump()
         Client.scheduleTask(1, hclip)
-        Client.scheduleTask(2, repressMovementKeys)
     } else {
-        hclip()
-        Client.scheduleTask(0, repressMovementKeys)
+        clip()
     }
 }
-
-const movementPacketListener = register("packetSent", () => {
-    movementPacketListener.unregister()
-
-    const movementSpeed = Player.getPlayer().field_71075_bZ.func_75094_b()
-    const speed = movementSpeed * 2.806
-    const radians = direction * Math.PI / 180
-    Player.getPlayer().field_70159_w = -Math.sin(radians) * speed
-    Player.getPlayer().field_70179_y = Math.cos(radians) * speed
-
-}).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer).unregister()
 
 export function jump() {
     KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), true)
     scheduleTask(1, () => {
         KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), false)
     })
+}
+
+const listeners = []
+const scheduledTasks = []
+export const livingUpdate = {
+    addListener: func => listeners.push(func),
+    scheduleExec: (ticks, func) => {
+        const id = Math.random()
+        console.log("scheduled task id: " + id)
+        scheduledTasks.push({ ticks, func, id })
+    }
+}
+
+export function onLivingUpdate(thing = false) {
+    if (thing) console.log(scheduledTasks.length)
+    for (let i = 0; i < listeners.length; i++) {
+        listeners[i]()
+    }
+
+    if (scheduledTasks.length) console.log(scheduledTasks.length)
+    for (let i = scheduledTasks.length - 1; i >= 0; i--) {
+        let task = scheduledTasks[i]
+        console.log("id: " + task.id)
+        if (task.ticks === 0) {
+            task.func()
+            scheduledTasks.splice(i, 1)
+        }
+        task.ticks--
+    }
+}
+
+register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
+    if (event.entity !== Player.getPlayer()) return
+    onLivingUpdate()
+})
+
+let blinkRoutes = {}
+
+register("step", () => {
+    const routes = {}
+    new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
+        routes[file] = parseBlinkFile(file)
+    })
+    if (!routes) return
+    blinkRoutes = routes
+}).setFps(1)
+
+export const getBlinkRoutes = () => blinkRoutes
+
+export function packetGetXYZ(packet) {
+    return [packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e()]
+}
+
+export function parseBlinkFile(fileName) {
+    try {
+        const packets = FileLib.read("CarbonaraAddons/BlinkRoutes", fileName).split("\n").map(str => str.split(", "))
+        packets.shift() // First line is always empty and I cba to make a better solution
+        return packets
+    } catch (e) {
+        return null
+    }
 }

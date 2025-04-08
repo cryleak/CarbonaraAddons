@@ -28,6 +28,13 @@ class Settings {
     ticks = ""
 
     @SwitchProperty({
+        name: "Once",
+        description: "Only trigger this node once until you reset it",
+        category: "Route"
+    })
+    once = false
+
+    @SwitchProperty({
         name: "Center",
         description: "Puts you right in the center of where the NODE is located. Note that this also modifies your Y level, so it may not work and just lagback if your node is extremely tall. Useful to align yourself if you aren't starting in the middle of the block.",
         category: "Route"

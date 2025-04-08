@@ -1,6 +1,7 @@
 import Settings from "../config"
 import nodeCreation from "../nodeCreation"
 
+import { registerSubCommand } from "../utils/commands"
 import { playerCoords } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
 import { getDistance3D } from "../../BloomCore/utils/Utils"
@@ -13,7 +14,6 @@ class AutoP3Config {
         } catch (e) {
             this.config = []
         }
-        this.saveConfig()
         this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip"]
         this.availableArgs = new Map([
             ["look", ["yaw", "pitch"]],
@@ -23,7 +23,7 @@ class AutoP3Config {
             ["motion", ["yaw", "pitch"]],
             ["stopvelocity", []],
             ["fullstop", []],
-            ["blink", ["blinkroute"]],
+            ["blink", ["blinkRoute"]],
             ["blinkvelo", ["ticks"]],
             ["jump", []],
             ["hclip", ["yaw"]]
@@ -64,7 +64,7 @@ class AutoP3Config {
             }
         })
 
-        register("command", (...args) => {
+        registerSubCommand(["editnode", "en"], args => {
             let nearestNodeIndex
             if (args && args.length) {
                 const index = args.shift()
@@ -91,9 +91,9 @@ class AutoP3Config {
             nodeCreation.look = node.look ?? false
             nodeCreation.openGUI()
             Client.scheduleTask(1, () => this.editing = true)
-        }).setName("editnode").setAliases(["en"])
+        })
 
-        register("command", (...args) => { // this is terrible
+        registerSubCommand(["createnode", "cn", "createring", "cr"], args => {
             if (!args.length || !args[0]) return chat([
                 `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
                 `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, blinkvelo, jump, hclip`,
@@ -121,7 +121,9 @@ class AutoP3Config {
                 itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Bonzo's Staff",
                 block: false,
                 look: false,
-                ticks: 15
+                ticks: 15,
+                blinkRoute: "",
+                once: false
             }
 
             for (let i = 0; i < args.length; i++) {
@@ -157,15 +159,19 @@ class AutoP3Config {
                     case "ticks":
                         argsObject.ticks = parseInt(args[i + 1])
                         break
+                    case "once":
+                        argsObject.once = true
+                        break
                 }
             }
             this.editingNodeIndex = null
             this.addNode(argsObject, playerCoords().camera)
-        }).setName("addnode").setAliases("an")
+        })
 
-        register("command", (index) => {
+        registerSubCommand(["deletenode", "dn", "delnode", "dn"], args => {
             if (!this.config.length) return chat("No nodes found!")
             let indexToDelete
+            const index = args[0]
             if (index) {
                 if (isNaN(index)) return chat("Not a number!")
                 indexToDelete = parseInt(index)
@@ -180,7 +186,7 @@ class AutoP3Config {
             chat(nodeString)
             this.config.splice(indexToDelete, 1)
             this.saveConfig()
-        }).setName("deletenode").setAliases(["dn", "delnode", "deln"])
+        })
     }
 
     addNode(args, pos) {
@@ -205,37 +211,29 @@ class AutoP3Config {
         const propertyNames = Object.getOwnPropertyNames(node)
         propertyNames.forEach((arg, index) => nodeString += `§b${arg}: §c${node[arg]}${index === propertyNames.length - 1 ? "." : ", "}§f`)
         chat(nodeString)
-        ChatLib.command("updateroutes", true)
     }
 
     getNearestNodeIndex() {
-        let nodeDistances = []
-        for (let i = 0; i < this.config.length; i++) {
-            nodeDistances.push({
-                distance: getDistance3D(...this.config[i].position, ...playerCoords().camera),
-                nodeIndex: i
-            })
-        }
-        const sortedNodeDistances = nodeDistances.sort((a, b) => a.distance - b.distance)
-        return sortedNodeDistances[0].nodeIndex
+        return this.config.map((node, i) => ({ distance: getDistance3D(...node.position, ...playerCoords().camera), i })).sort((a, b) => a.distance - b.distance)[0].i
     }
 
     saveConfig() {
         try {
             FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName + ".json", JSON.stringify(this.config), true)
         } catch (e) {
-            ChatLib.chat("Error saving config!")
+            chat("Error saving config!")
             console.log(e)
         }
     }
 
-    onConfigNameUpdate() {
+    onConfigNameUpdate(newName) {
         try {
-            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName + ".json"))
+            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + newName + ".json"))
+            if (!Array.isArray(this.config)) throw new Error("boom")
+            chat(`Swapped to config ${newName}.`)
         } catch (e) {
             this.config = []
         }
-        this.saveConfig()
     }
 }
 
@@ -248,8 +246,9 @@ nodeCreation.stop = false
 nodeCreation.radius = "0.5"
 nodeCreation.height = "0.1"
 nodeCreation.type = 5
-nodeCreation.itemName = "a"
+nodeCreation.itemName = "Bonzo's Staff"
 nodeCreation.yaw = "0"
 nodeCreation.pitch = "0"
 nodeCreation.delay = "0"
 nodeCreation.look = false
+nodeCreation.once = true

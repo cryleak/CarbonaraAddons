@@ -4,19 +4,30 @@ import AutoP3Config from "./AutoP3Management"
 import fakeKeybinds from "../utils/fakeKeybinds"
 
 import { clickAt } from "../utils/serverRotations"
-import { hclip, jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName } from "../utils/autoP3Utils"
+import { hclip, jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, parseBlinkFile, getBlinkRoutes } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
+import { onChatPacket } from "../../BloomCore/utils/Events"
+import { blink } from "./Blink"
+import { registerSubCommand } from "../utils/commands"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 let motionRunning = false
 let motionYaw = Player.getYaw()
+let inP3 = false
+let inBoss = false
+global.cryleak ??= {}
+global.cryleak.autop3 ??= {}
+global.cryleak.autop3.lastBlink = Date.now()
 
 register("renderWorld", () => {
     const settings = Settings()
     if (!settings.autoP3Enabled) return
     if (!World.isLoaded()) return
+    if (settings.onlyP3 && !inP3) return
+    if (!inBoss) return
+    if (!AutoP3Config.config) return
     for (let i = 0; i < AutoP3Config.config.length; i++) {
         let node = AutoP3Config.config[i]
         let position = node.position
@@ -24,21 +35,15 @@ register("renderWorld", () => {
         if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...position, 16777215, true, 0.02, false)
 
 
-        if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0]]
         if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
         RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, 60, 1, 90, 0, 0, ...color, false, true)
     }
+    if (settings.editMode) return
+    executeNodes(playerCoords().camera)
 })
 
-register("renderWorld", () => {
-    if (!Settings().autoP3Enabled) return
-    if (Settings().editMode) return
-    executeNodes(false)
-})
-
-function executeNodes(blinking) {
-    const playerPosition = playerCoords().camera
+function executeNodes(playerPosition) {
     for (let i = 0; i < AutoP3Config.config.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
         let node = AutoP3Config.config[i]
         let nodePosition = node.position
@@ -77,7 +82,7 @@ function executeNodes(blinking) {
                 if (blinking) performNode()
                 else scheduleTask(0, performNode)
             }
-        } else node.triggered = false
+        } else if (!node.once) node.triggered = false
     }
 }
 
@@ -120,7 +125,7 @@ const nodeTypes = {
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
     },
     blink: args => {
-        return
+        blink(args.blinkRoute)
     },
     blinkvelo: args => {
         blinkVeloTicks = args.ticks
@@ -145,87 +150,47 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     motionRunning = false
 })
 
-// Blink shit
+onChatPacket(() => {
+    inP3 = true
+    if (Settings().activateConfigOnP3Start) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().p3StartConfig)
+}).setCriteria("[BOSS] Goldor: Who dares trespass into my domain?")
 
-const lastPacketState = {
-    pos: { x: null, y: null, z: null },
-    onGround: null,
-    rotation: { yaw: null, pitch: null }
-}
-let movementPacketsSent = 0
-let missingPackets = 0
-let blinkEnabled = false
-let awaitingMotionUpdate = false
+onChatPacket(() => {
+    if (Settings().activateConfigOnBoss) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().bossStartConfig)
+}).setCriteria("[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!")
+
+registerSubCommand("startp3", () => {
+    inP3 = true
+    inBoss = true
+    if (Settings().activateConfigOnP3Start) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().p3StartConfig)
+    chat("Started P3!")
+})
+
+onChatPacket(() => {
+    inBoss = true
+}).setCriteria(/^\[BOSS\] (?:Maxor|Storm|Goldor|Necron): .+$/)
+
+register("worldLoad", () => {
+    inP3 = false
+    inBoss = false
+})
+
+Settings().getConfig().registerListener("configName", (previousValue, value) => {
+    if (previousValue === value) return
+    AutoP3Config.onConfigNameUpdate(value)
+})
+
+// blink velocity because for somer eason it just fucking breaks if i put it in the blink file
 let blinkVelo = false
 let blinkVeloTicks = 0
 let blinking = false
 
-fakeKeybinds.onKeyPress("packetChargeKeybind", () => {
-    blinkEnabled = !blinkEnabled
-    if (blinkEnabled) {
-        renderText.register()
-        packetCollector.register()
-    } else {
-        renderText.unregister()
-        packetCollector.unregister()
-    }
-})
-
-register("tick", (ticks) => {
-    if (ticks % 10 !== 0) return
-    missingPackets += 10 - movementPacketsSent
-    movementPacketsSent = 0
-})
-
-register("packetReceived", () => {
-    movementPacketsSent--
-}).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook)
-
-register("packetSent", (packet, event) => {
-    Client.scheduleTask(0, () => {
-        if (!event.isCancelled()) movementPacketsSent++
-    })
-}).setFilteredClasses([C03PacketPlayer])
-
-const renderText = register("renderOverlay", () => {
-    Renderer.scale(1)
-    const text = `${missingPackets}`
-    Renderer.drawString(text, Renderer.screen.getWidth() / 2, Renderer.screen.getHeight() / 2)
-}).unregister()
-
-const packetCollector = register("packetSent", (packet, event) => { // This only triggers on C03's sent from a Motion Update.
-    if (!awaitingMotionUpdate) return
-    awaitingMotionUpdate = false
-
-    let cancelPacket = true
-
-    const onGround = packet.func_149465_i()
-    if (onGround !== lastPacketState.onGround) cancelPacket = false
-    lastPacketState.onGround = onGround
-    if (packet.func_149463_k() && Settings().allowRotations) { // If rotating
-        const [yaw, pitch] = [packet.func_149462_g(), packet.func_149470_h()]
-        if (lastPacketState.rotation.yaw !== yaw || lastPacketState.rotation.pitch !== pitch) cancelPacket = false
-        lastPacketState.rotation.yaw = yaw
-        lastPacketState.rotation.pitch = pitch
-    }
-    if (packet.func_149466_j()) {// If moving
-        const currentPosition = { x: packet.func_149464_c(), y: packet.func_149467_d(), z: packet.func_149472_e() }
-        if (Object.values(currentPosition).some((coord, index) => coord !== Object.values(lastPacketState.pos)[index])) cancelPacket = false
-        lastPacketState.pos.x = currentPosition.x
-        lastPacketState.pos.y = currentPosition.y
-        lastPacketState.pos.z = currentPosition.z
-    }
-
-    if (cancelPacket) cancel(event)
-    if (blinking) executeNodes(true)
-}).setFilteredClass(C03PacketPlayer).unregister()
 
 register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
     if (event.entity !== Player.getPlayer()) return
-    awaitingMotionUpdate = true
-    if (!motionRunning) return
-    onMotionUpdate(motionYaw)
+    if (motionRunning) onMotionUpdate(motionYaw)
 })
+
 
 const awaitVelocity = register("packetReceived", (packet) => {
     if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
@@ -244,8 +209,11 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     blinking = true
     for (let i = 0; i < blinkVeloTicks; i++) {
         if (motionRunning) onMotionUpdate(motionYaw)
+        onLivingUpdate()
         Player.getPlayer().func_70636_d()
         Player.getPlayer().func_175161_p()
+        executeNodes(playerCoords().player)
     }
+    global.cryleak.autop3.lastBlink = Date.now()
     blinking = false
 })

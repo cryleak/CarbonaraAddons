@@ -25,12 +25,12 @@ config
         category: "AutoP3",
         value: false
     })
-    .addTextInput({
-        configName: "configName",
-        title: "Config name",
-        description: "Name of the config to load. You do not need to include .json in the name.",
+    .addSwitch({
+        configName: "onlyP3",
+        title: "Only activate in P3",
+        description: "",
         category: "AutoP3",
-        value: "Blink"
+        value: false
     })
     .addSwitch({
         configName: "displayIndex",
@@ -46,11 +46,47 @@ config
         category: "AutoP3",
         value: [0, 255, 255, 255],
     })
-    .addKeybind({
-        configName: "packetChargeKeybind",
-        title: "Toggle Packet Charging",
-        description: "",
-        category: "Blink"
+    .addTextInput({
+        configName: "configName",
+        title: "Config name",
+        description: "Name of the currently active config. You do not need to include .json in the name.",
+        category: "AutoP3",
+        subcategory: "Config",
+        value: "Blink"
+    })
+    .addSwitch({
+        configName: "activateConfigOnBoss",
+        title: "Switch config on boss enter",
+        description: "Selects the specified config on boss entry.",
+        category: "AutoP3",
+        subcategory: "Config",
+        value: false
+    })
+    .addTextInput({
+        configName: "bossStartConfig",
+        title: "Boss Start Config name",
+        description: "Name of the config to activate on boss enter",
+        category: "AutoP3",
+        subcategory: "Config",
+        value: "Predev",
+        shouldShow: data => data.activateConfigOnBoss
+    })
+    .addSwitch({
+        configName: "activateConfigOnP3Start",
+        title: "Switch config on P3 start",
+        description: "Selects the specified config on P3 start.",
+        category: "AutoP3",
+        subcategory: "Config",
+        value: false
+    })
+    .addTextInput({
+        configName: "p3StartConfig",
+        title: "P3 Start Config name",
+        description: "Name of the config to activate on P3 start",
+        category: "AutoP3",
+        subcategory: "Config",
+        value: "Blink",
+        shouldShow: data => data.activateConfigOnP3Start
     })
     .addSwitch({
         configName: "simulateSpeed",
@@ -66,6 +102,25 @@ config
         category: "AutoP3",
         subcategory: "Simulation",
     })
+    .addKeybind({
+        configName: "packetChargeKeybind",
+        title: "Toggle Packet Charging",
+        description: "",
+        category: "Blink"
+    })
+    .addSwitch({
+        configName: "pauseCharging",
+        title: "Stop charging packets after blinking",
+        description: "Stops charging packets for 1 second after blinking. May do something probably does nothing idk",
+        category: "Blink"
+    })
+    .addSwitch({
+        configName: "renderBlinkRoutes",
+        title: "Render Routes",
+        description: "Absolutely annihilates performance but useful for configging.",
+        category: "Blink"
+    })
+
 
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")

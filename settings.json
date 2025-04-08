@@ -18,9 +18,9 @@
                 "value": false
             },
             {
-                "type": 4,
-                "name": "configName",
-                "value": "Blink"
+                "type": 6,
+                "name": "onlyP3",
+                "value": false
             },
             {
                 "type": 6,
@@ -36,6 +36,31 @@
                     255,
                     255
                 ]
+            },
+            {
+                "type": 4,
+                "name": "configName",
+                "value": "Blink"
+            },
+            {
+                "type": 6,
+                "name": "activateConfigOnBoss",
+                "value": false
+            },
+            {
+                "type": 4,
+                "name": "bossStartConfig",
+                "value": "Predev"
+            },
+            {
+                "type": 6,
+                "name": "activateConfigOnP3Start",
+                "value": false
+            },
+            {
+                "type": 4,
+                "name": "p3StartConfig",
+                "value": "Blink"
             },
             {
                 "type": 6,
@@ -56,6 +81,16 @@
                 "type": 10,
                 "name": "packetChargeKeybind",
                 "value": 49
+            },
+            {
+                "type": 6,
+                "name": "pauseCharging",
+                "value": false
+            },
+            {
+                "type": 6,
+                "name": "renderBlinkRoutes",
+                "value": false
             }
         ]
     }
