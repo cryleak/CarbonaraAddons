@@ -150,10 +150,12 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 onChatPacket(() => {
     inP3 = true
     if (Settings().activateConfigOnP3Start) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().p3StartConfig)
+    Client.scheduleTask(1, resetTriggeredState)
 }).setCriteria("[BOSS] Goldor: Who dares trespass into my domain?")
 
 onChatPacket(() => {
     if (Settings().activateConfigOnBoss) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().bossStartConfig)
+        Client.scheduleTask(1, resetTriggeredState)
 }).setCriteria("[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!")
 
 registerSubCommand("startp3", () => {
@@ -161,6 +163,12 @@ registerSubCommand("startp3", () => {
     inBoss = true
     if (Settings().activateConfigOnP3Start) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().p3StartConfig)
     chat("Started P3!")
+    Client.scheduleTask(1, resetTriggeredState)
+})
+
+registerSubCommand(["resetroutes", "rr"], () => {
+    resetTriggeredState()
+    chat("Reset triggered state.")
 })
 
 onChatPacket(() => {
@@ -176,6 +184,13 @@ Settings().getConfig().registerListener("configName", (previousValue, value) => 
     if (previousValue === value) return
     AutoP3Config.onConfigNameUpdate(value)
 })
+
+function resetTriggeredState() {
+    for (let i = 0; i < AutoP3Config.config.length; i++) {
+        let node = AutoP3Config.config[i]
+        node.triggered = false
+    }
+}
 
 // blink velocity because for somer eason it just fucking breaks if i put it in the blink file
 let blinkVelo = false
