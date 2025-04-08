@@ -85,12 +85,12 @@
             {
                 "type": 6,
                 "name": "pauseCharging",
-                "value": false
+                "value": true
             },
             {
                 "type": 6,
                 "name": "renderBlinkRoutes",
-                "value": false
+                "value": true
             }
         ]
     }

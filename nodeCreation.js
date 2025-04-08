@@ -18,7 +18,7 @@ class Settings {
         description: "Name of the blink route. Should not include .json",
         category: "Route"
     })
-    blinkroute = ""
+    blinkRoute = ""
 
     @TextProperty({
         name: "Blink Velocity Ticks",

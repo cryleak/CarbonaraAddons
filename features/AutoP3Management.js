@@ -77,7 +77,7 @@ class AutoP3Config {
             this.editingNodeIndex = nearestNodeIndex
             this.nodeCoords = node.position
 
-            nodeCreation.blinkroute = node.blinkroute ?? ""
+            nodeCreation.blinkRoute = node.blinkRoute ?? ""
             nodeCreation.ticks = node.ticks?.toString() ?? "15"
             nodeCreation.center = node.center
             nodeCreation.stop = node.stop
@@ -239,7 +239,7 @@ class AutoP3Config {
 
 export default new AutoP3Config()
 
-nodeCreation.blinkroute = ""
+nodeCreation.blinkRoute = ""
 nodeCreation.ticks = "15"
 nodeCreation.center = false
 nodeCreation.stop = false

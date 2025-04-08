@@ -1,5 +1,6 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
+import RenderLibV2 from "../../RenderLibV2"
 
 import { getBlinkRoutes } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
@@ -96,4 +97,27 @@ export function blink(blinkroute) {
     const finalPacket = packets[packets.length - 1]
     Player.getPlayer().func_70107_b(parseFloat(finalPacket[0]), parseFloat(finalPacket[1]), parseFloat(finalPacket[2]))
     chat(`Blinked with ${packets.length} packets. Packets remaining: ${missingPackets}`)
+    global.cryleak.autop3.lastBlink = Date.now()
 }
+
+register("renderWorld", () => {
+    if (!Settings().renderBlinkRoutes) return
+    Object?.keys(getBlinkRoutes())?.forEach(name => {
+        const packets = getBlinkRoutes()[name]
+        for (let i = 0; i < packets.length; i++) {
+            let Vec1 = packets[i]
+            let Vec2 = packets[i + 1]
+            if (!Vec1 || !Vec2) continue
+            RenderLibV2.drawLine(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 1, 1, 1, 1, 1, false)
+        }
+        let Vec1 = packets[0]
+        let Vec2 = packets[packets.length - 1]
+        if (!Vec1 || !Vec2) return
+        RenderLibV2.drawInnerEspBox(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), 0.5, 0.5, 0, 1, 0, 0.25, true)
+        RenderLibV2.drawEspBox(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), 0.5, 0.5, 0, 1, 0, 1, true)
+        Tessellator.drawString(`Start of route "${name.split(".json")[0]}", route requires ${packets.length} packets`, Vec1[0], Vec1[1], Vec1[2], 16777215, true, 0.02, false)
+
+        RenderLibV2.drawInnerEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
+        RenderLibV2.drawEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
+    })
+})
