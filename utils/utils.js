@@ -7,7 +7,7 @@ const defaultColor = "§f"
  * @param {String} message 
  */
 export function chat(message) {
-    ChatLib.chat("§0[§6Carbonara§0] " + defaultColor + message.toString().replaceAll(/(?:&r|§r)/gi, defaultColor))
+    ChatLib.chat("§0[§4Carbonara§0] " + defaultColor + message.toString().replaceAll(/(?:&r|§r)/gi, defaultColor))
 }
 
 /**
@@ -16,7 +16,7 @@ export function chat(message) {
  */
 export function debugMessage(message) {
     // if (!Settings().debugMessages) return
-    ChatLib.chat("§0[§6CarbonaraDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
+    ChatLib.chat("§0[§4CarbonaraDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 
 const mcTessellator = Java.type("net.minecraft.client.renderer.Tessellator")

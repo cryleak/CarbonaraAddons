@@ -1,22 +1,25 @@
 import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import AutoP3Config from "./AutoP3Management"
-import fakeKeybinds from "../utils/fakeKeybinds"
 
 import { clickAt } from "../utils/serverRotations"
-import { hclip, jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, parseBlinkFile, getBlinkRoutes } from "../utils/autoP3Utils"
+import { hclip, jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { blink } from "./Blink"
 import { registerSubCommand } from "../utils/commands"
 
-const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
+const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
+const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
+const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
 let motionRunning = false
 let motionYaw = Player.getYaw()
 let inP3 = false
 let inBoss = false
+let cancelNodes = false
+let inTerminal = false
 
 register("renderWorld", () => {
     const settings = Settings()
@@ -32,15 +35,36 @@ register("renderWorld", () => {
         if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...position, 16777215, true, 0.02, false)
 
 
-        if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
+        if (node.triggered || Date.now() - node.lastTriggered < 1000 || cancelNodes) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
         RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, 60, 1, 90, 0, 0, ...color, false, true)
+    }
+    if (Settings().renderBlinkRoutes) {
+        Object?.keys(getBlinkRoutes())?.forEach(name => {
+            const packets = getBlinkRoutes()[name]
+            for (let i = 0; i < packets.length; i++) {
+                let Vec1 = packets[i]
+                let Vec2 = packets[i + 1]
+                if (!Vec1 || !Vec2) continue
+                RenderLibV2.drawLine(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 1, 1, 1, 1, 1, false)
+            }
+            let Vec1 = packets[0]
+            let Vec2 = packets[packets.length - 1]
+            if (!Vec1 || !Vec2) return
+            RenderLibV2.drawInnerEspBox(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), 0.5, 0.5, 0, 1, 0, 0.25, true)
+            RenderLibV2.drawEspBox(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), 0.5, 0.5, 0, 1, 0, 1, true)
+            Tessellator.drawString(`Start of route "${name.split(".json")[0]}", route requires ${packets.length} packets`, Vec1[0], Vec1[1], Vec1[2], 16777215, true, 0.02, false)
+
+            RenderLibV2.drawInnerEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
+            RenderLibV2.drawEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
+        })
     }
     if (settings.editMode) return
     executeNodes(playerCoords().camera)
 })
 
 function executeNodes(playerPosition) {
+    if (cancelNodes) return
     for (let i = 0; i < AutoP3Config.config.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
         let node = AutoP3Config.config[i]
         let nodePosition = node.position
@@ -63,6 +87,10 @@ function executeNodes(playerPosition) {
                 Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             }
             let performNode = () => {
+                if (cancelNodes) {
+                    node.triggered = false
+                    return
+                }
                 node.lastTriggered = Date.now()
                 if (node.look) rotate(node.yaw, node.pitch)
                 nodeTypes[node.type](node)
@@ -133,11 +161,23 @@ const nodeTypes = {
     },
     hclip: args => {
         hclip(args.yaw)
+    },
+    awaitterm: args => {
+        motionRunning = false
+        releaseMovementKeys()
+        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+        cancelNodes = true
+        chat("Awaiting terminal open. Blocking nodes.")
+        const listener = register("tick", () => {
+            if (!inTerminal) return
+            chat("Terminal opened, no longer blocking nodes.")
+            cancelNodes = false
+            listener.unregister()
+        })
     }
 }
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
-    if (!motionRunning) return
     if (Client.isInGui() || !World.isLoaded()) return
     if (!Keyboard.getEventKeyState()) return
     const keyCode = Keyboard.getEventKey()
@@ -145,6 +185,7 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 
     if (!movementKeys.includes(keyCode)) return
     motionRunning = false
+    cancelNodes = false
 })
 
 onChatPacket(() => {
@@ -155,14 +196,22 @@ onChatPacket(() => {
 
 onChatPacket(() => {
     if (Settings().activateConfigOnBoss) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().bossStartConfig)
-        Client.scheduleTask(1, resetTriggeredState)
+    Client.scheduleTask(1, resetTriggeredState)
 }).setCriteria("[BOSS] Maxor: WELL! WELL! WELL! LOOK WHO'S HERE!")
 
-registerSubCommand("startp3", () => {
-    inP3 = true
-    inBoss = true
-    if (Settings().activateConfigOnP3Start) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().p3StartConfig)
-    chat("Started P3!")
+registerSubCommand("start", (args) => {
+    const phase = args[0]?.toLowerCase()
+    if (phase === "p3") {
+        inP3 = true
+        inBoss = true
+        chat("Started P3!")
+        if (Settings().activateConfigOnP3Start) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().p3StartConfig)
+    } else if (phase === "boss") {
+        inP3 = false
+        inBoss = true
+        chat("Started Boss!")
+        if (Settings().activateConfigOnBoss) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().bossStartConfig)
+    } else return chat("Invalid phase!")
     Client.scheduleTask(1, resetTriggeredState)
 })
 
@@ -192,18 +241,47 @@ function resetTriggeredState() {
     }
 }
 
-// blink velocity because for somer eason it just fucking breaks if i put it in the blink file
+const termNames = [
+    /^Click in order!$/,
+    /^Select all the (.+?) items!$/,
+    /^What starts with: '(.+?)'\?$/,
+    /^Change all to same color!$/,
+    /^Correct all the panes!$/,
+    /^Click the button on time!$/
+]
+
+register("packetReceived", (packet, event) => {
+    const windowName = packet.func_179840_c().func_150254_d().removeFormatting()
+    if (termNames.some(regex => windowName.match(regex))) inTerminal = true
+    else inTerminal = false
+}).setFilteredClass(S2DPacketOpenWindow)
+
+register("packetReceived", () => {
+    inTerminal = false
+}).setFilteredClass(S2EPacketCloseWindow)
+
+register("packetSent", () => {
+    inTerminal = false
+}).setFilteredClass(C0DPacketCloseWindow)
+
+register("command", () => {
+    inTerminal = true
+    Client.scheduleTask(10, () => inTerminal = false)
+}).setName("simulateterminalopen")
+
+// blink velocity because for some reason it just fucking breaks if i put it in the blink file
 let blinkVelo = false
 let blinkVeloTicks = 0
 let blinking = false
 
 
-register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
-    if (event.entity !== Player.getPlayer()) return
+livingUpdate.addListener(() => {
     if (motionRunning) onMotionUpdate(motionYaw)
 })
 
-
+register("tick",() => {
+    ChatLib.chat(getTermPhase(playerCoords().player))
+})
 const awaitVelocity = register("packetReceived", (packet) => {
     if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
     if (packet.func_149410_e() !== 28000) return
@@ -222,7 +300,6 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     cancel(event)
     blinking = true
     for (let i = 0; i < blinkVeloTicks; i++) {
-        if (motionRunning) onMotionUpdate(motionYaw)
         onLivingUpdate()
         Player.getPlayer().func_70636_d()
         Player.getPlayer().func_175161_p()

@@ -335,3 +335,22 @@ export function parseBlinkFile(fileName) {
         return null
     }
 }
+
+/**
+ * Checks if the coordinates is inside of a terminal phase.
+ * @param {[]} coords 
+ * @returns What terminals set a set of coordinates is in, or 0 if it isn't in any.
+ */
+export function getTermPhase(coords) {
+    if (isCoordsWithinBox(coords, [113, 160, 48], [89, 100, 122])) return 1
+    else if (isCoordsWithinBox(coords, [91, 160, 145], [19, 100, 121])) return 2
+    else if (isCoordsWithinBox(coords, [-6, 160, 123], [19, 100, 50])) return 3
+    else if (isCoordsWithinBox(coords, [17, 160, 27], [90, 100, 50])) return 4
+    else return 0
+}
+
+function isCoordsWithinBox(coords, corner1, corner2) {
+    return (coords[0] >= Math.min(corner1[0], corner2[0]) && coords[0] <= Math.max(corner1[0], corner2[0]) &&
+        coords[1] >= Math.min(corner1[1], corner2[1]) && coords[1] <= Math.max(corner1[1], corner2[1]) &&
+        coords[2] >= Math.min(corner1[2], corner2[2]) && coords[2] <= Math.max(corner1[2], corner2[2]))
+}

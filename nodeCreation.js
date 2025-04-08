@@ -66,7 +66,7 @@ class Settings {
         name: "Node type",
         description: "Select an option",
         category: "Route",
-        options: ["Look", "Walk", "Use Item", "Superboom", "Motion", "Stop Velocity", "Full Stop", "Blink", "Blink Velocity", "Jump", "HClip"]
+        options: ["Look", "Walk", "Use Item", "Superboom", "Motion", "Stop Velocity", "Full Stop", "Blink", "Blink Velocity", "Jump", "HClip", "Await Terminal"]
     })
     type = 5;
 

@@ -9,12 +9,12 @@ class AutoP3Config {
     constructor() {
         // this.yawRequiredTypes = ["look", "useitem", "walk", "superboom"]
         try {
-            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName + ".json"))
+            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName.toLowerCase() + ".json"))
             if (!Array.isArray(this.config)) throw new Error("boom")
         } catch (e) {
             this.config = []
         }
-        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip"]
+        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterm"]
         this.availableArgs = new Map([
             ["look", ["yaw", "pitch"]],
             ["walk", ["yaw", "pitch"]],
@@ -26,7 +26,8 @@ class AutoP3Config {
             ["blink", ["blinkRoute"]],
             ["blinkvelo", ["ticks"]],
             ["jump", []],
-            ["hclip", ["yaw"]]
+            ["hclip", ["yaw"]],
+            ["awaitterm", []]
         ])
         this.nodeCoords = null
         this.editingNodeIndex = null
@@ -37,7 +38,7 @@ class AutoP3Config {
             showItemName: data => data.type === 3,
             showYaw: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("yaw") || data.look,
             showPitch: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.look,
-            showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch")
+            showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.type === 4
         }
 
         register("guiClosed", (gui) => {
@@ -219,7 +220,7 @@ class AutoP3Config {
 
     saveConfig() {
         try {
-            FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName + ".json", JSON.stringify(this.config), true)
+            FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName.toLowerCase() + ".json", JSON.stringify(this.config, null, "\t"), true)
         } catch (e) {
             chat("Error saving config!")
             console.log(e)
@@ -228,7 +229,7 @@ class AutoP3Config {
 
     onConfigNameUpdate(newName) {
         try {
-            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + newName + ".json"))
+            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + newName.toLowerCase() + ".json"))
             if (!Array.isArray(this.config)) throw new Error("boom")
             chat(`Swapped to config ${newName}.`)
         } catch (e) {

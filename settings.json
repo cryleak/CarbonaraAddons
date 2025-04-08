@@ -45,7 +45,7 @@
             {
                 "type": 6,
                 "name": "activateConfigOnBoss",
-                "value": false
+                "value": true
             },
             {
                 "type": 4,
@@ -55,7 +55,7 @@
             {
                 "type": 6,
                 "name": "activateConfigOnP3Start",
-                "value": false
+                "value": true
             },
             {
                 "type": 4,
@@ -90,7 +90,7 @@
             {
                 "type": 6,
                 "name": "renderBlinkRoutes",
-                "value": true
+                "value": false
             },
             {
                 "type": 10,

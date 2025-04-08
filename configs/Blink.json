@@ -1,1 +1,438 @@
-[{"type":"look","position":[56.5,114,84.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"yaw":-120.1201171875,"pitch":-14.850019454956055,"triggered":false},{"type":"look","position":[55.5,114,76.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"yaw":-1.93603515625,"pitch":25.04996681213379,"triggered":false},{"type":"motion","position":[79.5,165,34.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":0,"triggered":false,"yaw":-0.0068359375,"pitch":4.800128936767578},{"type":"jump","position":[77.5,165,49.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":0,"triggered":false},{"type":"motion","position":[79.5,109,126.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":true,"lastTriggered":1744132914213,"triggered":false,"yaw":84.426513671875,"pitch":1.3499253988265991},{"type":"motion","position":[58.5,109,130.5],"radius":0.5,"height":1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043187373,"triggered":false,"yaw":90.420166015625,"pitch":0.749779999256134},{"type":"motion","position":[50.5,109,130.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043187673,"triggered":false,"yaw":-179.57666015625,"pitch":4.0498738288879395},{"type":"motion","position":[50.5,109,122.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043188597,"triggered":false,"yaw":88.6220703125,"pitch":12.89987564086914},{"type":"stopvelocity","position":[45.5,109,122.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043180923,"triggered":false,"yaw":-84.189453125,"pitch":41.99988555908203,"look":true},{"type":"blinkvelo","position":[58.5,109,130.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043187373,"triggered":false,"ticks":15},{"type":"jump","position":[68.5,109,127.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744133656469,"triggered":false},{"type":"blinkvelo","position":[60.5,107.38345024868808,128.5],"radius":0.5,"height":1,"delay":0,"stop":true,"center":false,"lastTriggered":1744133657127,"triggered":false,"once":false,"ticks":"20"},{"type":"motion","position":[68.5,109,127.5],"radius":7,"height":1,"delay":0,"stop":false,"center":true,"lastTriggered":1744133656421,"triggered":false,"once":false,"yaw":"81.26263427734375","pitch":"5.549999713897705"},{"type":"motion","position":[78.5,109,132.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043133798,"triggered":false,"yaw":90.56536865234375,"pitch":3.599933624267578},{"type":"blinkvelo","position":[78.5,109,132.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043133798,"triggered":false,"ticks":15},{"type":"stopvelocity","position":[78.5,109,132.5],"radius":0,"height":0,"delay":0,"stop":false,"center":false,"lastTriggered":1744042676307,"triggered":false},{"type":"motion","position":[97.5,115,136.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744043130812,"triggered":false,"yaw":"6.851","pitch":"35.550"},{"type":"fullstop","position":[60.5,107.6064978965739,128.5],"radius":0.5,"height":10,"delay":0,"stop":false,"center":false,"lastTriggered":1744133656771,"triggered":false},{"type":"hclip","position":[60.5,122.59056439045878,128.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744133657433,"triggered":false,"yaw":"170"},{"type":"look","position":[78.5,109,130.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744125973838,"triggered":false,"yaw":"179.380","pitch":"32.100"},{"type":"blink","position":[54.5,109,130.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744128558234,"triggered":false,"blinkRoute":"test"},{"type":"blink","position":[64.5,255,65.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744129749734,"triggered":false,"blinkRoute":"test"},{"type":"blink","position":[56.5,121,125.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744133647575,"triggered":false,"once":false,"blinkRoute":"funny"},{"type":"look","position":[104.5,115,133.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744133719181,"triggered":false,"once":false,"yaw":"-117.879","pitch":"44.250"},{"type":"look","position":[104.5,115,137.5],"radius":0.5,"height":0.1,"delay":0,"stop":false,"center":false,"lastTriggered":1744133726033,"triggered":false,"once":true,"yaw":"-85.179","pitch":"74.550"}]
+[
+	{
+		"type": "look",
+		"position": [
+			56.5,
+			114,
+			84.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"yaw": -120.1201171875,
+		"pitch": -14.850019454956055,
+		"triggered": false
+	},
+	{
+		"type": "look",
+		"position": [
+			55.5,
+			114,
+			76.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"yaw": -1.93603515625,
+		"pitch": 25.04996681213379,
+		"triggered": false
+	},
+	{
+		"type": "motion",
+		"position": [
+			79.5,
+			165,
+			34.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 0,
+		"triggered": false,
+		"yaw": -0.0068359375,
+		"pitch": 4.800128936767578
+	},
+	{
+		"type": "jump",
+		"position": [
+			77.5,
+			165,
+			49.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 0,
+		"triggered": false
+	},
+	{
+		"type": "motion",
+		"position": [
+			79.5,
+			109,
+			126.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": true,
+		"lastTriggered": 1744132914213,
+		"triggered": false,
+		"yaw": 84.426513671875,
+		"pitch": 1.3499253988265991
+	},
+	{
+		"type": "jump",
+		"position": [
+			68.5,
+			109,
+			127.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139210377,
+		"triggered": false,
+		"once": false
+	},
+	{
+		"type": "blinkvelo",
+		"position": [
+			60.5,
+			107.38345024868808,
+			128.5
+		],
+		"radius": 0.5,
+		"height": 1,
+		"delay": 0,
+		"stop": true,
+		"center": false,
+		"lastTriggered": 1744139199773,
+		"triggered": false,
+		"once": false,
+		"ticks": "20"
+	},
+	{
+		"type": "motion",
+		"position": [
+			68.5,
+			109,
+			127.5
+		],
+		"radius": 0.5,
+		"height": 1,
+		"delay": 0,
+		"stop": false,
+		"center": true,
+		"lastTriggered": 1744139214882,
+		"triggered": false,
+		"once": false,
+		"yaw": "81.26263427734375",
+		"pitch": "5.549999713897705"
+	},
+	{
+		"type": "motion",
+		"position": [
+			78.5,
+			109,
+			132.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744043133798,
+		"triggered": false,
+		"yaw": 90.56536865234375,
+		"pitch": 3.599933624267578
+	},
+	{
+		"type": "blinkvelo",
+		"position": [
+			78.5,
+			109,
+			132.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744043133798,
+		"triggered": false,
+		"ticks": 15
+	},
+	{
+		"type": "stopvelocity",
+		"position": [
+			78.5,
+			109,
+			132.5
+		],
+		"radius": 0,
+		"height": 0,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744042676307,
+		"triggered": false
+	},
+	{
+		"type": "motion",
+		"position": [
+			97.5,
+			115,
+			136.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744043130812,
+		"triggered": false,
+		"yaw": "6.851",
+		"pitch": "35.550"
+	},
+	{
+		"type": "fullstop",
+		"position": [
+			60.5,
+			107.6064978965739,
+			128.5
+		],
+		"radius": 0.5,
+		"height": 10,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139199425,
+		"triggered": false
+	},
+	{
+		"type": "hclip",
+		"position": [
+			60.5,
+			122.59056439045878,
+			128.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139200576,
+		"triggered": false,
+		"yaw": "170"
+	},
+	{
+		"type": "look",
+		"position": [
+			78.5,
+			109,
+			130.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744125973838,
+		"triggered": false,
+		"yaw": "179.380",
+		"pitch": "32.100"
+	},
+	{
+		"type": "blink",
+		"position": [
+			64.5,
+			255,
+			65.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744129749734,
+		"triggered": false,
+		"blinkRoute": "test"
+	},
+	{
+		"type": "blink",
+		"position": [
+			56.5,
+			121,
+			125.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744133647575,
+		"triggered": false,
+		"once": false,
+		"blinkRoute": "funny"
+	},
+	{
+		"type": "look",
+		"position": [
+			104.5,
+			115,
+			133.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744133719181,
+		"triggered": false,
+		"once": false,
+		"yaw": "-117.879",
+		"pitch": "44.250"
+	},
+	{
+		"type": "look",
+		"position": [
+			104.5,
+			115,
+			137.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744133726033,
+		"triggered": false,
+		"once": true,
+		"yaw": "-85.179",
+		"pitch": "74.550"
+	},
+	{
+		"type": "motion",
+		"position": [
+			58.5,
+			109,
+			130.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": true,
+		"lastTriggered": 1744139153779,
+		"triggered": false,
+		"once": false,
+		"yaw": "38",
+		"pitch": "2.250"
+	},
+	{
+		"type": "jump",
+		"position": [
+			57.5,
+			109,
+			131.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139153826,
+		"triggered": false,
+		"once": false
+	},
+	{
+		"type": "motion",
+		"position": [
+			50.5,
+			109,
+			140.5
+		],
+		"radius": 0.5,
+		"height": 1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139154375,
+		"triggered": false,
+		"once": false,
+		"yaw": "89.061",
+		"pitch": "7.500"
+	},
+	{
+		"type": "motion",
+		"position": [
+			38.5,
+			109,
+			140.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139154877,
+		"triggered": false,
+		"once": false,
+		"yaw": "-179.589",
+		"pitch": "-0.000"
+	},
+	{
+		"type": "awaitterm",
+		"position": [
+			38.5,
+			109,
+			139.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139154922,
+		"triggered": false,
+		"once": false
+	},
+	{
+		"type": "motion",
+		"position": [
+			38.5,
+			109,
+			139.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744139156725,
+		"triggered": false,
+		"once": false,
+		"yaw": "91.461",
+		"pitch": "-1.050"
+	},
+	{
+		"type": "look",
+		"position": [
+			51.5,
+			109,
+			130.5
+		],
+		"radius": 0.5,
+		"height": 0.1,
+		"delay": 0,
+		"stop": false,
+		"center": false,
+		"lastTriggered": 1744138754466,
+		"triggered": false,
+		"once": false,
+		"yaw": "20.061",
+		"pitch": "82.350"
+	}
+]
