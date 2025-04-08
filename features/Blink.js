@@ -2,8 +2,9 @@ import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import RenderLibV2 from "../../RenderLibV2"
 
-import { getBlinkRoutes } from "../utils/autop3utils"
+import { getBlinkRoutes, updateBlinkRoutes } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
+import { registerSubCommand } from "../utils/commands"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const lastPacketState = {
@@ -12,12 +13,15 @@ const lastPacketState = {
     rotation: { yaw: null, pitch: null }
 }
 let movementPacketsSent = 0
-let missingPackets = 0
-let blinkEnabled = false
 let awaitingMotionUpdate = false
+global.cryleak ??= {}
+global.cryleak.autop3 ??= {}
+global.cryleak.autop3.lastBlink = Date.now()
+global.cryleak.autop3.missingPackets = 0
+global.cryleak.autop3.blinkEnabled = false
 
 register("tick", () => {
-    missingPackets += 1 - movementPacketsSent
+    global.cryleak.autop3.missingPackets += 1 - movementPacketsSent
     movementPacketsSent = 0
 })
 
@@ -33,13 +37,13 @@ register("packetSent", (packet, event) => {
 
 const renderText = register("renderOverlay", () => {
     Renderer.scale(1)
-    const text = `${missingPackets}`
+    const text = `${global.cryleak.autop3.missingPackets}`
     Renderer.drawString(text, Renderer.screen.getWidth() / 2, Renderer.screen.getHeight() / 2)
 }).unregister()
 
 fakeKeybinds.onKeyPress("packetChargeKeybind", () => {
-    blinkEnabled = !blinkEnabled
-    if (blinkEnabled) {
+    global.cryleak.autop3.blinkEnabled = !global.cryleak.autop3.blinkEnabled
+    if (global.cryleak.autop3.blinkEnabled) {
         renderText.register()
         packetCollector.register()
     } else {
@@ -84,7 +88,7 @@ export function blink(blinkroute) {
     const packets = getBlinkRoutes()[blinkroute + ".json"]
     if (!packets) return chat(`Can't find route "${blinkroute}".`)
 
-    if (packets.length > missingPackets) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
+    if (packets.length > global.cryleak.autop3.missingPackets) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
 
 
     for (let i = 0; i < packets.length; i++) {
@@ -96,7 +100,7 @@ export function blink(blinkroute) {
     }
     const finalPacket = packets[packets.length - 1]
     Player.getPlayer().func_70107_b(parseFloat(finalPacket[0]), parseFloat(finalPacket[1]), parseFloat(finalPacket[2]))
-    chat(`Blinked with ${packets.length} packets. Packets remaining: ${missingPackets}`)
+    chat(`Blinked with ${packets.length} packets.`)
     global.cryleak.autop3.lastBlink = Date.now()
 }
 
@@ -120,4 +124,46 @@ register("renderWorld", () => {
         RenderLibV2.drawInnerEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
         RenderLibV2.drawEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
     })
+})
+
+// Recording
+
+let recordingRouteName = null
+
+registerSubCommand(["recordroute", "recordblinkroute"], (args) => {
+    const name = args.join(" ")
+    if (!name) return chat("Invalid name!")
+    recordingRouteName = name
+    chat(`Started recording route with name ${recordingRouteName}.`)
+    FileLib.delete("CarbonaraAddons/blinkroutes", recordingRouteName + ".json")
+    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".json", `Speed when this route was recorded: ${((Player.getPlayer().field_71075_bZ.func_75094_b()) * 1000).toFixed(0)}`)
+    packetLogger.register()
+})
+
+const packetLogger = register("packetSent", (packet, event) => {
+    let ignorePacket = true
+
+    if (!packet.func_149466_j()) return
+
+    const onGround = packet.func_149465_i()
+    if (onGround !== lastPacketState.onGround) ignorePacket = false
+    lastPacketState.onGround = onGround
+    const currentPosition = { x: packet.func_149464_c(), y: packet.func_149467_d(), z: packet.func_149472_e() }
+    if (Object.values(currentPosition).some((coord, index) => coord !== Object.values(lastPacketState.pos)[index])) ignorePacket = false
+    lastPacketState.pos.x = currentPosition.x
+    lastPacketState.pos.y = currentPosition.y
+    lastPacketState.pos.z = currentPosition.z
+
+
+    if (ignorePacket) return
+
+    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".json", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}`)
+    updateBlinkRoutes()
+}).setFilteredClass(C03PacketPlayer).unregister()
+
+fakeKeybinds.onKeyPress("stopRecordingKeybind", () => {
+    if (!recordingRouteName) return chat("Not recording a route!")
+    packetLogger.unregister()
+    chat(`Stopped recording route ${recordingRouteName}. ${getBlinkRoutes()[recordingRouteName + ".json"].length} packets logged.`)
+    recordingRouteName = null
 })

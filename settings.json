@@ -91,6 +91,11 @@
                 "type": 6,
                 "name": "renderBlinkRoutes",
                 "value": true
+            },
+            {
+                "type": 10,
+                "name": "stopRecordingKeybind",
+                "value": 36
             }
         ]
     }

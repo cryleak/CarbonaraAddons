@@ -281,23 +281,17 @@ const listeners = []
 const scheduledTasks = []
 export const livingUpdate = {
     addListener: func => listeners.push(func),
-    scheduleExec: (ticks, func) => {
-        const id = Math.random()
-        console.log("scheduled task id: " + id)
-        scheduledTasks.push({ ticks, func, id })
-    }
+    scheduleExec: (ticks, func) => scheduledTasks.push({ ticks, func })
+
 }
 
-export function onLivingUpdate(thing = false) {
-    if (thing) console.log(scheduledTasks.length)
+export function onLivingUpdate() {
     for (let i = 0; i < listeners.length; i++) {
         listeners[i]()
     }
 
-    if (scheduledTasks.length) console.log(scheduledTasks.length)
     for (let i = scheduledTasks.length - 1; i >= 0; i--) {
         let task = scheduledTasks[i]
-        console.log("id: " + task.id)
         if (task.ticks === 0) {
             task.func()
             scheduledTasks.splice(i, 1)
@@ -314,15 +308,19 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
 let blinkRoutes = {}
 
 register("step", () => {
+    updateBlinkRoutes()
+}).setFps(1)
+
+export const getBlinkRoutes = () => blinkRoutes
+
+export function updateBlinkRoutes() {
     const routes = {}
     new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
         routes[file] = parseBlinkFile(file)
     })
     if (!routes) return
     blinkRoutes = routes
-}).setFps(1)
-
-export const getBlinkRoutes = () => blinkRoutes
+}
 
 export function packetGetXYZ(packet) {
     return [packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e()]

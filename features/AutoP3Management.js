@@ -89,11 +89,12 @@ class AutoP3Config {
             nodeCreation.pitch = node.pitch?.toString() ?? Player.getPitch().toFixed(3)
             nodeCreation.delay = node.delay.toString()
             nodeCreation.look = node.look ?? false
+            nodeCreation.once = node.once ?? false
             nodeCreation.openGUI()
             Client.scheduleTask(1, () => this.editing = true)
         })
 
-        registerSubCommand(["createnode", "cn", "createring", "cr"], args => {
+        registerSubCommand(["createnode", "cn", "createring", "cr", "addnode", "an", "addring", "ar"], args => {
             if (!args.length || !args[0]) return chat([
                 `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
                 `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, blinkvelo, jump, hclip`,
@@ -168,7 +169,7 @@ class AutoP3Config {
             this.addNode(argsObject, playerCoords().camera)
         })
 
-        registerSubCommand(["deletenode", "dn", "delnode", "dn"], args => {
+        registerSubCommand(["deletenode", "dn", "removenode", "rn", "removering", "rr"], args => {
             if (!this.config.length) return chat("No nodes found!")
             let indexToDelete
             const index = args[0]
@@ -176,9 +177,8 @@ class AutoP3Config {
                 if (isNaN(index)) return chat("Not a number!")
                 indexToDelete = parseInt(index)
             }
-            else {
-                indexToDelete = this.getNearestNodeIndex()
-            }
+            else indexToDelete = this.getNearestNodeIndex()
+
             if (!this.config[indexToDelete]) return chat("Node doesn't exist!")
             let nodeString = "Deleted node: "
             const propertyNames = Object.getOwnPropertyNames(this.config[indexToDelete])
@@ -199,7 +199,7 @@ class AutoP3Config {
         const nodeSpecificArgs = this.availableArgs.get(nodeType) // Args specific to the current node type
 
 
-        let node = { type: nodeType, position: pos, radius: parseFloat(args.radius), height: parseFloat(args.height), delay: parseInt(args.delay), stop: args.stop, center: args.center, lastTriggered: Date.now(), triggered: false }
+        let node = { type: nodeType, position: pos, radius: parseFloat(args.radius), height: parseFloat(args.height), delay: parseInt(args.delay), stop: args.stop, center: args.center, lastTriggered: Date.now(), triggered: false, once: args.once }
         for (let i = 0; i < nodeSpecificArgs.length; i++) {
             node[nodeSpecificArgs[i]] = args[nodeSpecificArgs[i]]
         }

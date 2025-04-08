@@ -17,9 +17,6 @@ let motionRunning = false
 let motionYaw = Player.getYaw()
 let inP3 = false
 let inBoss = false
-global.cryleak ??= {}
-global.cryleak.autop3 ??= {}
-global.cryleak.autop3.lastBlink = Date.now()
 
 register("renderWorld", () => {
     const settings = Settings()
@@ -203,9 +200,11 @@ const awaitVelocity = register("packetReceived", (packet) => {
 register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => { // The game fucking crashes if i don't perform this in a fresh scope, no idea why???
     if (event.entity !== Player.getPlayer()) return
     if (!blinkVelo) return
+    blinkVelo = false
+    if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
+    if (blinkVeloTicks > global.cryleak.autop3.missingPackets) return chat("Not enough packets!")
 
     cancel(event)
-    blinkVelo = false
     blinking = true
     for (let i = 0; i < blinkVeloTicks; i++) {
         if (motionRunning) onMotionUpdate(motionYaw)

@@ -120,6 +120,12 @@ config
         description: "Absolutely annihilates performance but useful for configging.",
         category: "Blink"
     })
+    .addKeybind({
+        configName: "stopRecordingKeybind",
+        title: "Stop Recording Route",
+        description: "Keybind to stop recording a route.",
+        category: "Blink"
+    })
 
 
 
