@@ -309,7 +309,6 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
 })
 
 function renameFile(oldname, newname) {
-    ChatLib.chat(`renamed ${oldname} to ${newname}`)
     const file = FileLib.read("CarbonaraAddons/blinkroutes", oldname)
     FileLib.write("CarbonaraAddons/blinkroutes", newname, file)
     FileLib.delete("CarbonaraAddons/blinkroutes", oldname)
