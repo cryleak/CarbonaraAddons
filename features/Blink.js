@@ -86,7 +86,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
 })
 
 export function blink(blinkroute) {
-    const packets = getBlinkRoutes()[blinkroute + ".json"]
+    const packets = getBlinkRoutes()[blinkroute + ".sereniblink"]
     if (!packets) return chat(`Can't find route "${blinkroute}".`)
 
     if (packets.length > global.cryleak.autop3.missingPackets) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
@@ -114,8 +114,8 @@ registerSubCommand(["recordroute", "recordblinkroute"], (args) => {
     if (!name) return chat("Invalid name!")
     recordingRouteName = name
     chat(`Started recording route with name ${recordingRouteName}.`)
-    FileLib.delete("CarbonaraAddons/blinkroutes", recordingRouteName + ".json")
-    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".json", `Speed when this route was recorded: ${((Player.getPlayer().field_71075_bZ.func_75094_b()) * 1000).toFixed(0)}`)
+    FileLib.delete("CarbonaraAddons/blinkroutes", recordingRouteName + ".sereniblink")
+    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".sereniblink", `Speed when this route was recorded: ${((Player.getPlayer().field_71075_bZ.func_75094_b()) * 1000).toFixed(0)}`)
     packetLogger.register()
 })
 
@@ -136,14 +136,14 @@ const packetLogger = register("packetSent", (packet, event) => {
 
     if (ignorePacket) return
 
-    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".json", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}`)
+    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".sereniblink", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}`)
     updateBlinkRoutes()
 }).setFilteredClass(C03PacketPlayer).unregister()
 
 fakeKeybinds.onKeyPress("stopRecordingKeybind", () => {
     if (!recordingRouteName) return chat("Not recording a route!")
     packetLogger.unregister()
-    chat(`Stopped recording route ${recordingRouteName}. ${getBlinkRoutes()[recordingRouteName + ".json"].length} packets logged.`)
+    chat(`Stopped recording route ${recordingRouteName}. ${getBlinkRoutes()[recordingRouteName + ".sereniblink"].length} packets logged.`)
     recordingRouteName = null
 })
 

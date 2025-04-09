@@ -308,7 +308,18 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     onLivingUpdate()
 })
 
+function renameFile(oldname, newname) {
+    ChatLib.chat(`renamed ${oldname} to ${newname}`)
+    const file = FileLib.read("CarbonaraAddons/blinkroutes", oldname)
+    FileLib.write("CarbonaraAddons/blinkroutes", newname, file)
+    FileLib.delete("CarbonaraAddons/blinkroutes", oldname)
+}
+
 let blinkRoutes = {}
+new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
+    if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
+    blinkRoutes[file] = parseBlinkFile(file)
+})
 
 register("step", () => {
     updateBlinkRoutes()
