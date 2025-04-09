@@ -365,7 +365,9 @@ function isCoordsWithinBox(coords, corner1, corner2) {
 }
 
 export function getHeldItemID() {
-    return Player?.getHeldItem()?.item?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
+    const item = Player.getHeldItem()
+    const itemId = item?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
+    return itemId
 }
 
 export const termNames = [

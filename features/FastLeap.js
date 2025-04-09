@@ -34,7 +34,7 @@ register(MouseEvent, (event) => {
 
     if (getHeldItemID() !== "INFINITE_SPIRIT_LEAP" && Player?.getHeldItem()?.getName()?.removeFormatting() !== "Spirit Leap") return
     if (!getTermPhase(playerCoords.player)) return
-    
+
     cancel(event)
     if (inTerminal) {
         if (!Settings().queueFastLeap) return
