@@ -15,6 +15,11 @@
             {
                 "type": 6,
                 "name": "centerNodes",
+                "value": true
+            },
+            {
+                "type": 6,
+                "name": "triggerFromBelow",
                 "value": false
             },
             {
@@ -25,7 +30,7 @@
             {
                 "type": 6,
                 "name": "displayIndex",
-                "value": true
+                "value": false
             },
             {
                 "type": 5,
@@ -39,13 +44,18 @@
             },
             {
                 "type": 4,
+                "name": "nodeSlices",
+                "value": "24"
+            },
+            {
+                "type": 4,
                 "name": "configName",
-                "value": "Blink"
+                "value": "blink"
             },
             {
                 "type": 6,
                 "name": "activateConfigOnBoss",
-                "value": true
+                "value": false
             },
             {
                 "type": 4,
@@ -55,7 +65,7 @@
             {
                 "type": 6,
                 "name": "activateConfigOnP3Start",
-                "value": true
+                "value": false
             },
             {
                 "type": 4,
@@ -90,12 +100,47 @@
             {
                 "type": 6,
                 "name": "renderBlinkRoutes",
-                "value": false
+                "value": true
             },
             {
                 "type": 10,
                 "name": "stopRecordingKeybind",
-                "value": 36
+                "value": 35
+            }
+        ]
+    },
+    {
+        "category": "Fast Leap",
+        "settings": [
+            {
+                "type": 6,
+                "name": "fastLeap",
+                "value": true
+            },
+            {
+                "type": 6,
+                "name": "queueFastLeap",
+                "value": false
+            },
+            {
+                "type": 4,
+                "name": "fastLeapS1",
+                "value": "Archer"
+            },
+            {
+                "type": 4,
+                "name": "fastLeapS2",
+                "value": "Healer"
+            },
+            {
+                "type": 4,
+                "name": "fastLeapS3",
+                "value": "Mage"
+            },
+            {
+                "type": 4,
+                "name": "fastLeapS4",
+                "value": "cryleak"
             }
         ]
     }

@@ -26,6 +26,13 @@ config
         value: false
     })
     .addSwitch({
+        configName: "triggerFromBelow",
+        title: "Trigger nodes from below",
+        description: "Triggers nodes if you are below them by less than the height of the node.",
+        category: "AutoP3",
+        value: false
+    })
+    .addSwitch({
         configName: "onlyP3",
         title: "Only activate in P3",
         description: "",
@@ -45,6 +52,13 @@ config
         description: "",
         category: "AutoP3",
         value: [0, 255, 255, 255],
+    })
+    .addTextInput({
+        configName: "nodeSlices",
+        title: "Node Slices",
+        description: "The amount of triangles that makes up one ring. It becomes more circular with a higher value but will have worse performance.",
+        category: "AutoP3",
+        value: "3",
     })
     .addTextInput({
         configName: "configName",
@@ -125,6 +139,49 @@ config
         title: "Stop Recording Route",
         description: "Keybind to stop recording a route.",
         category: "Blink"
+    })
+    .addSwitch({
+        configName: "fastLeap",
+        title: "Fast Leap",
+        description: "Leaps fast.",
+        category: "Fast Leap"
+    })
+    .addSwitch({
+        configName: "queueFastLeap",
+        title: "Queue Fast Leap",
+        description: "Queues fast leaps if you are in a terminal.",
+        category: "Fast Leap",
+        shouldShow: data => data.fastLeap
+    })
+    .addTextInput({
+        configName: "fastLeapS1",
+        title: "Player to leap to in S1",
+        description: "You can either input the name of a class or a player name.",
+        category: "Fast Leap",
+        value: "Archer",
+        shouldShow: data => data.fastLeap
+    })
+    .addTextInput({
+        configName: "fastLeapS2",
+        title: "Player to leap to in S2",
+        description: "You can either input the name of a class or a player name.",
+        category: "Fast Leap",
+        value: "Healer",
+        shouldShow: data => data.fastLeap
+    }).addTextInput({
+        configName: "fastLeapS3",
+        title: "Player to leap to in S3",
+        description: "You can either input the name of a class or a player name.",
+        category: "Fast Leap",
+        value: "Mage",
+        shouldShow: data => data.fastLeap
+    }).addTextInput({
+        configName: "fastLeapS4",
+        title: "Player to leap to in S4",
+        description: "You can either input the name of a class or a player name.",
+        category: "Fast Leap",
+        value: "Mage",
+        shouldShow: data => data.fastLeap
     })
 
 

@@ -14,10 +14,10 @@ class AutoP3Config {
         } catch (e) {
             this.config = []
         }
-        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterm"]
+        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterminal", "awaitleap"]
         this.availableArgs = new Map([
             ["look", ["yaw", "pitch"]],
-            ["walk", ["yaw", "pitch"]],
+            ["walk", []],
             ["useitem", ["yaw", "pitch", "itemName"]],
             ["superboom", ["yaw", "pitch"]],
             ["motion", ["yaw", "pitch"]],
@@ -26,8 +26,9 @@ class AutoP3Config {
             ["blink", ["blinkRoute"]],
             ["blinkvelo", ["ticks"]],
             ["jump", []],
-            ["hclip", ["yaw"]],
-            ["awaitterm", []]
+            ["hclip", ["yaw", "jumpOnHClip"]],
+            ["awaitterminal", []],
+            ["awaitleap", ["excludeClass"]]
         ])
         this.nodeCoords = null
         this.editingNodeIndex = null
@@ -38,7 +39,9 @@ class AutoP3Config {
             showItemName: data => data.type === 3,
             showYaw: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("yaw") || data.look,
             showPitch: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.look,
-            showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.type === 4
+            showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.type === 4,
+            showExcludeClass: data => data.type === 12,
+            showJumpOnHClip: data => data.type === 10
         }
 
         register("guiClosed", (gui) => {
@@ -91,11 +94,13 @@ class AutoP3Config {
             nodeCreation.delay = node.delay.toString()
             nodeCreation.look = node.look ?? false
             nodeCreation.once = node.once ?? false
+            nodeCreation.excludeClass = node.excludeClass
+            nodeCreation.jumpOnHClip = node.jumpOnHClip ?? false
             nodeCreation.openGUI()
             Client.scheduleTask(1, () => this.editing = true)
         })
 
-        registerSubCommand(["createnode", "cn", "createring", "cr", "addnode", "an", "addring", "ar"], args => {
+        registerSubCommand(["createnode", "cn", "addnode", "an"], args => {
             if (!args.length || !args[0]) return chat([
                 `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
                 `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, blinkvelo, jump, hclip`,
@@ -104,10 +109,14 @@ class AutoP3Config {
                 `§0-§r stop`,
                 `§0-§r look`,
                 `§0-§r center`,
+                `§0-§r look>`,
+                `§0-§r once>`,
                 `§0-§r radius §0<§rnumber§0>`,
                 `§0-§r height §0<§rnumber§0>`,
                 `§0-§r yaw §0<§rnumber§0>`,
                 `§0-§r pitch §0<§rnumber§0>`,
+                `§0-§r blinkroute §0<§rroutename§0>`,
+                `§0-§r blinkveloticks §0<§rnumber§0>`
             ].join("\n"))
 
             const type = args.shift()
@@ -125,7 +134,9 @@ class AutoP3Config {
                 look: false,
                 ticks: 15,
                 blinkRoute: "",
-                once: false
+                once: false,
+                excludeClass: "",
+                jumpOnHClip: true
             }
 
             for (let i = 0; i < args.length; i++) {
@@ -146,7 +157,7 @@ class AutoP3Config {
                         argsObject.height = parseFloat(args[i + 1])
                         break
                     case "yaw":
-                        argsObject.yaw = parseFloat(args[i + 1].toFixed(3))
+                        argsObject.yaw = parseFloat(args[i + 1]).toFixed(3)
                         break
                     case "pitch":
                         argsObject.pitch = parseFloat(args[i + 1]).toFixed(3)
@@ -158,6 +169,7 @@ class AutoP3Config {
                     case "route":
                         argsObject.blinkRoute = args[i + 1]
                         break
+                    case "blinkveloticks":
                     case "ticks":
                         argsObject.ticks = parseInt(args[i + 1])
                         break
@@ -170,7 +182,7 @@ class AutoP3Config {
             this.addNode(argsObject, playerCoords().camera)
         })
 
-        registerSubCommand(["deletenode", "dn", "removenode", "rn", "removering", "rr"], args => {
+        registerSubCommand(["deletenode", "dn", "removenode", "rn"], args => {
             if (!this.config.length) return chat("No nodes found!")
             let indexToDelete
             const index = args[0]
@@ -191,8 +203,7 @@ class AutoP3Config {
     }
 
     addNode(args, pos) {
-        pos[0] = Math.floor(pos[0]) + 0.5
-        pos[2] = Math.floor(pos[2]) + 0.5
+        if (Settings().centerNodes) pos[0] = Math.floor(pos[0]) + 0.5, pos[2] = Math.floor(pos[2]) + 0.5
         const nodeType = this.nodeTypes[parseInt(args.type)]?.toLowerCase()
         if (!nodeType) return chat("what the fuck is your nodetype")
 
@@ -253,3 +264,5 @@ nodeCreation.pitch = "0"
 nodeCreation.delay = "0"
 nodeCreation.look = false
 nodeCreation.once = true
+nodeCreation.excludeClass = "Mage"
+nodeCreation.jumpOnHClip = true

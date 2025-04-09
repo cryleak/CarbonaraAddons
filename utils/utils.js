@@ -16,6 +16,7 @@ export function chat(message) {
  */
 export function debugMessage(message) {
     // if (!Settings().debugMessages) return
+    return
     ChatLib.chat("§0[§4CarbonaraDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 

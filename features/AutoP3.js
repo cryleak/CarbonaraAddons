@@ -1,9 +1,10 @@
 import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import AutoP3Config from "./AutoP3Management"
+import Dungeons from "../../Atomx/skyblock/Dungeons"
 
 import { clickAt } from "../utils/serverRotations"
-import { hclip, jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase } from "../utils/autoP3Utils"
+import { jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -18,7 +19,9 @@ let motionRunning = false
 let motionYaw = Player.getYaw()
 let inP3 = false
 let inBoss = false
-let cancelNodes = false
+let awaitingTerminal = false
+let awaitingLeap = false
+let awaitLeapExcludeClass = ""
 let inTerminal = false
 
 register("renderWorld", () => {
@@ -28,6 +31,7 @@ register("renderWorld", () => {
     if (settings.onlyP3 && !inP3) return
     if (!inBoss) return
     if (!AutoP3Config.config) return
+    const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices
     for (let i = 0; i < AutoP3Config.config.length; i++) {
         let node = AutoP3Config.config[i]
         let position = node.position
@@ -35,41 +39,43 @@ register("renderWorld", () => {
         if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...position, 16777215, true, 0.02, false)
 
 
-        if (node.triggered || Date.now() - node.lastTriggered < 1000 || cancelNodes) color = [1, 0, 0, 1]
+        if (node.triggered || Date.now() - node.lastTriggered < 1000 || awaitingTerminal || awaitingLeap) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, 60, 1, 90, 0, 0, ...color, false, true)
+        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 0, 0, ...color, false, true)
     }
-    if (Settings().renderBlinkRoutes) {
-        Object?.keys(getBlinkRoutes())?.forEach(name => {
-            const packets = getBlinkRoutes()[name]
+    if (settings.renderBlinkRoutes) {
+        const routes = Object.keys(getBlinkRoutes())
+        for (let i = 0; i < routes.length; i++) {
+            let name = routes[i]
+            let packets = getBlinkRoutes()[name]
             for (let i = 0; i < packets.length; i++) {
-                let Vec1 = packets[i]
-                let Vec2 = packets[i + 1]
-                if (!Vec1 || !Vec2) continue
-                RenderLibV2.drawLine(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 1, 1, 1, 1, 1, false)
+                let packet1 = packets[i]
+                let packet2 = packets[i + 1]
+                if (!packet1 || !packet2) continue
+                RenderLibV2.drawLine(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 1, 1, 1, 1, 1, false)
             }
-            let Vec1 = packets[0]
-            let Vec2 = packets[packets.length - 1]
-            if (!Vec1 || !Vec2) return
-            RenderLibV2.drawInnerEspBox(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), 0.5, 0.5, 0, 1, 0, 0.25, true)
-            RenderLibV2.drawEspBox(parseFloat(Vec1[0]), parseFloat(Vec1[1]), parseFloat(Vec1[2]), 0.5, 0.5, 0, 1, 0, 1, true)
-            Tessellator.drawString(`Start of route "${name.split(".json")[0]}", route requires ${packets.length} packets`, Vec1[0], Vec1[1], Vec1[2], 16777215, true, 0.02, false)
+            let packet1 = packets[0]
+            let packet2 = packets[packets.length - 1]
+            if (!packet1 || !packet2) return
+            RenderLibV2.drawInnerEspBox(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), 0.5, 0.5, 0, 1, 0, 0.25, true)
+            RenderLibV2.drawEspBox(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), 0.5, 0.5, 0, 1, 0, 1, true)
+            Tessellator.drawString(`Start of route "${name.split(".json")[0]}", route requires ${packets.length} packets`, packet1[0], packet1[1], packet1[2], 16777215, true, 0.02, false)
 
-            RenderLibV2.drawInnerEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
-            RenderLibV2.drawEspBox(parseFloat(Vec2[0]), parseFloat(Vec2[1]), parseFloat(Vec2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
-        })
+            RenderLibV2.drawInnerEspBox(parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
+            RenderLibV2.drawEspBox(parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
+        }
     }
     if (settings.editMode) return
     executeNodes(playerCoords().camera)
 })
 
 function executeNodes(playerPosition) {
-    if (cancelNodes) return
+    if (awaitingTerminal || awaitingLeap) return
     for (let i = 0; i < AutoP3Config.config.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
         let node = AutoP3Config.config[i]
         let nodePosition = node.position
         let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePosition[0], nodePosition[2])
-        let yDistance = playerPosition[1] - nodePosition[1]
+        let yDistance = Settings().triggerFromBelow ? Math.abs(playerPosition[1] - nodePosition[1]) : playerPosition[1] - nodePosition[1]
         if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
             if (node.triggered) continue
             if (Date.now() - node.lastTriggered < 1000) continue
@@ -79,15 +85,15 @@ function executeNodes(playerPosition) {
             if (node.center) {
                 debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
                 Player.getPlayer().func_70107_b(nodePosition[0], nodePosition[1], nodePosition[2])
-                releaseMovementKeys()
                 Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-            } else if (node.stop) {
+            }
+            if (node.stop) {
                 motionRunning = false
                 releaseMovementKeys()
                 Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             }
             let performNode = () => {
-                if (cancelNodes) {
+                if (awaitingTerminal || awaitingLeap) {
                     node.triggered = false
                     return
                 }
@@ -95,15 +101,8 @@ function executeNodes(playerPosition) {
                 if (node.look) rotate(node.yaw, node.pitch)
                 nodeTypes[node.type](node)
             }
-            if (node.delay) {
-                let execDelay = Math.ceil(parseInt(node.delay) / 50) // Round to nearest tick
-                scheduleTask(execDelay, () => {
-                    playerPosition = playerCoords().player
-                    let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePosition[0], nodePosition[2])
-                    let yDistance = playerPosition[1] - nodePosition[1]
-                    if (distance < node.radius && yDistance <= node.height && yDistance >= 0) performNode()
-                })
-            } else {
+            if (node.delay) scheduleTask(Math.ceil(parseInt(node.delay) / 50), performNode)
+            else {
                 if (blinking) performNode()
                 else scheduleTask(0, performNode)
             }
@@ -117,7 +116,6 @@ const nodeTypes = {
     },
     walk: args => {
         motionRunning = false
-        rotate(args.yaw, args.pitch)
         setWalking(true)
     },
     useitem: args => {
@@ -160,20 +158,39 @@ const nodeTypes = {
         jump()
     },
     hclip: args => {
-        hclip(args.yaw)
+        const clip = () => {
+            releaseMovementKeys()
+            Player.getPlayer().field_70159_w = 0
+            Player.getPlayer().field_70179_y = 0
+            livingUpdate.scheduleTask(1, () => {
+                const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * (43 / 15)
+                const radians = args.yaw * Math.PI / 180
+                Player.getPlayer().field_70159_w = -Math.sin(radians) * speed
+                Player.getPlayer().field_70179_y = Math.cos(radians) * speed
+            })
+            livingUpdate.scheduleTask(2, repressMovementKeys)
+        }
+
+        if (Player.getPlayer().field_70122_E && args.jumpOnHClip) {
+            jump()
+            scheduleTask(1, clip)
+        } else clip()
+
     },
-    awaitterm: args => {
+    awaitterminal: args => {
         motionRunning = false
         releaseMovementKeys()
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-        cancelNodes = true
+        awaitingTerminal = true
         chat("Awaiting terminal open. Blocking nodes.")
-        const listener = register("tick", () => {
-            if (!inTerminal) return
-            chat("Terminal opened, no longer blocking nodes.")
-            cancelNodes = false
-            listener.unregister()
-        })
+    },
+    awaitleap: args => {
+        motionRunning = false
+        releaseMovementKeys()
+        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+        awaitingLeap = true
+        awaitLeapExcludeClass = args.excludeClass
+        chat("Waiting for party members to leap. Blocking nodes.")
     }
 }
 
@@ -185,7 +202,8 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
 
     if (!movementKeys.includes(keyCode)) return
     motionRunning = false
-    cancelNodes = false
+    awaitingTerminal = false
+    awaitingLeap = false
 })
 
 onChatPacket(() => {
@@ -218,6 +236,11 @@ registerSubCommand("start", (args) => {
 registerSubCommand(["resetroutes", "rr"], () => {
     resetTriggeredState()
     chat("Reset triggered state.")
+})
+
+registerSubCommand(["editmode", "em"], () => {
+    Settings().getConfig().setConfigValue("AutoP3", "editMode", !Settings().editMode)
+    chat(`Edit mode ${Settings().editMode ? "enabled" : "disabled"}.`)
 })
 
 onChatPacket(() => {
@@ -264,10 +287,43 @@ register("packetSent", () => {
     inTerminal = false
 }).setFilteredClass(C0DPacketCloseWindow)
 
+register("tick", () => {
+    if (!inTerminal || !awaitingTerminal) return
+    chat("Terminal opened. No longer blocking nodes.")
+    awaitingTerminal = false
+})
+
 register("command", () => {
     inTerminal = true
     Client.scheduleTask(10, () => inTerminal = false)
 }).setName("simulateterminalopen")
+
+register("tick", () => {
+    if (!awaitingLeap) return
+    const players = World.getAllPlayers()
+    const party = Dungeons.getTeamMembers()
+    const partyNames = Object.keys(party)
+    if (partyNames.every(partyMember => {
+        const teamMember = players.find(player => player.getName() === partyMember)
+        if (!teamMember && party[partyMember]["class"] !== awaitLeapExcludeClass && partyMember !== awaitLeapExcludeClass) return false
+        return Player.getName() === partyMember || party[partyMember]["class"] === awaitLeapExcludeClass || partyMember === awaitLeapExcludeClass || getTermPhase([teamMember.getX(), teamMember.getY(), teamMember.getZ()]) === getTermPhase(playerCoords().player)
+    })) {
+        chat("All players that are supposed to leap have leaped. No longer blocking nodes.")
+        awaitingLeap = false
+    }
+})
+
+register("worldUnload", () => {
+    awaitingLeap = false
+    awaitingTerminal = false
+    inTerminal = false
+    motionRunning = false
+    inP3 = false
+    inBoss = false
+    awaitVelocity.unregister()
+    blinkVelo = false
+    blinking = false
+})
 
 // blink velocity because for some reason it just fucking breaks if i put it in the blink file
 let blinkVelo = false
@@ -279,9 +335,6 @@ livingUpdate.addListener(() => {
     if (motionRunning) onMotionUpdate(motionYaw)
 })
 
-register("tick",() => {
-    ChatLib.chat(getTermPhase(playerCoords().player))
-})
 const awaitVelocity = register("packetReceived", (packet) => {
     if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
     if (packet.func_149410_e() !== 28000) return

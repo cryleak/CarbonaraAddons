@@ -1,6 +1,6 @@
 import {@ButtonProperty, @CheckboxProperty, @ColorProperty, @PercentSliderProperty, @SelectorProperty, @SwitchProperty, @TextProperty, @Vigilant, @SliderProperty, @NumberProperty, @DecimalSliderProperty} from '../Vigilance/index';
 
-@Vigilant("AutoRoutes")
+@Vigilant("CarbonaraAddons")
 class Settings {
     constructor() {
         this.initialize(this);
@@ -8,9 +8,11 @@ class Settings {
         this.addDependency("Blink Route", "show blinkRoute")
         this.addDependency("Blink Velocity Ticks", "show ticks")
         this.addDependency("Item name to use", "show itemName")
+        this.addDependency("Player/Class to exclude", "show excludeClass")
         this.addDependency("Look", "show look")
         this.addDependency("Yaw", "show yaw")
         this.addDependency("Pitch", "show pitch")
+        this.addDependency("Jump on HClip", "show jumpOnHClip")
     }
 
     @TextProperty({
@@ -66,7 +68,7 @@ class Settings {
         name: "Node type",
         description: "Select an option",
         category: "Route",
-        options: ["Look", "Walk", "Use Item", "Superboom", "Motion", "Stop Velocity", "Full Stop", "Blink", "Blink Velocity", "Jump", "HClip", "Await Terminal"]
+        options: ["Look", "Walk", "Use Item", "Superboom", "Motion", "Stop Velocity", "Full Stop", "Blink", "Blink Velocity", "Jump", "HClip", "Await Terminal", "Await Leap"]
     })
     type = 5;
 
@@ -77,12 +79,26 @@ class Settings {
     })
     itemName = ""
 
+    @TextProperty({
+        name: "Player/Class to exclude",
+        description: "(Case sensitive) Options: Mage, Berserk, Archer, Healer, Tank\nAlternatively, type a player name here.",
+        category: "Route",
+    })
+    excludeClass = "Mage"
+
     @SwitchProperty({
         name: "Look",
         description: "Rotate to specified Yaw/Pitch.",
         category: "Route"
     })
     look = ""
+
+    @SwitchProperty({
+        name: "Jump on HClip",
+        description: "Jumps before HClipping if you are on the ground.",
+        category: "Route"
+    })
+    jumpOnHClip = true
 
     @TextProperty({
         name: "Yaw",
@@ -146,6 +162,20 @@ class Settings {
         category: "Schizo vigilance shit ignore this"
     })
     showLook = false
+
+    @SwitchProperty({
+        name: "show excludeClass",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showExcludeClass = false
+
+    @SwitchProperty({
+        name: "show jumpOnHClip",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showJumpOnHClip = false
 }
 
 export default new Settings()

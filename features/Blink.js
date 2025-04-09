@@ -56,6 +56,7 @@ const packetCollector = register("packetSent", (packet, event) => { // This only
     if (!awaitingMotionUpdate) return
     awaitingMotionUpdate = false
     if (Settings().pauseCharging && Date.now() - global.cryleak.autop3.lastBlink < 1000) return
+    if (recordingRouteName) return
 
     let cancelPacket = true
 
@@ -144,4 +145,13 @@ fakeKeybinds.onKeyPress("stopRecordingKeybind", () => {
     packetLogger.unregister()
     chat(`Stopped recording route ${recordingRouteName}. ${getBlinkRoutes()[recordingRouteName + ".json"].length} packets logged.`)
     recordingRouteName = null
+})
+
+register("worldUnload", () => {
+    global.cryleak.autop3.missingPackets = 0
+    recordingRouteName = null
+    packetLogger.unregister()
+    global.cryleak.autop3.blinkEnabled = false
+    packetCollector.unregister()
+    renderText.unregister()
 })
