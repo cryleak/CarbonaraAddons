@@ -367,3 +367,12 @@ function isCoordsWithinBox(coords, corner1, corner2) {
 export function getHeldItemID() {
     return Player?.getHeldItem()?.item?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
 }
+
+export const termNames = [
+    /^Click in order!$/,
+    /^Select all the (.+?) items!$/,
+    /^What starts with: '(.+?)'\?$/,
+    /^Change all to same color!$/,
+    /^Correct all the panes!$/,
+    /^Click the button on time!$/
+]

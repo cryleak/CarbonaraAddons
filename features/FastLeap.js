@@ -2,7 +2,7 @@ import Settings from "../config"
 import LeapHelper from "../utils/leapUtils"
 import Dungeons from "../../Atomx/skyblock/Dungeons"
 
-import { getHeldItemID, getTermPhase, playerCoords, sendAirClick } from "../utils/autop3utils"
+import { getHeldItemID, getTermPhase, playerCoords, sendAirClick, termNames } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
 
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
@@ -33,27 +33,25 @@ register(MouseEvent, (event) => {
     if (!state || button !== 0) return
 
     if (getHeldItemID() !== "INFINITE_SPIRIT_LEAP" && Player?.getHeldItem()?.getName()?.removeFormatting() !== "Spirit Leap") return
+    if (!getTermPhase(playerCoords.player)) return
+    
+    cancel(event)
     if (inTerminal) {
         if (!Settings().queueFastLeap) return
         queuedLeap = true
-        return
+        return chat("Queued a leap after the terminal closes.")
     }
-    cancel(event)
 
     sendAirClick()
-
     queuedLeap = false
     const player = getPlayerToLeapTo()
-    if (!player || !player.length) return
+    if (player === null) return
+    if (!player || !player.length) return chat("§cCouldn't get player or something idk")
     LeapHelper.queueLeap(player)
 })
 
 function getPlayerToLeapTo() {
     const termPhase = getTermPhase(playerCoords().player)
-    if (!termPhase) {
-        chat("§cNot in a term phase!")
-        return null
-    }
     let player = Settings()["fastLeapS" + termPhase]
     if (classes.includes(player)) {
         const party = Dungeons.getTeamMembers()

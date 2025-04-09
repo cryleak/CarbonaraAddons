@@ -4,7 +4,7 @@ import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../../Atomx/skyblock/Dungeons"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys } from "../utils/autoP3Utils"
+import { jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -41,7 +41,7 @@ register("renderWorld", () => {
 
         if (node.triggered || Date.now() - node.lastTriggered < 1000 || awaitingTerminal || awaitingLeap) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 0, 0, ...color, false, true)
+        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, false, true)
     }
     if (settings.renderBlinkRoutes) {
         const routes = Object.keys(getBlinkRoutes())
@@ -263,15 +263,6 @@ function resetTriggeredState() {
         node.triggered = false
     }
 }
-
-const termNames = [
-    /^Click in order!$/,
-    /^Select all the (.+?) items!$/,
-    /^What starts with: '(.+?)'\?$/,
-    /^Change all to same color!$/,
-    /^Correct all the panes!$/,
-    /^Click the button on time!$/
-]
 
 register("packetReceived", (packet, event) => {
     const windowName = packet.func_179840_c().func_150254_d().removeFormatting()
