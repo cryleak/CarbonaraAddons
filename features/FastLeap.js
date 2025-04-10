@@ -33,7 +33,7 @@ register(MouseEvent, (event) => {
     if (!state || button !== 0) return
 
     if (getHeldItemID() !== "INFINITE_SPIRIT_LEAP" && Player?.getHeldItem()?.getName()?.removeFormatting() !== "Spirit Leap") return
-    if (!getTermPhase(playerCoords.player)) return
+    if (!getTermPhase(playerCoords().player)) return
 
     cancel(event)
     if (inTerminal) {

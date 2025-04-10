@@ -4,7 +4,7 @@ import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../../Atomx/skyblock/Dungeons"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames } from "../utils/autoP3Utils"
+import { jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -59,7 +59,7 @@ register("renderWorld", () => {
             if (!packet1 || !packet2) return
             RenderLibV2.drawInnerEspBox(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), 0.5, 0.5, 0, 1, 0, 0.25, true)
             RenderLibV2.drawEspBox(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), 0.5, 0.5, 0, 1, 0, 1, true)
-            Tessellator.drawString(`Start of route "${name.split(".json")[0]}", route requires ${packets.length} packets`, packet1[0], packet1[1], packet1[2], 16777215, true, 0.02, false)
+            Tessellator.drawString(`Start of route "${name.split(".sereniblink")[0]}", route requires ${packets.length} packets`, packet1[0], packet1[1], packet1[2], 16777215, true, 0.02, false)
 
             RenderLibV2.drawInnerEspBox(parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
             RenderLibV2.drawEspBox(parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
@@ -80,7 +80,7 @@ function executeNodes(playerPosition) {
             if (node.triggered) continue
             if (Date.now() - node.lastTriggered < 1000) continue
             if (blinking && node.delay) continue
-            if (blinking && ["blink", "blinkvelo", "superboom", "useitem"].includes(node.type)) continue
+            if (blinking && ["blink", "blinkvelo", "superboom", "useitem", "awaitterminal", "awaitleap"].includes(node.type)) continue
             node.triggered = true
             if (node.center) {
                 debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
@@ -103,7 +103,7 @@ function executeNodes(playerPosition) {
             }
             if (node.delay) scheduleTask(Math.ceil(parseInt(node.delay) / 50), performNode)
             else {
-                if (blinking) performNode()
+                if (blinking || node.type === "awaitterminal" || node.type === "awaitleap") performNode()
                 else scheduleTask(0, performNode)
             }
         } else if (!node.once) node.triggered = false
@@ -148,6 +148,9 @@ const nodeTypes = {
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
     },
     blink: args => {
+        motionRunning = false
+        releaseMovementKeys()
+        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
         blink(args.blinkRoute)
     },
     blinkvelo: args => {
@@ -160,13 +163,11 @@ const nodeTypes = {
     hclip: args => {
         const clip = () => {
             releaseMovementKeys()
-            Player.getPlayer().field_70159_w = 0
-            Player.getPlayer().field_70179_y = 0
+            setVelocity(0, null, 0)
             livingUpdate.scheduleTask(1, () => {
                 const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * (43 / 15)
                 const radians = args.yaw * Math.PI / 180
-                Player.getPlayer().field_70159_w = -Math.sin(radians) * speed
-                Player.getPlayer().field_70179_y = Math.cos(radians) * speed
+                setVelocity(-Math.sin(radians) * speed, null, Math.cos(radians) * speed)
             })
             livingUpdate.scheduleTask(2, repressMovementKeys)
         }
@@ -278,31 +279,30 @@ register("packetSent", () => {
     inTerminal = false
 }).setFilteredClass(C0DPacketCloseWindow)
 
-register("tick", () => {
-    if (!inTerminal || !awaitingTerminal) return
-    chat("Terminal opened. No longer blocking nodes.")
-    awaitingTerminal = false
+register("step", () => {
+    if (inTerminal && awaitingTerminal) {
+        chat("Terminal opened. No longer blocking nodes.")
+        awaitingTerminal = false
+    }
+    if (awaitingLeap) {
+        const players = World.getAllPlayers()
+        const party = Dungeons.getTeamMembers()
+        const partyNames = Object.keys(party)
+        if (partyNames.every(partyMember => {
+            const teamMember = players.find(player => player.getName() === partyMember)
+            if (!teamMember && party[partyMember]["class"] !== awaitLeapExcludeClass && partyMember !== awaitLeapExcludeClass) return false
+            return Player.getName() === partyMember || party[partyMember]["class"] === awaitLeapExcludeClass || partyMember === awaitLeapExcludeClass || getTermPhase([teamMember.getX(), teamMember.getY(), teamMember.getZ()]) === getTermPhase(playerCoords().player)
+        })) {
+            chat("All players that are supposed to leap have leaped. No longer blocking nodes.")
+            awaitingLeap = false
+        }
+    }
 })
 
 register("command", () => {
     inTerminal = true
     Client.scheduleTask(10, () => inTerminal = false)
 }).setName("simulateterminalopen")
-
-register("tick", () => {
-    if (!awaitingLeap) return
-    const players = World.getAllPlayers()
-    const party = Dungeons.getTeamMembers()
-    const partyNames = Object.keys(party)
-    if (partyNames.every(partyMember => {
-        const teamMember = players.find(player => player.getName() === partyMember)
-        if (!teamMember && party[partyMember]["class"] !== awaitLeapExcludeClass && partyMember !== awaitLeapExcludeClass) return false
-        return Player.getName() === partyMember || party[partyMember]["class"] === awaitLeapExcludeClass || partyMember === awaitLeapExcludeClass || getTermPhase([teamMember.getX(), teamMember.getY(), teamMember.getZ()]) === getTermPhase(playerCoords().player)
-    })) {
-        chat("All players that are supposed to leap have leaped. No longer blocking nodes.")
-        awaitingLeap = false
-    }
-})
 
 register("worldUnload", () => {
     awaitingLeap = false
@@ -349,6 +349,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
         Player.getPlayer().func_175161_p()
         executeNodes(playerCoords().player)
     }
+    chat(`Blinked ${blinkVeloTicks} physics ticks.`)
     global.cryleak.autop3.lastBlink = Date.now()
     blinking = false
 })

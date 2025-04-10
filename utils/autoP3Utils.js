@@ -228,10 +228,8 @@ export function onMotionUpdate(yaw) {
     if (airTicks < 2) {
         lastX = x
         lastZ = z
-        if (!clickingMelody) {
-            Player.getPlayer().field_70159_w = x
-            Player.getPlayer().field_70179_y = z
-        }
+        if (!clickingMelody) setVelocity(x, null, z)
+
     } else {
         //assume max acceleration
         const factor = airMotionFactor / 10000
@@ -240,13 +238,14 @@ export function onMotionUpdate(yaw) {
         // lastX *= 0.91
         // lastZ *= 0.91
         if (!clickingMelody) {
-            Player.getPlayer().field_70159_w = lastX * 0.91 + factor * speed * -Math.sin(radians)
-            Player.getPlayer().field_70179_y = lastZ * 0.91 + factor * speed * Math.cos(radians)
+            setVelocity(lastX * 0.91 + factor * speed * -Math.sin(radians), null, lastZ * 0.91 + factor * speed * Math.cos(radians))
             // Player.getPlayer().field_70159_w = lastX
             // Player.getPlayer().field_70179_y = lastZ
         }
     }
 }
+
+export const getCurrentWindowName = () => currentWindowName
 
 register("packetReceived", (packet, event) => {
     currentWindowName = packet.func_179840_c().func_150254_d().removeFormatting()
@@ -316,8 +315,8 @@ function renameFile(oldname, newname) {
 
 let blinkRoutes = {}
 new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
-    if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
     blinkRoutes[file] = parseBlinkFile(file)
+    if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
 })
 
 register("step", () => {
@@ -330,6 +329,7 @@ export function updateBlinkRoutes() {
     const routes = {}
     new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
         routes[file] = parseBlinkFile(file)
+        if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
     })
     if (!routes) return
     blinkRoutes = routes
@@ -365,9 +365,7 @@ function isCoordsWithinBox(coords, corner1, corner2) {
 }
 
 export function getHeldItemID() {
-    const item = Player.getHeldItem()
-    const itemId = item?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
-    return itemId
+    return Player?.getHeldItem()?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
 }
 
 export const termNames = [
@@ -378,3 +376,9 @@ export const termNames = [
     /^Correct all the panes!$/,
     /^Click the button on time!$/
 ]
+
+export function setVelocity(x, y, z) {
+    if (typeof x === "number") Player.getPlayer().field_70159_w = x
+    if (typeof y === "number") Player.getPlayer().field_70181_x = y
+    if (typeof z === "number") Player.getPlayer().field_70179_y = z
+}

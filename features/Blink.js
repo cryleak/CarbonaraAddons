@@ -2,7 +2,7 @@ import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import RenderLibV2 from "../../RenderLibV2"
 
-import { getBlinkRoutes, updateBlinkRoutes } from "../utils/autop3utils"
+import { getBlinkRoutes, setVelocity, updateBlinkRoutes } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
 
@@ -94,16 +94,24 @@ export function blink(blinkroute) {
 
     for (let i = 0; i < packets.length; i++) {
         let packet = packets[i]
-        if (packet.length !== 4) return chat("Couldn't parse file! Is it invalid?")
-
-        const [x, y, z, onGround] = [parseFloat(packet[0]), parseFloat(packet[1]), parseFloat(packet[2]), packet[3] === "true"]
+        if (packet.length < 4 || !packet.length) return chat("Couldn't parse file! Is it invalid?")
+        let [x, y, z, onGround] = [parseFloat(packet[0]), parseFloat(packet[1]), parseFloat(packet[2]), packet[3] === "true"]
         Client.sendPacket(new C03PacketPlayer.C04PacketPlayerPosition(x, y, z, onGround))
+        if (packet.length === 7) {
+            let motion = [parseFloat(packet[4]), parseFloat(packet[5]), parseFloat(packet[6])]
+            setVelocity(...motion)
+        }
     }
     const finalPacket = packets[packets.length - 1]
     Player.getPlayer().func_70107_b(parseFloat(finalPacket[0]), parseFloat(finalPacket[1]), parseFloat(finalPacket[2]))
     chat(`Blinked with ${packets.length} packets.`)
     global.cryleak.autop3.lastBlink = Date.now()
 }
+
+registerSubCommand(["playroute", "playblinkroute"], (args) => {
+    const name = args.join(" ")
+    blink(name)
+})
 
 // Recording
 
@@ -136,7 +144,7 @@ const packetLogger = register("packetSent", (packet, event) => {
 
     if (ignorePacket) return
 
-    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".sereniblink", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}`)
+    FileLib.append("CarbonaraAddons/blinkroutes", recordingRouteName + ".sereniblink", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}, ${Player.getPlayer().field_70159_w}, ${Player.getPlayer().field_70181_x}, ${Player.getPlayer().field_70179_y}`)
     updateBlinkRoutes()
 }).setFilteredClass(C03PacketPlayer).unregister()
 

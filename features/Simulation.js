@@ -1,7 +1,6 @@
 import Settings from "../config"
 
-let yVelo = 3.5
-const ping = 125
+let ping = 125
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 
 const simulation = register("tick", () => {

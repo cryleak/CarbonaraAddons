@@ -216,6 +216,8 @@ class AutoP3Config {
             node[nodeSpecificArgs[i]] = args[nodeSpecificArgs[i]]
         }
         if (args.look) node.yaw = args.yaw, node.pitch = args.pitch, node.look = true
+        if (nodeType === "awaitterminal" || nodeType === "awaitleap") node.once = true
+
         if (this.editingNodeIndex === null) this.config.push(node)
         else this.config[this.editingNodeIndex] = node
         this.saveConfig()
