@@ -1,4 +1,5 @@
 settings.json
 config.toml
+posData.json
 blinkroutes/*
 configs/*

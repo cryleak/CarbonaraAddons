@@ -1,10 +1,11 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
-import RenderLibV2 from "../../RenderLibV2"
+import PogObject from "../../PogData"
 
 import { getBlinkRoutes, setVelocity, updateBlinkRoutes } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
+import { packetCounterGui } from "../config"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const lastPacketState = {
@@ -12,8 +13,17 @@ const lastPacketState = {
     onGround: null,
     rotation: { yaw: null, pitch: null }
 }
+const data = new PogObject("CarbonaraAddons", {
+    packetCounter: {
+        x: Renderer.screen.getWidth() / 2,
+        y: Renderer.screen.getHeight() / 2,
+        scale: 1,
+    }
+}, "posData.json")
+
 let movementPacketsSent = 0
 let awaitingMotionUpdate = false
+
 global.cryleak ??= {}
 global.cryleak.autop3 ??= {}
 global.cryleak.autop3.lastBlink = Date.now()
@@ -35,22 +45,46 @@ register("packetSent", (packet, event) => {
     })
 }).setFilteredClass(C03PacketPlayer)
 
-const renderText = register("renderOverlay", () => {
-    Renderer.scale(1)
-    const text = `${global.cryleak.autop3.missingPackets}`
-    Renderer.drawString(text, Renderer.screen.getWidth() / 2, Renderer.screen.getHeight() / 2)
-}).unregister()
-
-fakeKeybinds.onKeyPress("packetChargeKeybind", () => {
-    global.cryleak.autop3.blinkEnabled = !global.cryleak.autop3.blinkEnabled
-    if (global.cryleak.autop3.blinkEnabled) {
-        renderText.register()
-        packetCollector.register()
-    } else {
-        renderText.unregister()
-        packetCollector.unregister()
+register("renderOverlay", () => {
+    if (packetCounterGui.isOpen()) {
+        Renderer.scale(data.packetCounter.scale)
+        const text = 1000000
+        Renderer.drawString(text, data.packetCounter.x, data.packetCounter.y)
+        return
     }
+    if (!global.cryleak.autop3.blinkEnabled) return
+    Renderer.scale(data.packetCounter.scale)
+    const text = `${global.cryleak.autop3.missingPackets}`
+    Renderer.drawString(text, data.packetCounter.x, data.packetCounter.y)
 })
+
+register("dragged", (_0, _1, x, y, bn) => {
+    if (!packetCounterGui.isOpen()) return
+    if (bn === 2) return
+    data.packetCounter.x = x / data.packetCounter.scale
+    data.packetCounter.y = y / data.packetCounter.scale
+    data.save()
+})
+
+register("scrolled", (_0, _1, dir) => {
+    if (!packetCounterGui.isOpen()) return
+    if (dir == 1) data.packetCounter.scale += 0.01
+    else data.packetCounter.scale -= 0.01
+    data.packetCounter.scale = Math.round(data.packetCounter.scale * 100) / 100
+    ChatLib.clearChat(69427) // Prevent clogging chat by deleting the previous message
+    new Message(`§0[§4Carbonara§0] §fCurrent scale: ${data.packetCounter.scale}`).setChatLineId(69427).chat()
+    data.save()
+})
+
+fakeKeybinds.onKeyPress("packetChargeKeybind", () => toggleCharge(!global.cryleak.autop3.blinkEnabled))
+
+registerSubCommand(["togglecharge"], (args) => toggleCharge(args?.[0] === "true"))
+
+function toggleCharge(state) {
+    global.cryleak.autop3.blinkEnabled = state
+    if (global.cryleak.autop3.blinkEnabled) packetCollector.register()
+    else packetCollector.unregister()
+}
 
 const packetCollector = register("packetSent", (packet, event) => { // This only triggers on C03's sent from a Motion Update.
     if (!awaitingMotionUpdate) return
@@ -86,6 +120,8 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
 })
 
 export function blink(blinkroute) {
+    if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
+
     const packets = getBlinkRoutes()[blinkroute + ".sereniblink"]
     if (!packets) return chat(`Can't find route "${blinkroute}".`)
 
@@ -111,6 +147,10 @@ export function blink(blinkroute) {
 registerSubCommand(["playroute", "playblinkroute"], (args) => {
     const name = args.join(" ")
     blink(name)
+})
+
+registerSubCommand("listblinkroutes", () => {
+    chat(`Blink routes: ${Object.keys(getBlinkRoutes()).map(route => route.split(".sereniblink")[0]).toString()}`)
 })
 
 // Recording
@@ -161,5 +201,4 @@ register("worldUnload", () => {
     packetLogger.unregister()
     global.cryleak.autop3.blinkEnabled = false
     packetCollector.unregister()
-    renderText.unregister()
 })

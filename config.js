@@ -1,6 +1,7 @@
 import DefaultConfig from "../Amaterasu/core/DefaultConfig"
 import Settings from "../Amaterasu/core/Settings"
 
+export const packetCounterGui = new Gui()
 const config = new DefaultConfig("CarbonaraAddons", "settings.json")
 
 config
@@ -116,6 +117,16 @@ config
         category: "AutoP3",
         subcategory: "Simulation",
     })
+    .addButton({
+        configName: "movePacketCounter",
+        title: "Move Packet Counter",
+        description: "",
+        category: "Blink",
+        title: "Move",
+        onClick() {
+            packetCounterGui.open()
+        }
+    })
     .addKeybind({
         configName: "packetChargeKeybind",
         title: "Toggle Packet Charging",
@@ -126,6 +137,12 @@ config
         configName: "pauseCharging",
         title: "Stop charging packets after blinking",
         description: "Stops charging packets for 1 second after blinking. May do something probably does nothing idk",
+        category: "Blink"
+    })
+    .addSwitch({
+        configName: "allowRotations",
+        title: "Allow Rotations",
+        description: "Charges less packets but lets you rotate.",
         category: "Blink"
     })
     .addSwitch({
