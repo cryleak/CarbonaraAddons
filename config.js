@@ -200,6 +200,20 @@ config
         value: "Mage",
         shouldShow: data => data.fastLeap
     })
+    .addSwitch({
+        configName: "pyFastLeap",
+        title: "Fast Leap On Purple Pad",
+        description: "",
+        category: "Fast Leap",
+        shouldShow: data => data.fastLeap
+    }).addTextInput({
+        configName: "fastLeapPP",
+        title: "Player to leap to on Purple Pad",
+        description: "You can either input the name of a class or a player name.",
+        category: "Fast Leap",
+        value: "Mage",
+        shouldShow: data => data.fastLeap && data.pyFastLeap
+    })
 
 
 

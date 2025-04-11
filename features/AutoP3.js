@@ -149,8 +149,6 @@ const nodeTypes = {
     },
     blink: args => {
         motionRunning = false
-        releaseMovementKeys()
-        Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
         blink(args.blinkRoute)
 
         if (args.stop) setVelocity(0, null, 0)
@@ -163,6 +161,7 @@ const nodeTypes = {
         jump()
     },
     hclip: args => {
+        motionRunning = false
         const clip = () => {
             releaseMovementKeys()
             setVelocity(0, null, 0)

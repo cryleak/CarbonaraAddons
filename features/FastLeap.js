@@ -4,6 +4,7 @@ import Dungeons from "../../Atomx/skyblock/Dungeons"
 
 import { getHeldItemID, getTermPhase, playerCoords, sendAirClick, termNames } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
+import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
 const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
@@ -33,12 +34,11 @@ register(MouseEvent, (event) => {
     if (!state || button !== 0) return
 
     if (getHeldItemID() !== "INFINITE_SPIRIT_LEAP" && Player?.getHeldItem()?.getName()?.removeFormatting() !== "Spirit Leap") return
-    if (!getTermPhase(playerCoords().player)) return
 
-    cancel(event)
     if (inTerminal) {
         if (!Settings().queueFastLeap) return
         queuedLeap = true
+        cancel(event)
         return chat("Queued a leap after the terminal closes.")
     }
 
@@ -46,21 +46,26 @@ register(MouseEvent, (event) => {
     queuedLeap = false
     const player = getPlayerToLeapTo()
     if (player === null) return
-    if (!player || !player.length) return chat("§cCouldn't get player or something idk")
+    if (!player || !player.length) return
     LeapHelper.queueLeap(player)
+    cancel(event)
 })
 
 function getPlayerToLeapTo() {
     const termPhase = getTermPhase(playerCoords().player)
-    let player = Settings()["fastLeapS" + termPhase]
-    if (classes.includes(player)) {
+    let target = Settings()["fastLeapS" + termPhase]
+    if (!termPhase && Settings().pyFastLeap && getDistanceToCoord(97, 166.5, 94) < 10) target = Settings().fastLeapPP
+    else return
+    let player
+    if (classes.includes(target)) {
         const party = Dungeons.getTeamMembers()
-        player = Object.keys(party).find(player => party[player]["class"] === leapTo)
+        player = Object.keys(party).find(teamMember => party[teamMember]["class"] === target)
         if (!player) {
-            chat(`§cCan't find a player with the class "${Settings()["fastLeapS" + termPhase]}"!`)
+            chat(`§cCan't find a player with the class "${target}"!`)
             return null
         }
-    }
+    } else player = target
+    if (!player) chat("§cCouldn't get player or something idk")
     return player
 }
 

@@ -33,7 +33,6 @@ export default new class LeapHelper {
             const itemName = item?.getName()?.removeFormatting()?.toLowerCase()
             if (itemName !== this._currentLeap()?.toLowerCase()) return
             sendWindowClick(windowID, slot, 0, 0)
-            chat("§cLeaping to " + this._currentLeap())
             this._reloadGUI()
 
         }).setFilteredClass(S2FPacketSetSlot)
