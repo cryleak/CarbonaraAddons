@@ -42,11 +42,11 @@ register(MouseEvent, (event) => {
         return chat("Queued a leap after the terminal closes.")
     }
 
-    sendAirClick()
     queuedLeap = false
     const player = getPlayerToLeapTo()
     if (player === null) return
     if (!player || !player.length) return
+    sendAirClick()
     LeapHelper.queueLeap(player)
     cancel(event)
 })
@@ -54,8 +54,7 @@ register(MouseEvent, (event) => {
 function getPlayerToLeapTo() {
     const termPhase = getTermPhase(playerCoords().player)
     let target = Settings()["fastLeapS" + termPhase]
-    if (!termPhase && Settings().pyFastLeap && getDistanceToCoord(97, 166.5, 94) < 10) target = Settings().fastLeapPP
-    else return
+    if (!target && Settings().pyFastLeap && getDistanceToCoord(97, 166.5, 94) < 10) target = Settings().fastLeapPP
     let player
     if (classes.includes(target)) {
         const party = Dungeons.getTeamMembers()

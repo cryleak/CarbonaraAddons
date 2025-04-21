@@ -78,7 +78,10 @@ register("scrolled", (_0, _1, dir) => {
 
 fakeKeybinds.onKeyPress("packetChargeKeybind", () => toggleCharge(!global.cryleak.autop3.blinkEnabled))
 
-registerSubCommand(["togglecharge"], (args) => toggleCharge(args?.[0] === "true"))
+registerSubCommand(["togglecharge"], (args) => {
+    if (args.length && args[0]) toggleCharge(args[0] === "true")
+    else toggleCharge(!global.cryleak.autop3.blinkEnabled)
+})
 
 function toggleCharge(state) {
     global.cryleak.autop3.blinkEnabled = state

@@ -26,4 +26,4 @@ register("command", (...args) => {
         if (listener.args.some(arg => arg === action)) return listener.listener(args)
     }
     chat(`Unknown subcommand! List of subcommands:\n${listeners.map(listener => listener.args.join(", ") + (listener.args.length > 1 ? " (These all do the same thing)" : "")).join("\n")}`)
-}).setName("carbonara").setAliases("cb")
+}).setName("carbonara").setAliases("ca")
