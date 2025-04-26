@@ -60,20 +60,20 @@ register("renderOverlay", () => {
     if (packetCounterGui.isOpen()) {
         Renderer.scale(data.packetCounter.scale)
         const text = 1000000
-        Renderer.drawString(text, data.packetCounter.x, data.packetCounter.y)
+        Renderer.drawString(text, Renderer.screen.getWidth() * data.packetCounter.x, Renderer.screen.getHeight() * data.packetCounter.y)
         return
     }
     if (!global.cryleak.autop3.blinkEnabled) return
     Renderer.scale(data.packetCounter.scale)
     const text = `${global.cryleak.autop3.missingPackets.length}`
-    Renderer.drawString(text, data.packetCounter.x, data.packetCounter.y)
+    Renderer.drawString(text, Renderer.screen.getWidth() * data.packetCounter.x, Renderer.screen.getHeight() * data.packetCounter.y)
 })
 
 register("dragged", (_0, _1, x, y, bn) => {
     if (!packetCounterGui.isOpen()) return
     if (bn === 2) return
-    data.packetCounter.x = x / data.packetCounter.scale
-    data.packetCounter.y = y / data.packetCounter.scale
+    data.packetCounter.x = (x / data.packetCounter.scale) / Renderer.screen.getWidth()
+    data.packetCounter.y = (y / data.packetCounter.scale) / Renderer.screen.getHeight()
     data.save()
 })
 
