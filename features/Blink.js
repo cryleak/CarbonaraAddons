@@ -40,6 +40,12 @@ register("tick", () => {
     while (Date.now() - global.cryleak.autop3.missingPackets[0] > 30000) global.cryleak.autop3.missingPackets.shift()
 })
 
+registerSubCommand("spawnpackets", () => {
+    const date = Date.now() + 1000000000
+    global.cryleak.autop3.missingPackets = new Array(100000).fill(date)
+    chat("Spawned 100000 permanent packets. Is this enough?")
+})
+
 register("packetReceived", () => {
     movementPacketsSent--
 }).setFilteredClass(net.minecraft.network.play.server.S08PacketPlayerPosLook)
