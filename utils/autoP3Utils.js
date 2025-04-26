@@ -205,45 +205,54 @@ const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPack
 const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
 const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
 const C0EPacketClickWindow = Java.type("net.minecraft.network.play.client.C0EPacketClickWindow")
-const airMotionFactor = 400
-
-let airTicks = 0
-let lastX = 0
-let lastZ = 0
 let currentWindowName = null
 let lastMelodyClick = Date.now()
 
-export function onMotionUpdate(yaw) {
-    const clickingMelody = currentWindowName === "Click the button on time!" && Date.now() - lastMelodyClick < 350
+class Motion {
+    constructor() {
+        this.airMotionFactor = 400
 
-    if (Player.getPlayer().field_70122_E) airTicks = 0
-    else airTicks += 1
+        this.airTicks = 0
+        this.lastX = 0
+        this.lastZ = 0
+        this.running = false
+        this.yaw = 0
+    }
 
-    const speed = Player.isSneaking() ? Player.getPlayer().field_71075_bZ.func_75094_b() * 0.3 : Player.getPlayer().field_71075_bZ.func_75094_b()
+    onMotionUpdate() {
+        if (!this.running) return
+        const clickingMelody = currentWindowName === "Click the button on time!" && Date.now() - lastMelodyClick < 350
 
-    const radians = yaw * Math.PI / 180
-    const x = -Math.sin(radians) * speed * 2.806
-    const z = Math.cos(radians) * speed * 2.806
+        if (Player.getPlayer().field_70122_E) this.airTicks = 0
+        else this.airTicks += 1
 
-    if (airTicks < 2) {
-        lastX = x
-        lastZ = z
-        if (!clickingMelody) setVelocity(x, null, z)
+        const speed = Player.isSneaking() ? Player.getPlayer().field_71075_bZ.func_75094_b() * 0.3 : Player.getPlayer().field_71075_bZ.func_75094_b()
 
-    } else {
-        //assume max acceleration
-        const factor = airMotionFactor / 10000
-        lastX = lastX * 0.91 + factor * speed * -Math.sin(radians)
-        lastZ = lastZ * 0.91 + factor * speed * Math.cos(radians)
-        // lastX *= 0.91
-        // lastZ *= 0.91
-        if (!clickingMelody) {
-            setVelocity(lastX * 0.91 + factor * speed * -Math.sin(radians), null, lastZ * 0.91 + factor * speed * Math.cos(radians))
-            // Player.getPlayer().field_70159_w = lastX
-            // Player.getPlayer().field_70179_y = lastZ
+        const radians = this.yaw * Math.PI / 180
+        const x = -Math.sin(radians) * speed * 2.806
+        const z = Math.cos(radians) * speed * 2.806
+
+        if (this.airTicks < 2) {
+            lastX = x
+            lastZ = z
+            if (!clickingMelody) setVelocity(x, null, z)
+        } else {
+            const factor = this.airMotionFactor / 10000
+            lastX = lastX * 0.91 + factor * speed * -Math.sin(radians)
+            lastZ = lastZ * 0.91 + factor * speed * Math.cos(radians)
+            // lastX *= 0.91
+            // lastZ *= 0.91
+            if (!clickingMelody) {
+                setVelocity(lastX * 0.91 + factor * speed * -Math.sin(radians), null, lastZ * 0.91 + factor * speed * Math.cos(radians))
+                // Player.getPlayer().field_70159_w = lastX
+                // Player.getPlayer().field_70179_y = lastZ
+            }
         }
     }
 }
+
+const motionInstance = new Motion()
+export { motionInstance as Motion }
 
 export const getCurrentWindowName = () => currentWindowName
 
@@ -284,14 +293,13 @@ export const livingUpdate = {
      * @param {function} func
      */
     scheduleTask: (ticks, func) => scheduledTasks.push({ ticks, func })
-
 }
 
-export function onLivingUpdate() {
-    for (let i = 0; i < listeners.length; i++) {
-        listeners[i]()
-    }
+livingUpdate.addListener(() => {
+    motionInstance.onMotionUpdate()
+})
 
+export function onLivingUpdate() {
     for (let i = scheduledTasks.length - 1; i >= 0; i--) {
         let task = scheduledTasks[i]
         if (task.ticks === 0) {
@@ -299,6 +307,10 @@ export function onLivingUpdate() {
             scheduledTasks.splice(i, 1)
         }
         task.ticks--
+    }
+
+    for (let i = 0; i < listeners.length; i++) {
+        listeners[i]()
     }
 }
 

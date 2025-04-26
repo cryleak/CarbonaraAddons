@@ -27,12 +27,17 @@ let awaitingMotionUpdate = false
 global.cryleak ??= {}
 global.cryleak.autop3 ??= {}
 global.cryleak.autop3.lastBlink = Date.now()
-global.cryleak.autop3.missingPackets = 0
+global.cryleak.autop3.missingPackets = []
 global.cryleak.autop3.blinkEnabled = false
 
 register("tick", () => {
-    global.cryleak.autop3.missingPackets += 1 - movementPacketsSent
+    const packetsGained = 1 - movementPacketsSent
+    if (packetsGained < 0) for (let i = 0; i < Math.abs(packetsGained); i++) global.cryleak.autop3.missingPackets.shift()
+    else for (let i = 0; i < packetsGained; i++) global.cryleak.autop3.missingPackets.push(Date.now())
+
+
     movementPacketsSent = 0
+    while (Date.now() - global.cryleak.autop3.missingPackets[0] > 30000) global.cryleak.autop3.missingPackets.shift()
 })
 
 register("packetReceived", () => {
@@ -54,7 +59,7 @@ register("renderOverlay", () => {
     }
     if (!global.cryleak.autop3.blinkEnabled) return
     Renderer.scale(data.packetCounter.scale)
-    const text = `${global.cryleak.autop3.missingPackets}`
+    const text = `${global.cryleak.autop3.missingPackets.length}`
     Renderer.drawString(text, data.packetCounter.x, data.packetCounter.y)
 })
 
@@ -128,7 +133,7 @@ export function blink(blinkroute) {
     const packets = getBlinkRoutes()[blinkroute + ".sereniblink"]
     if (!packets) return chat(`Can't find route "${blinkroute}".`)
 
-    if (packets.length > global.cryleak.autop3.missingPackets) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
+    if (packets.length > global.cryleak.autop3.missingPackets.length) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
 
 
     for (let i = 0; i < packets.length; i++) {
@@ -199,7 +204,7 @@ fakeKeybinds.onKeyPress("stopRecordingKeybind", () => {
 })
 
 register("worldUnload", () => {
-    global.cryleak.autop3.missingPackets = 0
+    global.cryleak.autop3.missingPackets = []
     recordingRouteName = null
     packetLogger.unregister()
     global.cryleak.autop3.blinkEnabled = false

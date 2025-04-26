@@ -5,7 +5,7 @@ import { chat } from "./utils"
 const listeners = []
 
 /**
- * Registers a subcommand under the command /carbonara or /cb. There can only be 1 listener per subcommand.
+ * Registers a subcommand under the command /carbonara or /ca. There can only be 1 listener per subcommand.
  * @param {string[]} args 
  * @param {function} listener 
  */

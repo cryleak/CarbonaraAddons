@@ -4,7 +4,7 @@ import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../../Atomx/skyblock/Dungeons"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, onMotionUpdate, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity } from "../utils/autoP3Utils"
+import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -15,8 +15,6 @@ const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
 const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
 const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
-let motionRunning = false
-let motionYaw = Player.getYaw()
 let inP3 = false
 let inBoss = false
 let awaitingTerminal = false
@@ -88,7 +86,7 @@ function executeNodes(playerPosition) {
                 Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             }
             if (node.stop) {
-                motionRunning = false
+                Motion.running = false
                 releaseMovementKeys()
                 Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
             }
@@ -115,7 +113,7 @@ const nodeTypes = {
         rotate(args.yaw, args.pitch)
     },
     walk: args => {
-        motionRunning = false
+        Motion.running = false
         setWalking(true)
     },
     useitem: args => {
@@ -135,20 +133,34 @@ const nodeTypes = {
         })
     },
     motion: args => {
-        motionYaw = args.yaw
-        motionRunning = true
+        releaseMovementKeys()
+        Motion.running = true
+        Motion.yaw = args.yaw
+        Motion.lastX = 0
+        Motion.lastZ = 0
+        Motion.airTicks = 0
+
+        if (!Player.getPlayer().field_70122_E) {
+            Motion.running = false
+            setVelocity(0, null, 0)
+            console.log(`set velo ${Date.now()}`)
+            livingUpdate.scheduleTask(1, () => {
+                Motion.running = true
+                console.log(`restart motion ${Date.now()}`)
+            })
+        }
     },
     stopvelocity: args => {
-        motionRunning = false
+        Motion.running = false
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
     },
     fullstop: args => {
-        motionRunning = false
+        Motion.running = false
         releaseMovementKeys()
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
     },
     blink: args => {
-        motionRunning = false
+        Motion.running = false
         blink(args.blinkRoute)
 
         if (args.stop) setVelocity(0, null, 0)
@@ -161,7 +173,7 @@ const nodeTypes = {
         jump()
     },
     hclip: args => {
-        motionRunning = false
+        Motion.running = false
         const clip = () => {
             releaseMovementKeys()
             setVelocity(0, null, 0)
@@ -180,14 +192,14 @@ const nodeTypes = {
 
     },
     awaitterminal: args => {
-        motionRunning = false
+        Motion.running = false
         releaseMovementKeys()
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
         awaitingTerminal = true
         chat("Awaiting terminal open. Blocking nodes.")
     },
     awaitleap: args => {
-        motionRunning = false
+        Motion.running = false
         releaseMovementKeys()
         Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
         awaitingLeap = true
@@ -203,7 +215,7 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     if (!keyCode) return
 
     if (!movementKeys.includes(keyCode)) return
-    motionRunning = false
+    Motion.running = false
     awaitingTerminal = false
     awaitingLeap = false
 })
@@ -309,7 +321,7 @@ register("worldUnload", () => {
     awaitingLeap = false
     awaitingTerminal = false
     inTerminal = false
-    motionRunning = false
+    Motion.running = false
     inP3 = false
     inBoss = false
     awaitVelocity.unregister()
@@ -321,11 +333,6 @@ register("worldUnload", () => {
 let blinkVelo = false
 let blinkVeloTicks = 0
 let blinking = false
-
-
-livingUpdate.addListener(() => {
-    if (motionRunning) onMotionUpdate(motionYaw)
-})
 
 const awaitVelocity = register("packetReceived", (packet) => {
     if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
@@ -340,7 +347,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     if (!blinkVelo) return
     blinkVelo = false
     if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
-    if (blinkVeloTicks > global.cryleak.autop3.missingPackets) return chat("Not enough packets!")
+    if (blinkVeloTicks > global.cryleak.autop3.missingPackets.length) return chat("Not enough packets!")
 
     cancel(event)
     blinking = true
