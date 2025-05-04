@@ -5,13 +5,15 @@ import { playerCoords, setVelocity } from "../utils/autoP3Utils"
 import { chat } from "../utils/utils"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
+const C07PacketPlayerDigging = Java.type("net.minecraft.network.play.client.C07PacketPlayerDigging")
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
 let toggled = false
 let playerPosition = playerCoords().player
 
 register("packetSent", (packet, event) => {
     if (toggled) cancel(event)
-}).setFilteredClass(C03PacketPlayer)
+}).setFilteredClasses([C03PacketPlayer, C07PacketPlayerDigging, C08PacketPlayerBlockPlacement])
 
 register("playerInteract", (action, position, event) => {
     if (toggled) cancel(event)
