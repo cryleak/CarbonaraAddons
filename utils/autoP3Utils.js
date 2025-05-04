@@ -394,3 +394,14 @@ export function setVelocity(x, y, z) {
     if (typeof y === "number") Player.getPlayer().field_70181_x = y
     if (typeof z === "number") Player.getPlayer().field_70179_y = z
 }
+
+export const findAirOpening = () => { // For use in lavaclip
+    const playerPos = [Math.floor(Player.getX()), Math.floor(Player.getY()), Math.floor(Player.getZ())]
+    for (let i = Math.floor(playerPos[1]); i > 0; i--) {
+        let block1 = World.getBlockAt(playerPos[0], i, playerPos[2]).type.getID()
+        let block2 = World.getBlockAt(playerPos[0], i - 1, playerPos[2]).type.getID()
+        let block3 = World.getBlockAt(playerPos[0], i - 2, playerPos[2]).type.getID()
+        if (block1 === 0 && block2 === 0 && block3 !== 0) return i
+    }
+    return null
+}

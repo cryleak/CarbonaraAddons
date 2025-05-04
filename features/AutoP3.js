@@ -4,17 +4,19 @@ import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../../Atomx/skyblock/Dungeons"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion } from "../utils/autoP3Utils"
+import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { blink } from "./Blink"
 import { registerSubCommand } from "../utils/commands"
+import fakeKeybinds from "../utils/fakeKeybinds"
 
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
 const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
 const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
+const activeBlinkRoutes = new Set()
 let inP3 = false
 let inBoss = false
 let awaitingTerminal = false
@@ -40,11 +42,13 @@ register("renderWorld", () => {
         if (node.triggered || Date.now() - node.lastTriggered < 1000 || awaitingTerminal || awaitingLeap) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
         RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, false, true)
+        if (node.type === "blink") activeBlinkRoutes.add(node.blinkRoute)
     }
     if (settings.renderBlinkRoutes) {
         const routes = Object.keys(getBlinkRoutes())
         for (let i = 0; i < routes.length; i++) {
             let name = routes[i]
+            if (settings.renderActiveBlinkRoutes && !activeBlinkRoutes.has(name.split(".sereniblink")[0])) continue
             let packets = getBlinkRoutes()[name]
             for (let i = 0; i < packets.length; i++) {
                 let packet1 = packets[i]
@@ -143,10 +147,8 @@ const nodeTypes = {
         if (!Player.getPlayer().field_70122_E) {
             Motion.running = false
             setVelocity(0, null, 0)
-            console.log(`set velo ${Date.now()}`)
             livingUpdate.scheduleTask(1, () => {
                 Motion.running = true
-                console.log(`restart motion ${Date.now()}`)
             })
         }
     },
@@ -163,7 +165,11 @@ const nodeTypes = {
         Motion.running = false
         blink(args.blinkRoute)
 
-        if (args.stop) setVelocity(0, null, 0)
+        if (args.stop) {
+            setVelocity(0, null, 0)
+            releaseMovementKeys()
+            Motion.running = false
+        }
     },
     blinkvelo: args => {
         blinkVeloTicks = args.ticks
@@ -187,7 +193,7 @@ const nodeTypes = {
 
         if (Player.getPlayer().field_70122_E && args.jumpOnHClip) {
             jump()
-            scheduleTask(1, clip)
+            scheduleTask(2, clip)
         } else clip()
 
     },
@@ -205,6 +211,25 @@ const nodeTypes = {
         awaitingLeap = true
         awaitLeapExcludeClass = args.excludeClass
         chat("Waiting for party members to leap. Blocking nodes.")
+    },
+    lavaclip: args => {
+        chat("VClipping when you enter lava.")
+
+        const vclip = register("tick", () => {
+            if (!Player.getPlayer().func_180799_ab()) return
+            veloPacket.register()
+            vclip.unregister()
+            Player.getPlayer().func_70107_b(Player.getX(), args.lavaClipDistance == 0 ? findAirOpening() : Player.getY() - args.lavaClipDistance, Player.getZ())
+        })
+        scheduleTask(100, () => vclip.unregister())
+
+        const veloPacket = register("packetReceived", (packet, event) => {
+            if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
+            if (packet.func_149410_e() !== 28000) return
+            cancel(event)
+            veloPacket.unregister()
+            vclip.unregister()
+        }).setFilteredClass(S12PacketEntityVelocity).unregister()
     }
 }
 
@@ -219,6 +244,8 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     awaitingTerminal = false
     awaitingLeap = false
 })
+
+fakeKeybinds.onKeyPress("hClipKeybind", () => nodeTypes["hclip"]({ yaw: Player.getYaw(), jumpOnHClip: true }))
 
 onChatPacket(() => {
     inP3 = true

@@ -14,7 +14,7 @@ class AutoP3Config {
         } catch (e) {
             this.config = []
         }
-        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterminal", "awaitleap"]
+        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterminal", "awaitleap", "lavaclip"]
         this.availableArgs = new Map([
             ["look", ["yaw", "pitch"]],
             ["walk", []],
@@ -28,7 +28,8 @@ class AutoP3Config {
             ["jump", []],
             ["hclip", ["yaw", "jumpOnHClip"]],
             ["awaitterminal", []],
-            ["awaitleap", ["excludeClass"]]
+            ["awaitleap", ["excludeClass"]],
+            ["lavaclip", ["lavaClipDistance"]]
         ])
         this.nodeCoords = null
         this.editingNodeIndex = null
@@ -41,7 +42,8 @@ class AutoP3Config {
             showPitch: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.look,
             showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.type === 4,
             showExcludeClass: data => data.type === 12,
-            showJumpOnHClip: data => data.type === 10
+            showJumpOnHClip: data => data.type === 10,
+            showLavaClipDistance: data => data.type === 13
         }
 
         register("guiClosed", (gui) => {
@@ -96,6 +98,7 @@ class AutoP3Config {
             nodeCreation.once = node.once ?? false
             nodeCreation.excludeClass = node.excludeClass
             nodeCreation.jumpOnHClip = node.jumpOnHClip ?? false
+            nodeCreation.lavaClipDistance = node.lavaClipDistance?.toString() ?? "0"
             nodeCreation.openGUI()
             Client.scheduleTask(1, () => this.editing = true)
         })
@@ -103,7 +106,7 @@ class AutoP3Config {
         registerSubCommand(["createnode", "cn", "addnode", "an"], args => {
             if (!args.length || !args[0]) return chat([
                 `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
-                `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, blinkvelo, jump, hclip`,
+                `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, jump, hclip`,
                 `§0-§r List of args you can use:`,
                 `§0-§r §rdelay §0<§fnumber§0>`,
                 `§0-§r stop`,
@@ -116,7 +119,7 @@ class AutoP3Config {
                 `§0-§r yaw §0<§rnumber§0>`,
                 `§0-§r pitch §0<§rnumber§0>`,
                 `§0-§r blinkroute §0<§rroutename§0>`,
-                `§0-§r blinkveloticks §0<§rnumber§0>`
+                //`§0-§r blinkveloticks §0<§rnumber§0>`
             ].join("\n"))
 
             const type = args.shift()
@@ -136,7 +139,8 @@ class AutoP3Config {
                 blinkRoute: "",
                 once: false,
                 excludeClass: "",
-                jumpOnHClip: true
+                jumpOnHClip: true,
+                lavaClipDistance: 0
             }
 
             for (let i = 0; i < args.length; i++) {
@@ -175,6 +179,9 @@ class AutoP3Config {
                         break
                     case "once":
                         argsObject.once = true
+                        break
+                    case "distance":
+                        argsObject.lavaClipDistance = parseInt(args[i + 1])
                         break
                 }
             }
@@ -216,7 +223,7 @@ class AutoP3Config {
             node[nodeSpecificArgs[i]] = args[nodeSpecificArgs[i]]
         }
         if (args.look) node.yaw = args.yaw, node.pitch = args.pitch, node.look = true
-        if (nodeType === "awaitterminal" || nodeType === "awaitleap") node.once = true
+        if (nodeType === "awaitterminal" || nodeType === "awaitleap" || nodeType === "lavaclip") node.once = true
 
         if (this.editingNodeIndex === null) this.config.push(node)
         else this.config[this.editingNodeIndex] = node

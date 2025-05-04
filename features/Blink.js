@@ -37,7 +37,7 @@ register("tick", () => {
 
 
     movementPacketsSent = 0
-    while (Date.now() - global.cryleak.autop3.missingPackets[0] > 30000) global.cryleak.autop3.missingPackets.shift()
+    while (Date.now() - global.cryleak.autop3.missingPackets[0] > 120000) global.cryleak.autop3.missingPackets.shift()
 })
 
 registerSubCommand("spawnpackets", () => {

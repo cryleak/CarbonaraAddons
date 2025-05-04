@@ -5,6 +5,12 @@ export const packetCounterGui = new Gui()
 const config = new DefaultConfig("CarbonaraAddons", "settings.json")
 
 config
+    .addKeybind({
+        configName: "hClipKeybind",
+        title: "HClip Keybind",
+        description: "Manual HClip",
+        category: "AutoP3"
+    })
     .addSwitch({
         configName: "autoP3Enabled",
         title: "Toggle AutoP3",
@@ -103,6 +109,13 @@ config
         value: "Blink",
         shouldShow: data => data.activateConfigOnP3Start
     })
+    .addKeybind({
+        configName: "freecamKeybind",
+        title: "Freecam Keybind",
+        description: "Liberates your camera.",
+        category: "AutoP3",
+        subcategory: "Config"
+    })
     .addSwitch({
         configName: "simulateSpeed",
         title: "Simulate Speed In Singleplayer",
@@ -149,6 +162,12 @@ config
         configName: "renderBlinkRoutes",
         title: "Render Routes",
         description: "Absolutely annihilates performance but useful for configging.",
+        category: "Blink"
+    })
+    .addSwitch({
+        configName: "renderActiveBlinkRoutes",
+        title: "Render Active Routes only",
+        description: "",
         category: "Blink"
     })
     .addKeybind({
