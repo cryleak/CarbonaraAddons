@@ -296,6 +296,7 @@ register("worldLoad", () => {
 Settings().getConfig().registerListener("configName", (previousValue, value) => {
     if (previousValue === value) return
     AutoP3Config.onConfigNameUpdate(value)
+    activeBlinkRoutes.clear()
 })
 
 function resetTriggeredState() {
