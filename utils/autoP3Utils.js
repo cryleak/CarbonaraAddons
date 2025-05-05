@@ -285,7 +285,7 @@ class LivingUpdate {
         this.scheduledTasks = []
         register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
             if (event.entity !== Player.getPlayer()) return
-            if (this.onLivingUpdate(event).isCanceled()) return ChatLib.chat("canceled")
+            this.onLivingUpdate(event)
         })
     }
     /**

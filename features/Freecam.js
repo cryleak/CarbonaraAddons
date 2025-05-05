@@ -41,8 +41,9 @@ class Freecam {
     toggle(state = !this.toggled) {
         if (state === this.toggled) return
         this.toggled = state
+        const currentGamemode = Client.getMinecraft().field_71442_b.func_178889_l().toString()
         if (!this.toggled) {
-            Player.getPlayer().field_71075_bZ.field_75101_c = false
+            Player.getPlayer().field_71075_bZ.field_75101_c = currentGamemode === "ADVENTURE" || currentGamemode === "SURVIVAL" ? false : true
             Player.getPlayer().field_71075_bZ.field_75100_b = false
             Player.getPlayer().func_70107_b(...this.realPlayerPosition)
             setVelocity(0, 0, 0)

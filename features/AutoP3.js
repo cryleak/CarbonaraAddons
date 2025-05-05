@@ -345,6 +345,12 @@ registerSubCommand(["simulateterminalopen", "simulatetermopen", "simtermopen"], 
     Client.scheduleTask(10, () => inTerminal = false)
 })
 
+registerSubCommand("center", () => {
+    Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5)
+    setVelocity(0, null, 0)
+    chat("Centered the player.")
+})
+
 register("worldUnload", () => {
     awaitingLeap = false
     awaitingTerminal = false
