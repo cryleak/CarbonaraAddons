@@ -2,15 +2,15 @@ import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../../Atomx/skyblock/Dungeons"
+import fakeKeybinds from "../utils/fakeKeybinds"
+import Blink from "./Blink"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, onLivingUpdate, getBlinkRoutes, livingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening } from "../utils/autoP3Utils"
+import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
-import { blink } from "./Blink"
 import { registerSubCommand } from "../utils/commands"
-import fakeKeybinds from "../utils/fakeKeybinds"
 
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
@@ -41,15 +41,15 @@ register("renderWorld", () => {
 
         if (node.triggered || Date.now() - node.lastTriggered < 1000 || awaitingTerminal || awaitingLeap) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, false, true)
+        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, true, true)
         if (node.type === "blink") activeBlinkRoutes.add(node.blinkRoute)
     }
     if (settings.renderBlinkRoutes) {
-        const routes = Object.keys(getBlinkRoutes())
+        const routes = Object.keys(Blink.blinkRoutes)
         for (let i = 0; i < routes.length; i++) {
             let name = routes[i]
             if (settings.renderActiveBlinkRoutes && !activeBlinkRoutes.has(name.split(".sereniblink")[0])) continue
-            let packets = getBlinkRoutes()[name]
+            let packets = Blink.blinkRoutes[name]
             for (let i = 0; i < packets.length; i++) {
                 let packet1 = packets[i]
                 let packet2 = packets[i + 1]
@@ -81,8 +81,8 @@ function executeNodes(playerPosition) {
         if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
             if (node.triggered) continue
             if (Date.now() - node.lastTriggered < 1000) continue
-            if (blinking && node.delay) continue
-            if (blinking && ["blink", "blinkvelo", "superboom", "useitem", "awaitterminal", "awaitleap"].includes(node.type)) continue
+            if (blinkingVelo && node.delay) continue
+            if (blinkingVelo && ["blink", "blinkvelo", "superboom", "useitem", "awaitterminal", "awaitleap"].includes(node.type)) continue
             node.triggered = true
             if (node.center) {
                 debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
@@ -105,7 +105,7 @@ function executeNodes(playerPosition) {
             }
             if (node.delay) scheduleTask(Math.ceil(parseInt(node.delay) / 50), performNode)
             else {
-                if (blinking || node.type === "awaitterminal" || node.type === "awaitleap") performNode()
+                if (blinkingVelo || node.type === "awaitterminal" || node.type === "awaitleap") performNode()
                 else scheduleTask(0, performNode)
             }
         } else if (!node.once) node.triggered = false
@@ -147,7 +147,7 @@ const nodeTypes = {
         if (!Player.getPlayer().field_70122_E) {
             Motion.running = false
             setVelocity(0, null, 0)
-            livingUpdate.scheduleTask(1, () => {
+            LivingUpdate.scheduleTask(1, () => {
                 Motion.running = true
             })
         }
@@ -163,7 +163,7 @@ const nodeTypes = {
     },
     blink: args => {
         Motion.running = false
-        blink(args.blinkRoute)
+        Blink.executeBlink(args.blinkRoute)
 
         if (args.stop) {
             setVelocity(0, null, 0)
@@ -183,12 +183,12 @@ const nodeTypes = {
         const clip = () => {
             releaseMovementKeys()
             setVelocity(0, null, 0)
-            livingUpdate.scheduleTask(1, () => {
+            LivingUpdate.scheduleTask(1, () => {
                 const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * (43 / 15)
                 const radians = args.yaw * Math.PI / 180
                 setVelocity(-Math.sin(radians) * speed, null, Math.cos(radians) * speed)
             })
-            livingUpdate.scheduleTask(2, repressMovementKeys)
+            LivingUpdate.scheduleTask(2, repressMovementKeys)
         }
 
         if (Player.getPlayer().field_70122_E && args.jumpOnHClip) {
@@ -339,10 +339,10 @@ register("step", () => {
     }
 })
 
-register("command", () => {
+registerSubCommand(["simulateterminalopen", "simulatetermopen", "simtermopen"], () => {
     inTerminal = true
     Client.scheduleTask(10, () => inTerminal = false)
-}).setName("simulateterminalopen")
+})
 
 register("worldUnload", () => {
     awaitingLeap = false
@@ -352,39 +352,39 @@ register("worldUnload", () => {
     inP3 = false
     inBoss = false
     awaitVelocity.unregister()
-    blinkVelo = false
-    blinking = false
+    awaitingBlinkVelo = false
+    blinkingVelo = false
 })
 
 // blink velocity because for some reason it just fucking breaks if i put it in the blink file
-let blinkVelo = false
+let awaitingBlinkVelo = false
 let blinkVeloTicks = 0
-let blinking = false
+let blinkingVelo = false
 
 const awaitVelocity = register("packetReceived", (packet) => {
     if (Player.getPlayer().func_145782_y() !== packet.func_149412_c()) return
     if (packet.func_149410_e() !== 28000) return
     awaitVelocity.unregister()
 
-    blinkVelo = true
+    awaitingBlinkVelo = true
 }).setFilteredClass(S12PacketEntityVelocity).unregister()
 
-register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => { // The game fucking crashes if i don't perform this in a fresh scope, no idea why???
+register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
     if (event.entity !== Player.getPlayer()) return
-    if (!blinkVelo) return
-    blinkVelo = false
+    if (!awaitingBlinkVelo) return
+    awaitingBlinkVelo = false
     if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
     if (blinkVeloTicks > global.cryleak.autop3.missingPackets.length) return chat("Not enough packets!")
 
     cancel(event)
-    blinking = true
+    blinkingVelo = true
     for (let i = 0; i < blinkVeloTicks; i++) {
-        onLivingUpdate()
+        if (LivingUpdate.onLivingUpdate().isCanceled()) continue
         Player.getPlayer().func_70636_d()
         Player.getPlayer().func_175161_p()
         executeNodes(playerCoords().player)
     }
     chat(`Blinked ${blinkVeloTicks} physics ticks.`)
     global.cryleak.autop3.lastBlink = Date.now()
-    blinking = false
+    blinkingVelo = false
 })

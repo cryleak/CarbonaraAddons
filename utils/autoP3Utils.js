@@ -4,7 +4,7 @@ import { debugMessage, chat, scheduleTask } from "./utils"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
-const File = Java.type("java.io.File")
+const CancellableEvent = com.chattriggers.ctjs.minecraft.listeners.CancellableEvent
 
 /**
  * Swaps to an item in your hotbar with the specified name.
@@ -279,83 +279,57 @@ export function jump() {
     })
 }
 
-const listeners = []
-const scheduledTasks = []
-export const livingUpdate = {
+class LivingUpdate {
+    constructor() {
+        this.listeners = []
+        this.scheduledTasks = []
+        register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
+            if (event.entity !== Player.getPlayer()) return
+            if (this.onLivingUpdate(event).isCanceled()) return ChatLib.chat("canceled")
+        })
+    }
     /**
      * Adds a listener that runs before every player update event.
      * @param {Function} func 
      */
-    addListener: func => listeners.push(func),
+    addListener(func) {
+        this.listeners.push(func)
+    }
     /**
      * Schedules a task to run in the specified amount of living updates.
      * @param {integer} ticks 
      * @param {function} func
      */
-    scheduleTask: (ticks, func) => scheduledTasks.push({ ticks, func })
-}
+    scheduleTask(ticks, func) {
+        this.scheduledTasks.push({ ticks, func })
+    }
 
-livingUpdate.addListener(() => {
-    motionInstance.onMotionUpdate()
-})
-
-export function onLivingUpdate() {
-    for (let i = scheduledTasks.length - 1; i >= 0; i--) {
-        let task = scheduledTasks[i]
-        if (task.ticks === 0) {
-            task.func()
-            scheduledTasks.splice(i, 1)
+    /**
+     * (Internal use) Ran when the player position updates.
+     * @param {CancellableEvent} event The Event to use. If you don't specify this it will create a new event
+     * @returns The event used. You can check if it is canceled.
+     */
+    onLivingUpdate(event) {
+        if (!event) event = new CancellableEvent()
+        for (let i = this.scheduledTasks.length - 1; i >= 0; i--) {
+            let task = this.scheduledTasks[i]
+            if (task.ticks === 0) {
+                task.func(event)
+                this.scheduledTasks.splice(i, 1)
+            }
+            task.ticks--
         }
-        task.ticks--
-    }
 
-    for (let i = 0; i < listeners.length; i++) {
-        listeners[i]()
-    }
-}
-
-register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
-    if (event.entity !== Player.getPlayer()) return
-    onLivingUpdate()
-})
-
-function renameFile(oldname, newname) {
-    const file = FileLib.read("CarbonaraAddons/blinkroutes", oldname)
-    FileLib.write("CarbonaraAddons/blinkroutes", newname, file)
-    FileLib.delete("CarbonaraAddons/blinkroutes", oldname)
-}
-
-let blinkRoutes = {}
-new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
-    blinkRoutes[file] = parseBlinkFile(file)
-    if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
-})
-
-register("step", () => {
-    updateBlinkRoutes()
-}).setFps(1)
-
-export const getBlinkRoutes = () => blinkRoutes
-
-export function updateBlinkRoutes() {
-    const routes = {}
-    new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
-        routes[file] = parseBlinkFile(file)
-        if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
-    })
-    if (!routes) return
-    blinkRoutes = routes
-}
-
-function parseBlinkFile(fileName) {
-    try {
-        const packets = FileLib.read("CarbonaraAddons/BlinkRoutes", fileName).split("\n").map(str => str.split(", "))
-        packets.shift() // First line is always empty and I cba to make a better solution
-        return packets
-    } catch (e) {
-        return null
+        for (let i = 0; i < this.listeners.length; i++) {
+            this.listeners[i](event)
+        }
+        if (!event.isCanceled()) motionInstance.onMotionUpdate()
+        return event
     }
 }
+
+const LivingUpdateInstance = new LivingUpdate()
+export { LivingUpdateInstance as LivingUpdate }
 
 /**
  * Checks if the coordinates is inside of a terminal phase.
@@ -401,7 +375,7 @@ export const findAirOpening = () => { // For use in lavaclip
         let block1 = World.getBlockAt(playerPos[0], i, playerPos[2]).type.getID()
         let block2 = World.getBlockAt(playerPos[0], i - 1, playerPos[2]).type.getID()
         let block3 = World.getBlockAt(playerPos[0], i - 2, playerPos[2]).type.getID()
-        if (block1 === 0 && block2 === 0 && block3 !== 0) return i
+        if (block1 === 0 && block2 === 0 && block3 !== 0) return i - 1
     }
     return null
 }
