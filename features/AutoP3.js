@@ -6,7 +6,7 @@ import fakeKeybinds from "../utils/fakeKeybinds"
 import Blink from "./Blink"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening } from "../utils/autoP3Utils"
+import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening, leftClick } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
