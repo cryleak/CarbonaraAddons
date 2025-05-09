@@ -103,4 +103,12 @@ export default new class LeapHelper {
         this.leapQueue.push(name)
 
     }
+
+    clickInLeapMenu(name) {
+        if (Player?.getContainer().getName() !== "Spirit Leap") return
+        const item = Player.getContainer().getItems().findIndex(item => item?.getName().substring(2).toLowerCase() === name.toLowerCase())
+        if (item === -1) return chat(`Could not find ${name}`)
+        Player.getContainer().click(item)
+        chat(`Attemping to leap to ${name}`)
+    }
 }

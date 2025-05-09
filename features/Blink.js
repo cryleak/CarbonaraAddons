@@ -33,14 +33,11 @@ class Blink {
         this.movementPacketsSent = 0
         this.awaitingMotionUpdate = false
         this.blinkRoutes = {}
-        new File("./config/ChatTriggers/modules/CarbonaraAddons/blinkroutes")?.list()?.forEach(file => {
-            this.blinkRoutes[file] = this.parseBlinkFile(file)
-            if (file.endsWith(".json")) renameFile(file, file.split(".json")[0] + ".sereniblink")
-        })
+        this.updateBlinkRoutes()
 
         register("tick", () => {
             const packetsGained = 1 - this.movementPacketsSent
-            if (packetsGained < 0) for (let i = 0; i < Math.abs(packetsGained); i++) global.cryleak.autop3.missingPackets.shift()
+            if (packetsGained < 0) for (let i = 0; i < Math.abs(packetsGained); i++) global.cryleak.autop3.missingPackets.pop()
             else for (let i = 0; i < packetsGained; i++) global.cryleak.autop3.missingPackets.push(Date.now())
 
 

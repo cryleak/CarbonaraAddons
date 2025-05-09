@@ -160,7 +160,7 @@ export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), nul
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 /**
  * Sends a C08 with no target block.
- * @param {exec} exec A specified function to run before the C08 is sent
+ * @param {Function} exec A specified function to run before the C08 is sent
  * @returns Success of the air click, false if it didn't click, true if it did
  */
 export const sendAirClick = (exec) => {
@@ -205,8 +205,6 @@ const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPack
 const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
 const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
 const C0EPacketClickWindow = Java.type("net.minecraft.network.play.client.C0EPacketClickWindow")
-let currentWindowName = null
-let lastMelodyClick = Date.now()
 
 class Motion {
     constructor() {
@@ -221,7 +219,7 @@ class Motion {
 
     onMotionUpdate() {
         if (!this.running) return
-        const clickingMelody = currentWindowName === "Click the button on time!" && Date.now() - lastMelodyClick < 350
+        const clickingMelody = terminalInstance.currentWindowName === "Click the button on time!" && Date.now() - terminalInstance.lastMelodyClick < 350
 
         if (Player.getPlayer().field_70122_E) this.airTicks = 0
         else this.airTicks += 1
@@ -253,24 +251,6 @@ class Motion {
 
 const motionInstance = new Motion()
 export { motionInstance as Motion }
-
-export const getCurrentWindowName = () => currentWindowName
-
-register("packetReceived", (packet, event) => {
-    currentWindowName = packet.func_179840_c().func_150254_d().removeFormatting()
-}).setFilteredClass(S2DPacketOpenWindow)
-
-register("packetReceived", () => {
-    currentWindowName = null
-}).setFilteredClass(S2EPacketCloseWindow)
-
-register("packetSent", () => {
-    currentWindowName = null
-}).setFilteredClass(C0DPacketCloseWindow)
-
-register("packetSent", () => {
-    if (currentWindowName === "Click the button on time!") lastMelodyClick = Date.now()
-}).setFilteredClass(C0EPacketClickWindow)
 
 export function jump() {
     KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), true)
@@ -379,3 +359,40 @@ export const findAirOpening = () => { // For use in lavaclip
     }
     return null
 }
+
+class Terminal {
+    constructor() {
+        this.inTerminal = false
+        this.currentWindowName = null
+        this.lastMelodyClick = Date.now()
+
+        register("packetReceived", (packet, event) => {
+            const windowName = packet.func_179840_c().func_150254_d().removeFormatting()
+            if (termNames.some(regex => windowName.match(regex))) this.inTerminal = true
+            else this.inTerminal = false
+            this.currentWindowName = packet.func_179840_c().func_150254_d().removeFormatting()
+        }).setFilteredClass(S2DPacketOpenWindow)
+
+        register("packetReceived", () => {
+            this.inTerminal = false
+            this.currentWindowName = null
+        }).setFilteredClass(S2EPacketCloseWindow)
+
+        register("packetSent", () => {
+            this.inTerminal = false
+            this.currentWindowName = null
+        }).setFilteredClass(C0DPacketCloseWindow)
+
+        register("packetSent", () => {
+            if (this.currentWindowName === "Click the button on time!") this.lastMelodyClick = Date.now()
+        }).setFilteredClass(C0EPacketClickWindow)
+
+        register("worldUnload", () => {
+            this.inTerminal = false
+            this.currentWindowName = null
+        })
+    }
+}
+
+const terminalInstance = new Terminal()
+export { terminalInstance as Terminal }

@@ -177,61 +177,91 @@ config
         category: "Blink"
     })
     .addSwitch({
+        configName: "autoLeapOnRelic",
+        title: "Auto Leap on Relic Pickup",
+        description: "You need to open the menu yourself and use Relic Aura from some mod for this to work.",
+        category: "Leap",
+        subcategory: "Wither King"
+    })
+    .addTextInput({
+        configName: "autoLeapOnRelicName",
+        title: "Player to leap to after picking up the relic",
+        description: "You can either input the name of a class or a player name.",
+        category: "Leap",
+        value: "Healer",
+        subcategory: "Wither King",
+        shouldShow: data => data.autoLeapOnRelic
+    })
+    .addSwitch({
         configName: "fastLeap",
         title: "Fast Leap",
         description: "Leaps fast.",
-        category: "Fast Leap"
+        category: "Leap",
+        subcategory: "Fast Leap"
     })
     .addSwitch({
         configName: "queueFastLeap",
         title: "Queue Fast Leap",
         description: "Queues fast leaps if you are in a terminal.",
-        category: "Fast Leap",
+        category: "Leap",
+        subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     })
     .addTextInput({
         configName: "fastLeapS1",
         title: "Player to leap to in S1",
         description: "You can either input the name of a class or a player name.",
-        category: "Fast Leap",
+        category: "Leap",
         value: "Archer",
+        subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     })
     .addTextInput({
         configName: "fastLeapS2",
         title: "Player to leap to in S2",
         description: "You can either input the name of a class or a player name.",
-        category: "Fast Leap",
+        category: "Leap",
         value: "Healer",
+        subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     }).addTextInput({
         configName: "fastLeapS3",
         title: "Player to leap to in S3",
         description: "You can either input the name of a class or a player name.",
-        category: "Fast Leap",
+        category: "Leap",
         value: "Mage",
+        subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     }).addTextInput({
         configName: "fastLeapS4",
         title: "Player to leap to in S4",
         description: "You can either input the name of a class or a player name.",
-        category: "Fast Leap",
+        category: "Leap",
         value: "Mage",
+        subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     })
     .addSwitch({
         configName: "pyFastLeap",
         title: "Fast Leap On Purple Pad",
         description: "",
-        category: "Fast Leap",
+        category: "Leap",
+        subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     }).addTextInput({
         configName: "fastLeapPP",
         title: "Player to leap to on Purple Pad",
         description: "You can either input the name of a class or a player name.",
-        category: "Fast Leap",
+        category: "Leap",
+        subcategory: "Fast Leap",
         value: "Mage",
         shouldShow: data => data.fastLeap && data.pyFastLeap
+    })
+    .addSwitch({
+        configName: "randomColors",
+        title: "Math.random() chat messages",
+        description: "Changes the color of all chat messages printed by Carbonara",
+        category: "Mod"
     })
 
 

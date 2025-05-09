@@ -1,14 +1,39 @@
+import Settings from "../config"
+
 const renderManager = Client.getMinecraft().func_175598_ae()
 
 
 const defaultColor = "§f"
+
+const colors = ["§4", "§c", "§6", "§e", "§2", "§a", "§b", "§3", "§1", "§9", "§d", "§5", "§f", "§7", "§8", "§0"]
 /**
  * Prints in chat a message with a prefix
  * @param {String} message 
  */
 export function chat(message) {
-    ChatLib.chat("§0[§4Carbonara§0] " + defaultColor + message.toString().replaceAll(/(?:&r|§r)/gi, defaultColor))
+    if (!Settings().randomColors) ChatLib.chat("§0[§4Carbonara§0] " + defaultColor + message.toString().replaceAll(/(?:&r|§r)/gi, defaultColor))
+    else {
+        let string = ChatLib.removeFormatting(`[Carbonara] ${message.toString()}`)
+        for (let i = string.length - 1; i >= 0; i--) {
+            let color = colors[Math.floor(Math.random() * colors.length)]
+            string = string.substring(0, i) + color + string.substring(i)
+        }
+        ChatLib.chat(string)
+    }
 }
+
+/*
+register("chat", event => {
+    if (!Settings().randomColors) return
+    cancel(event)
+    let message = ChatLib.getChatMessage(event, false).toString()
+    for (let i = message.length - 1; i >= 0; i--) {
+        let color = colors[Math.floor(Math.random() * colors.length)]
+        message = message.substring(0, i) + color + message.substring(i)
+    }
+    ChatLib.chat(message)
+})
+*/
 
 /**
  * Prints in chat a debug message if debug messages are enabled.
@@ -104,10 +129,10 @@ const codeToExec = []
 /**
  * Schedules a task to run in the specified number of ticks. This variant of scheduleTask lets you nest scheduleTasks inside of eachother. Note that it won't work if you trigger it inside a Client.scheduleTask.
  * @param {int} delay Delay in ticks
- * @param {func} exec Code to execute
+ * @param {Function} task Code to execute
  */
-export function scheduleTask(delay, exec) {
-    Client.scheduleTask(delay, () => codeToExec.push(exec))
+export function scheduleTask(delay, task) {
+    Client.scheduleTask(delay, () => codeToExec.push(task))
 }
 
 register("tick", () => {

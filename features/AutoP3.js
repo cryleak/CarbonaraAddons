@@ -1,12 +1,12 @@
 import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import AutoP3Config from "./AutoP3Management"
-import Dungeons from "../../Atomx/skyblock/Dungeons"
+import Dungeons from "../utils/Dungeons"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Blink from "./Blink"
 
 import { clickAt } from "../utils/serverRotations"
-import { jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening, leftClick } from "../utils/autoP3Utils"
+import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening, leftClick } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -22,7 +22,6 @@ let inBoss = false
 let awaitingTerminal = false
 let awaitingLeap = false
 let awaitLeapExcludeClass = ""
-let inTerminal = false
 
 register("renderWorld", () => {
     const settings = Settings()
@@ -306,33 +305,19 @@ function resetTriggeredState() {
     }
 }
 
-register("packetReceived", (packet, event) => {
-    const windowName = packet.func_179840_c().func_150254_d().removeFormatting()
-    if (termNames.some(regex => windowName.match(regex))) inTerminal = true
-    else inTerminal = false
-}).setFilteredClass(S2DPacketOpenWindow)
-
-register("packetReceived", () => {
-    inTerminal = false
-}).setFilteredClass(S2EPacketCloseWindow)
-
-register("packetSent", () => {
-    inTerminal = false
-}).setFilteredClass(C0DPacketCloseWindow)
-
 register("step", () => {
-    if (inTerminal && awaitingTerminal) {
+    if (Terminal.inTerminal && awaitingTerminal) {
         chat("Terminal opened. No longer blocking nodes.")
         awaitingTerminal = false
     }
     if (awaitingLeap) {
         const players = World.getAllPlayers()
-        const party = Dungeons.getTeamMembers()
+        const party = Dungeons.teamMembers
         const partyNames = Object.keys(party)
         if (partyNames.every(partyMember => {
             const teamMember = players.find(player => player.getName() === partyMember)
-            if (!teamMember && party[partyMember]["class"] !== awaitLeapExcludeClass && partyMember !== awaitLeapExcludeClass) return false
-            return Player.getName() === partyMember || party[partyMember]["class"] === awaitLeapExcludeClass || partyMember === awaitLeapExcludeClass || getTermPhase([teamMember.getX(), teamMember.getY(), teamMember.getZ()]) === getTermPhase(playerCoords().player)
+            if (!teamMember && party[partyMember].dungeonClass !== awaitLeapExcludeClass && partyMember !== awaitLeapExcludeClass) return false
+            return Player.getName() === partyMember || party[partyMember].dungeonClass === awaitLeapExcludeClass || partyMember === awaitLeapExcludeClass || getTermPhase([teamMember.getX(), teamMember.getY(), teamMember.getZ()]) === getTermPhase(playerCoords().player)
         })) {
             chat("All players that are supposed to leap have leaped. No longer blocking nodes.")
             awaitingLeap = false
@@ -341,8 +326,8 @@ register("step", () => {
 })
 
 registerSubCommand(["simulateterminalopen", "simulatetermopen", "simtermopen"], () => {
-    inTerminal = true
-    Client.scheduleTask(10, () => inTerminal = false)
+    Terminal.inTerminal = true
+    Client.scheduleTask(10, () => Terminal.inTerminal = false)
 })
 
 registerSubCommand("center", () => {
@@ -354,7 +339,6 @@ registerSubCommand("center", () => {
 register("worldUnload", () => {
     awaitingLeap = false
     awaitingTerminal = false
-    inTerminal = false
     Motion.running = false
     inP3 = false
     inBoss = false
