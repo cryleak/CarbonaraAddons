@@ -192,6 +192,15 @@ config
         subcategory: "Wither King",
         shouldShow: data => data.autoLeapOnRelic
     })
+    .addTextInput({
+        configName: "autoLeapOnRelicDelay",
+        title: "Delay before clicking in the leap menu",
+        description: "Milliseconds.",
+        category: "Leap",
+        value: "150",
+        subcategory: "Wither King",
+        shouldShow: data => data.autoLeapOnRelic
+    })
     .addSwitch({
         configName: "fastLeap",
         title: "Fast Leap",
