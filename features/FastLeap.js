@@ -7,6 +7,7 @@ import { chat } from "../utils/utils"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 
 const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent")
+const ArmorStand = Java.type("net.minecraft.entity.item.EntityArmorStand")
 const classes = ["Archer", "Berserk", "Mage", "Healer", "Tank"]
 
 

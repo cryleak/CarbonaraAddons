@@ -1,7 +1,7 @@
 {
     "name": "CarbonaraAddons",
     "creator": "ITheSerenity",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "denmark mod",
     "entry": "index.js",
 	"requires": [

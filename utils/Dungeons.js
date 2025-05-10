@@ -33,6 +33,7 @@ export default new class Dungeons {
                 if (!match) return
 
                 const [_, sbLevel, player, dungeonClass, classLevel] = match
+                if (!Object.values(this.scoreboardClasses).includes(dungeonClass)) return
                 if (Object.keys(this.teamMembers).includes(player)) return
 
                 this.teamMembers[player] = { dungeonClass }
