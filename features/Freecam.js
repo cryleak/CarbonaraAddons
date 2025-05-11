@@ -10,7 +10,7 @@ const C07PacketPlayerDigging = Java.type("net.minecraft.network.play.client.C07P
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
-class Freecam {
+export default new class Freecam {
     constructor() {
         this.toggled = false
         this.realPlayerPosition = playerCoords().player
@@ -56,5 +56,3 @@ class Freecam {
         }
     }
 }
-
-export default new Freecam()

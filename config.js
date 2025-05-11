@@ -267,6 +267,18 @@ config
         shouldShow: data => data.fastLeap && data.pyFastLeap
     })
     .addSwitch({
+        configName: "secretAuraEnabled",
+        title: "Secret Aura Toggle",
+        description: "",
+        category: "Block Aura"
+    })
+    .addKeybind({
+        configName: "secretAuraKeybind",
+        title: "Secret Aura Keybind",
+        description: "Also resets clicked blocks when pressed.",
+        category: "Block Aura"
+    })
+    .addSwitch({
         configName: "randomColors",
         title: "Math.random() chat messages",
         description: "Changes the color of all chat messages printed by Carbonara",

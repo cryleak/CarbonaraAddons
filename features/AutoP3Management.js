@@ -14,6 +14,7 @@ class AutoP3Config {
         } catch (e) {
             this.config = []
         }
+        this.defineTransientProperties()
         this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterminal", "awaitleap", "lavaclip"]
         this.availableArgs = new Map([
             ["look", ["yaw", "pitch"]],
@@ -218,7 +219,7 @@ class AutoP3Config {
         const nodeSpecificArgs = this.availableArgs.get(nodeType) // Args specific to the current node type
 
 
-        let node = { type: nodeType, position: pos, radius: parseFloat(args.radius), height: parseFloat(args.height), delay: parseInt(args.delay), stop: args.stop, center: args.center, lastTriggered: Date.now(), triggered: false, once: args.once }
+        let node = { type: nodeType, position: pos, radius: parseFloat(args.radius), height: parseFloat(args.height), delay: parseInt(args.delay), stop: args.stop, center: args.center, once: args.once }
         for (let i = 0; i < nodeSpecificArgs.length; i++) {
             node[nodeSpecificArgs[i]] = args[nodeSpecificArgs[i]]
         }
@@ -239,6 +240,7 @@ class AutoP3Config {
     }
 
     saveConfig() {
+        this.defineTransientProperties()
         try {
             FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName.toLowerCase() + ".json", JSON.stringify(this.config, null, "\t"), true)
         } catch (e) {
@@ -255,6 +257,24 @@ class AutoP3Config {
         } catch (e) {
             this.config = []
         }
+        this.defineTransientProperties()
+    }
+
+    defineTransientProperties() {
+        this.config.forEach(node => Object.defineProperties(node, {
+            triggered: {
+                value: false,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+            lastTriggered: {
+                value: 0,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            }
+        }))
     }
 }
 
