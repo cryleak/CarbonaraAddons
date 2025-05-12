@@ -272,6 +272,12 @@ config
         description: "CT secret aura...",
         category: "Block Aura"
     })
+    .addSwitch({
+        configName: "secretAuraDungeonsOnly",
+        title: "Dungeons Only",
+        description: "Only enable in dungeons",
+        category: "Block Aura"
+    })
     .addKeybind({
         configName: "secretAuraToggleKeybind",
         title: "Secret Aura Keybind",

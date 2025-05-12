@@ -6,7 +6,6 @@ import Dungeons from "../utils/Dungeons"
 import { registerSubCommand } from "../utils/commands"
 import { chat } from "../utils/utils"
 import { LivingUpdate } from "../utils/autoP3Utils"
-import { C03PacketPlayer } from "../../BloomCore/utils/Utils"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const Blocks = Java.type("net.minecraft.init.Blocks")
@@ -14,80 +13,129 @@ const System = Java.type("java.lang.System")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
 const BlockChest = Java.type("net.minecraft.block.BlockChest")
 const BlockLever = Java.type("net.minecraft.block.BlockLever")
+const BlockSkull = Java.type("net.minecraft.block.BlockSkull")
+const BlockCompressedPowered = Java.type("net.minecraft.block.BlockCompressedPowered") // Redstone block
 const EnumFacing = Java.type("net.minecraft.util.EnumFacing")
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 const HashSet = Java.type("java.util.HashSet")
 const horizontalEnumFacings = [EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST]
+const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
 
 export default new class SecretAura {
     constructor() {
-        this.range = 6.2
+        this.range = 6.0
+        this.skullRange = 4.5
         this.clickedBlocks = new HashSet()
         this.blocksToClick = []
         this.toggled = false
-        this.renderShit = []
+        // this.renderShit = []
+        this.clickableBlocksInRange = []
+        this.threadRunning = false
+        this.redstoneKeyPickedUp = false
+        this.ignoreRooms = ["Water Board", "Three Weirdos"]
 
 
         register("tick", () => {
-            const runStart = System.nanoTime()
-            if (!Settings().secretAuraEnabled || !World.isLoaded()) return
-            const eyePosition = Player.getPlayer().func_174824_e(1)
-            const boxCorner1 = new MCBlockPos(eyePosition.field_72450_a - this.range, eyePosition.field_72448_b - this.range, eyePosition.field_72449_c - this.range)
-            const boxCorner2 = new MCBlockPos(eyePosition.field_72450_a + this.range, eyePosition.field_72448_b + this.range, eyePosition.field_72449_c + this.range)
+            if (this.threadRunning) return
+            this.threadRunning = true
+            new Thread(() => {
+                const runStart = System.nanoTime()
+                if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly) return this.threadRunning = false
+                const eyePosition = Player.getPlayer().func_174824_e(1)
+                const scanRange = 12.5 // Takes about 17ms to scan on my 5800X3D
+                const boxCorner1 = new MCBlockPos(eyePosition.field_72450_a - scanRange, eyePosition.field_72448_b - scanRange, eyePosition.field_72449_c - scanRange)
+                const boxCorner2 = new MCBlockPos(eyePosition.field_72450_a + scanRange, eyePosition.field_72448_b + scanRange, eyePosition.field_72449_c + scanRange)
 
+                const squaredRange = scanRange ** 2
+
+                const clickableBlocks = []
+                MCBlockPos.func_177980_a(boxCorner1, boxCorner2).forEach(blockPos => {
+                    if (eyePosition.func_72436_e(new Vec3(blockPos)) > squaredRange) return
+                    const blockState = World.getWorld().func_180495_p(blockPos)
+                    const block = blockState.func_177230_c()
+                    if (block instanceof BlockChest || block instanceof BlockLever || block instanceof BlockCompressedPowered && this.redstoneKeyPickedUp) clickableBlocks.push({ blockPos, isSkull: false })
+                    else if (block instanceof BlockSkull) {
+                        const tileEntity = World.getWorld().func_175625_s(blockPos)
+                        if (!tileEntity || !tileEntity.func_152108_a()) return
+                        const skullId = tileEntity.func_152108_a().getId().toString()
+                        if (skullId === "e0f3e929-869e-3dca-9504-54c666ee6f23" || skullId === "fed95410-aba1-39df-9b95-1d4f361eb66e") clickableBlocks.push({ blockPos, isSkull: true })
+                    }
+                })
+                this.clickableBlocksInRange = clickableBlocks
+                console.log(`Scanning took ${(System.nanoTime() - runStart) / 1000000}ms`)
+                this.threadRunning = false
+            }).start()
+        })
+
+        register("tick", () => {
+            const runStart = System.nanoTime()
+            ChatLib.chat(this.ignoreRooms.includes(dungeonUtils.currentRoomName))
+            ChatLib.chat(dungeonUtils.currentRoomName)
+            if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly || this.ignoreRooms.includes(dungeonUtils.currentRoomName)) return
+            const eyePosition = Player.getPlayer().func_174824_e(1)
             const squaredRange = this.range ** 2
+            const squaredSkullRange = this.skullRange ** 2
+
             let clicked = false
-            MCBlockPos.func_177980_a(boxCorner1, boxCorner2).forEach(blockPos => {
-                if (clicked || eyePosition.func_72436_e(new Vec3(blockPos)) > squaredRange) return
+            this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => {
+                if (clicked || eyePosition.func_72436_e(new Vec3(blockPos)) > (isSkull ? squaredSkullRange : squaredRange)) return
                 const blockState = World.getWorld().func_180495_p(blockPos)
                 const block = blockState.func_177230_c()
-                if (block instanceof BlockChest || block instanceof BlockLever) {
-                    if (this.clickedBlocks.contains(blockPos)) return
+                if (this.clickedBlocks.contains(blockPos)) return
 
-                    clicked = true
-                    const adjacentBlocks = []
-                    if (this.isDoubleChest(blockPos)) horizontalEnumFacings.forEach(enumFacing => { // Fix double chest hitvecs... This is schizo as fuck I know
-                        const adjacentBlockPos = blockPos.func_177972_a(enumFacing)
-                        adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld().func_180495_p(adjacentBlockPos) })
-                        World.getWorld().func_175698_g(adjacentBlockPos)
-                    })
+                clicked = true
+                const adjacentBlocks = []
+                if (this.isDoubleChest(blockPos)) horizontalEnumFacings.forEach(enumFacing => { // Fix double chest hitvecs... This is schizo as fuck I know
+                    const adjacentBlockPos = blockPos.func_177972_a(enumFacing)
+                    adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld().func_180495_p(adjacentBlockPos) })
+                    World.getWorld().func_175698_g(adjacentBlockPos)
+                })
 
-                    const heldItemIndex = Player.getHeldItemIndex()
-                    let secretAuraItemIndex
-                    if (!isNaN(Settings().secretAuraItem)) secretAuraItemIndex = parseInt(Settings().secretAuraItem)
-                    else {
-                        secretAuraItemIndex = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(Settings().secretAuraItem?.toLowerCase()))
-                        if (secretAuraItemIndex === -1) return
-                    }
-                    if (!isNaN(secretAuraItemIndex)) Player.setHeldItemIndex(secretAuraItemIndex)
-
-                    LivingUpdate.scheduleTask(0, () => { // This runs right before the next living update (same tick)
-                        this.rightClickBlock(block, blockPos)
-                        if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld().func_175656_a(blockPos, blockState))
-                    })
-                    Client.scheduleTask(0, () => { // This runs next tick
-                        if (Settings().secretAuraSwapBack) Player.setHeldItemIndex(heldItemIndex)
-                    })
-                    this.clickedBlocks.add(blockPos)
+                const heldItemIndex = Player.getHeldItemIndex()
+                let secretAuraItemIndex
+                if (!isNaN(Settings().secretAuraItem)) secretAuraItemIndex = parseInt(Settings().secretAuraItem)
+                else {
+                    secretAuraItemIndex = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(Settings().secretAuraItem?.toLowerCase()))
+                    if (secretAuraItemIndex === -1) return
                 }
+                if (!isNaN(secretAuraItemIndex)) Player.setHeldItemIndex(secretAuraItemIndex)
+
+                LivingUpdate.scheduleTask(0, () => { // This runs right before the next living update (same tick)
+                    this.rightClickBlock(block, blockPos)
+                    if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld().func_175656_a(blockPos, blockState))
+                    if (block instanceof BlockSkull) {
+                        const tileEntity = World.getWorld().func_175625_s(blockPos)
+                        const skullId = tileEntity?.func_152108_a()?.getId()?.toString()
+                        if (skullId === "fed95410-aba1-39df-9b95-1d4f361eb66e") this.redstoneKeyPickedUp = true
+                    }
+                })
+                Client.scheduleTask(0, () => { // This runs next tick
+                    if (Settings().secretAuraSwapBack) Player.setHeldItemIndex(heldItemIndex)
+                })
+                this.clickedBlocks.add(blockPos)
             })
-            console.log(`Scanning took ${(System.nanoTime() - runStart) / 1000000}ms`)
+            console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
         })
 
         register("renderWorld", () => {
-            this.renderShit.forEach(thing => {
-                RenderLibV2.drawEspBoxV2(thing.field_72450_a, thing.field_72448_b, thing.field_72449_c, 0.1, 0.1, 0.1, 1, 1, 1, 1, true)
-            })
+            this.renderShit?.forEach(thing => RenderLibV2.drawEspBoxV2(thing.field_72450_a, thing.field_72448_b, thing.field_72449_c, 0.1, 0.1, 0.1, 1, 1, 1, 1, true))
+            this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => RenderLibV2.drawEspBoxV2(blockPos.func_177958_n() + 0.5, blockPos.func_177956_o(), blockPos.func_177952_p() + 0.5, 1, 1, 1, 1, 1, 1, 1, true))
         })
 
         register("packetSent", (packet, event) => {
             let hitvec = [packet.func_149573_h(), packet.func_149569_i(), packet.func_149575_j()]
             hitvec = new Vec3(...hitvec).func_178787_e(new Vec3(packet.func_179724_a()))
-            this.renderShit.push(hitvec)
-            const blockpos = new Vec3(packet.func_179724_a())
-            const distance = blockpos.func_72438_d(new Vec3(pos[0], pos[1] + Player.getPlayer().func_70047_e(), pos[2]))
-            ChatLib.chat(`click ${new Vec3(packet.func_179724_a()).toString()} distance ${distance}`)
+            // this.renderShit.push(hitvec)
+            // const blockpos = new Vec3(packet.func_179724_a())
+            // const distance = blockpos.func_72438_d(new Vec3(pos[0], pos[1] + Player.getPlayer().func_70047_e(), pos[2]))
+            // ChatLib.chat(`click ${new Vec3(packet.func_179724_a()).toString()} distance ${distance}`)
         }).setFilteredClass(net.minecraft.network.play.client.C08PacketPlayerBlockPlacement)
+
+        register("worldUnload", () => {
+            // while (this.renderShit.length) this.renderShit.pop()
+            this.clickedBlocks.clear()
+            this.redstoneKeyPickedUp = false
+        })
 
 
         registerSubCommand("testsecretaura", () => this.toggle(!Settings().secretAuraEnabled))
@@ -115,7 +163,7 @@ export default new class SecretAura {
         new Thread(() => Settings().getConfig().setConfigValue("Block Aura", "secretAuraEnabled", state)).start()
         chat(`Secret aura ${state ? "enabled" : "disabled"}`)
         this.clickedBlocks.clear()
-        while (this.renderShit.length) this.renderShit.pop()
+        // while (this.renderShit.length) this.renderShit.pop()
     }
 
     rightClickBlock(block, blockPos, eyePosition = Player.getPlayer().func_174824_e(1)) {
@@ -125,28 +173,12 @@ export default new class SecretAura {
         const movingObjectPosition = block.func_180636_a(World.getWorld(), blockPos, eyePosition, centerPosition)
         let [mopBlockPos, entityHit, hitVec, sideHit, typeOfHit] = [movingObjectPosition.field_178783_e, movingObjectPosition.field_72308_g, movingObjectPosition.field_72307_f.func_178788_d(blockPosVec3), movingObjectPosition.field_178784_b, movingObjectPosition.field_72313_a]
         Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit.func_176745_a(), Player.getHeldItem()?.getItemStack() ?? null, hitVec.field_72450_a, hitVec.field_72448_b, hitVec.field_72449_c))
-        Player.getPlayer().func_71038_i()
+        if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer().func_71038_i()
     }
 }
 
+/*
 let pos = [0, 0, 0]
-let lastSwapPacket = Date.now()
-let slotIndex = Player.getHeldItemIndex()
-register("packetSent", (packet) => {
-    lastSwapPacket = Date.now()
-    slotIndex = packet.func_149614_c()
-    // ChatLib.chat(`slotindex ${slotIndex}`)
-}).setFilteredClass(net.minecraft.network.play.client.C09PacketHeldItemChange)
-
-register("packetSent", (packet, event) => {
-    const isFucked = packet.func_149574_g()?.toString() === Player.getHeldItem()?.getItemStack()?.toString() && Player.getHeldItem()?.getItemStack()?.toString() === Player.getInventory().getItems()[slotIndex]?.getItemStack()?.toString()
-    // ChatLib.chat(`${Date.now() - lastSwapPacket} and ${isFucked}`)
-    if (!isFucked) {
-        chat("HELLO 0 TICK")
-        World.playSound("note.pling", 100, 0.25)
-        cancel(event)
-    }
-}).setFilteredClass(C08PacketPlayerBlockPlacement)
 
 register("soundPlay", (pos, name, vol, pitch, category, event) => {
     if (name !== "random.click" || vol !== 0.30000001192092896) return
@@ -161,3 +193,4 @@ register("packetSent", (packet, event) => { // This only triggers on C03's sent 
         pos[2] = currentPosition.z
     }
 }).setFilteredClass(C03PacketPlayer)
+*/
