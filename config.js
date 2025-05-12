@@ -269,20 +269,39 @@ config
     .addSwitch({
         configName: "secretAuraEnabled",
         title: "Secret Aura Toggle",
-        description: "",
+        description: "CT secret aura...",
         category: "Block Aura"
     })
     .addKeybind({
-        configName: "secretAuraKeybind",
+        configName: "secretAuraToggleKeybind",
         title: "Secret Aura Keybind",
-        description: "Also resets clicked blocks when pressed.",
+        description: "Also resets clicked blocks when pressed. Also, using this option causes a fucking memory leak cause Amaterasu is extremely retarded so maybe allocate more ram or something idk",
+        category: "Block Aura"
+    })
+    .addKeybind({
+        configName: "secretAuraClearBlocksKeybind",
+        title: "Clear BlocksKeybind",
+        description: "Resets clicked blocks when pressed.",
+        category: "Block Aura"
+    })
+    .addTextInput({
+        configName: "secretAuraItem",
+        title: "Item to swap to",
+        description: "You can either set this to a number to choose a static hotbar slot or swap to an item with a specific name.",
+        category: "Block Aura"
+    })
+    .addSwitch({
+        configName: "secretAuraSwapBack",
+        title: "Swap Back",
+        description: "Swap back to previously held item after clicking",
         category: "Block Aura"
     })
     .addSwitch({
         configName: "randomColors",
         title: "Math.random() chat messages",
         description: "Changes the color of all chat messages printed by Carbonara",
-        category: "Mod"
+        category: "Mod",
+        value: true
     })
 
 
