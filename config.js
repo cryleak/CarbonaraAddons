@@ -177,31 +177,6 @@ config
         category: "Blink"
     })
     .addSwitch({
-        configName: "autoLeapOnRelic",
-        title: "Auto Leap on Relic Pickup",
-        description: "You need to open the menu yourself and use Relic Aura from some mod for this to work.",
-        category: "Leap",
-        subcategory: "Wither King"
-    })
-    .addTextInput({
-        configName: "autoLeapOnRelicName",
-        title: "Player to leap to after picking up the relic",
-        description: "You can either input the name of a class or a player name.",
-        category: "Leap",
-        value: "Healer",
-        subcategory: "Wither King",
-        shouldShow: data => data.autoLeapOnRelic
-    })
-    .addTextInput({
-        configName: "autoLeapOnRelicDelay",
-        title: "Delay before clicking in the leap menu",
-        description: "Milliseconds.",
-        category: "Leap",
-        value: "150",
-        subcategory: "Wither King",
-        shouldShow: data => data.autoLeapOnRelic
-    })
-    .addSwitch({
         configName: "fastLeap",
         title: "Fast Leap",
         description: "Leaps fast.",
@@ -308,6 +283,46 @@ config
         description: "Changes the color of all chat messages printed by Carbonara",
         category: "Mod",
         value: true
+    })
+    .addSwitch({
+        configName: "relicPickupAura",
+        title: "Relic Pickup Aura",
+        description: "Aura to pick up the relic",
+        category: "Wither King"
+    })
+    .addSwitch({
+        configName: "relicPlaceAura",
+        title: "Relic Place Aura",
+        description: "Aura to place up the relic",
+        category: "Wither King"
+    })
+    .addSwitch({
+        configName: "autoLeapOnRelic",
+        title: "Auto Leap on Relic Pickup",
+        description: "You need to open the menu yourself and use Relic Pickup Aura for this to work.",
+        category: "Wither King"
+    })
+    .addTextInput({
+        configName: "autoLeapOnRelicName",
+        title: "Player to leap to after picking up the relic",
+        description: "You can either input the name of a class or a player name.",
+        category: "Wither King",
+        value: "Healer",
+        shouldShow: data => data.autoLeapOnRelic
+    })
+    .addTextInput({
+        configName: "autoLeapOnRelicDelay",
+        title: "Delay before clicking in the leap menu",
+        description: "Milliseconds.",
+        category: "Wither King",
+        value: "150",
+        shouldShow: data => data.autoLeapOnRelic
+    })
+    .addSwitch({
+        configName: "blinkRelics",
+        title: "Blink Relics",
+        description: "More leniency than cgy for where you can stand.",
+        category: "Wither King"
     })
 
 

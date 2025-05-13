@@ -1,0 +1,85 @@
+import Settings from "../config"
+import FastLeap from "./FastLeap"
+import SecretAura from "./SecretAura"
+import Blink from "./Blink"
+
+import { LivingUpdate } from "../utils/autop3utils"
+import { onChatPacket } from "../../BloomCore/utils/Events"
+import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
+
+const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
+const ArmorStand = Java.type("net.minecraft.entity.item.EntityArmorStand")
+const Vec3 = Java.type("net.minecraft.util.Vec3")
+
+export default new class Relic {
+    constructor() {
+        this.cauldrons = {
+            "Green": new MCBlockPos(49, 7, 44),
+            "Red": new MCBlockPos(51, 7, 42),
+            "Purple": new MCBlockPos(54, 7, 41),
+            "Orange": new MCBlockPos(57, 7, 42),
+            "Blue": new MCBlockPos(59, 7, 44)
+        }
+        this.pickedUpRelic = null
+
+        this.relicPickupAura = register("renderWorld", () => {
+            const armorStands = World.getAllEntitiesOfType(ArmorStand)
+            const entity = armorStands.find(e => new EntityLivingBase(e?.getEntity()).getItemInSlot(4)?.getNBT()?.toString()?.includes("Relic") && getDistanceToEntity(e) < 4.5)
+            if (!entity) return
+            this.relicPickupAura.unregister()
+            const objectMouseOver = Client.getMinecraft().field_71476_x.field_72307_f
+            const dx = objectMouseOver.xCoord - entity.field_70165_t
+            const dy = objectMouseOver.yCoord - entity.field_70163_u
+            const dz = objectMouseOver.zCoord - entity.field_70161_v
+            const packet = new net.minecraft.network.play.client.C02PacketUseEntity(entity, new Vec3(dx, dy, dz))
+            Client.sendPacket(packet)
+            const helmetName = ChatLib.removeFormatting(new Item(entity.func_82169_q(3)).getName())
+            const relicColorPickedUp = Object.keys(this.cauldrons).find(relicName => helmetName.includes(relicName))
+            if (relicColorPickedUp) {
+                ChatLib.chat(`Picked up ${relicColorPickedUp}. Please tell me if this works even!!!!!!!!`)
+                this.pickedUpRelic = this.cauldrons[relicColorPickedUp]
+            }
+
+            if (Settings().blinkRelics) {
+                if (getDistanceToCoord(90.075, 6, 55.700) < 1.4) return Blink.executeBlink("Orange")
+                else if (getDistanceToCoord(22.925, 6, 57.700) < 1.4) return Blink.executeBlink("Red")
+            }
+
+            const player = FastLeap.getPlayerToLeapTo(true)
+            if (player === null) return
+            if (!player || !player.length) return
+            const clickDelay = parseInt(Settings().autoLeapOnRelicDelay)
+            if (isNaN(clickDelay) || clickDelay === 0) LeapHelper.clickInLeapMenu(player)
+            else setTimeout(() => LeapHelper.clickInLeapMenu(player), clickDelay)
+        }).unregister()
+
+        this.relicPlaceAura = register("tick", () => {
+            if (!this.pickedUpRelic) return
+            const eyePosition = Player.getPlayer().func_174824_e(1)
+            const blockPos = this.pickedUpRelic
+            if (eyePosition.func_72438_d(new Vec3(blockPos)) > 6) return
+            const blockState = World.getWorld().func_180495_p(blockPos)
+            const block = blockState.func_177230_c()
+            Player.setHeldItemIndex(8)
+            LivingUpdate.scheduleTask(0, () => SecretAura.rightClickBlock(block, blockPos, eyePosition))
+            this.relicPlaceAura.unregister()
+        }).unregister()
+
+        register("worldUnload", () => {
+            this.pickedUpRelic = null
+            this.relicPickupAura.unregister()
+            this.relicPlaceAura.unregister()
+        })
+
+        onChatPacket((name, relicColorPickedUp) => {
+            if (name !== Player.getName()) return
+            this.pickedUpRelic = this.cauldrons[relicColorPickedUp]
+        }).setCriteria(/^(\w{3,16}) picked the Corrupted (\w{3,6}) Relic!$/)
+
+        onChatPacket(() => {
+            if (Settings().relicPickupAura) this.relicPickupAura.register()
+            if (Settings().relicPlaceAura) this.relicPlaceAura.register()
+        }).setCriteria("[BOSS] Necron: All this, for nothing...")
+    }
+
+}

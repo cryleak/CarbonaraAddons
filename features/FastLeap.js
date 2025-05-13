@@ -14,7 +14,6 @@ const classes = ["Archer", "Berserk", "Mage", "Healer", "Tank"]
 export default new class FastLeap {
     constructor() {
         this.queuedLeap = false
-        this.ignoreC02 = false
 
         register(MouseEvent, (event) => {
             const button = event.button
@@ -66,31 +65,6 @@ export default new class FastLeap {
         register("worldUnload", () => {
             this.queuedLeap = false
         })
-
-        register("packetSent", (packet, event) => {
-            if (this.ignoreC02) return
-            if (!Settings().autoLeapOnRelic) return
-            const entity = packet.func_149564_a(World.getWorld())
-            if (!entity instanceof ArmorStand) return
-            const entityWornHelmet = entity?.func_82169_q(3)
-            if (!entityWornHelmet) return
-            const helmetName = ChatLib.removeFormatting(new Item(entityWornHelmet).getName())
-            if (!helmetName.includes("Relic")) return
-
-            const player = this.getPlayerToLeapTo(true)
-            if (player === null) return
-            if (!player || !player.length) return
-
-            cancel(event)
-            this.ignoreC02 = true
-            Client.sendPacket(packet)
-            this.ignoreC02 = false
-
-            const clickDelay = parseInt(Settings().autoLeapOnRelicDelay)
-            if (isNaN(clickDelay) || clickDelay === 0) LeapHelper.clickInLeapMenu(player)
-            else setTimeout(() => LeapHelper.clickInLeapMenu(player), clickDelay)
-
-        }).setFilteredClass(net.minecraft.network.play.client.C02PacketUseEntity)
     }
 
     getPlayerToLeapTo(relic = false) {

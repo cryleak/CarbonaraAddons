@@ -41,23 +41,23 @@ export default new class SecretAura {
             new Thread(() => {
                 const runStart = System.nanoTime()
                 if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly) return this.threadRunning = false
-                const eyePosition = Player.getPlayer().func_174824_e(1)
+                const eyePosition = Player.getPlayer()./* getPositionEyes */func_174824_e(1)
                 const scanRange = 12.5 // Takes about 17ms to scan on my 5800X3D
-                const boxCorner1 = new MCBlockPos(eyePosition.field_72450_a - scanRange, eyePosition.field_72448_b - scanRange, eyePosition.field_72449_c - scanRange)
-                const boxCorner2 = new MCBlockPos(eyePosition.field_72450_a + scanRange, eyePosition.field_72448_b + scanRange, eyePosition.field_72449_c + scanRange)
+                const boxCorner1 = new MCBlockPos(eyePosition./* xCoord */field_72450_a - scanRange, eyePosition./* yCoord */field_72448_b - scanRange, eyePosition./* zCoord */field_72449_c - scanRange)
+                const boxCorner2 = new MCBlockPos(eyePosition./* xCoord */field_72450_a + scanRange, eyePosition./* yCoord */field_72448_b + scanRange, eyePosition./* zCoord */field_72449_c + scanRange)
 
                 const squaredRange = scanRange ** 2
 
                 const clickableBlocks = []
-                MCBlockPos.func_177980_a(boxCorner1, boxCorner2).forEach(blockPos => {
-                    if (eyePosition.func_72436_e(new Vec3(blockPos)) > squaredRange) return
-                    const blockState = World.getWorld().func_180495_p(blockPos)
-                    const block = blockState.func_177230_c()
+                MCBlockPos./* getAllInBox */func_177980_a(boxCorner1, boxCorner2).forEach(blockPos => {
+                    if (eyePosition./* squareDistanceTo */func_72436_e(new Vec3(blockPos)) > squaredRange) return
+                    const blockState = World.getWorld()./* getBlockState */func_180495_p(blockPos)
+                    const block = blockState./* getBlock */func_177230_c()
                     if (block instanceof BlockChest || block instanceof BlockLever || block instanceof BlockCompressedPowered && this.redstoneKeyPickedUp) clickableBlocks.push({ blockPos, isSkull: false })
                     else if (block instanceof BlockSkull) {
-                        const tileEntity = World.getWorld().func_175625_s(blockPos)
-                        if (!tileEntity || !tileEntity.func_152108_a()) return
-                        const skullId = tileEntity.func_152108_a().getId().toString()
+                        const tileEntity = World.getWorld()./* getTileEntity */func_175625_s(blockPos)
+                        if (!tileEntity || !tileEntity./* getPlayerProfile */func_152108_a()) return
+                        const skullId = tileEntity./* getPlayerProfile */func_152108_a().getId().toString()
                         if (skullId === "e0f3e929-869e-3dca-9504-54c666ee6f23" || skullId === "fed95410-aba1-39df-9b95-1d4f361eb66e") clickableBlocks.push({ blockPos, isSkull: true })
                     }
                 })
@@ -69,26 +69,24 @@ export default new class SecretAura {
 
         register("tick", () => {
             const runStart = System.nanoTime()
-            ChatLib.chat(this.ignoreRooms.includes(dungeonUtils.currentRoomName))
-            ChatLib.chat(dungeonUtils.currentRoomName)
             if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly || this.ignoreRooms.includes(dungeonUtils.currentRoomName)) return
-            const eyePosition = Player.getPlayer().func_174824_e(1)
+            const eyePosition = Player.getPlayer()./* getPositionEyes */func_174824_e(1)
             const squaredRange = this.range ** 2
             const squaredSkullRange = this.skullRange ** 2
 
             let clicked = false
             this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => {
-                if (clicked || eyePosition.func_72436_e(new Vec3(blockPos)) > (isSkull ? squaredSkullRange : squaredRange)) return
-                const blockState = World.getWorld().func_180495_p(blockPos)
-                const block = blockState.func_177230_c()
+                if (clicked || eyePosition./* squareDistanceTo */func_72436_e(new Vec3(blockPos)) > (isSkull ? squaredSkullRange : squaredRange)) return
+                const blockState = World.getWorld()./* getBlockState */func_180495_p(blockPos)
+                const block = blockState./* getBlock */func_177230_c()
                 if (this.clickedBlocks.contains(blockPos)) return
 
                 clicked = true
                 const adjacentBlocks = []
                 if (this.isDoubleChest(blockPos)) horizontalEnumFacings.forEach(enumFacing => { // Fix double chest hitvecs... This is schizo as fuck I know
-                    const adjacentBlockPos = blockPos.func_177972_a(enumFacing)
-                    adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld().func_180495_p(adjacentBlockPos) })
-                    World.getWorld().func_175698_g(adjacentBlockPos)
+                    const adjacentBlockPos = blockPos./* offset */func_177972_a(enumFacing)
+                    adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld()./* getBlockState */func_180495_p(adjacentBlockPos) })
+                    World.getWorld()./* setBlockToAir */func_175698_g(adjacentBlockPos)
                 })
 
                 const heldItemIndex = Player.getHeldItemIndex()
@@ -102,10 +100,10 @@ export default new class SecretAura {
 
                 LivingUpdate.scheduleTask(0, () => { // This runs right before the next living update (same tick)
                     this.rightClickBlock(block, blockPos)
-                    if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld().func_175656_a(blockPos, blockState))
+                    if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))
                     if (block instanceof BlockSkull) {
-                        const tileEntity = World.getWorld().func_175625_s(blockPos)
-                        const skullId = tileEntity?.func_152108_a()?.getId()?.toString()
+                        const tileEntity = World.getWorld()./* getTileEntity */func_175625_s(blockPos)
+                        const skullId = tileEntity?./* getPlayerProfile */func_152108_a()?.getId()?.toString()
                         if (skullId === "fed95410-aba1-39df-9b95-1d4f361eb66e") this.redstoneKeyPickedUp = true
                     }
                 })
@@ -118,13 +116,13 @@ export default new class SecretAura {
         })
 
         register("renderWorld", () => {
-            this.renderShit?.forEach(thing => RenderLibV2.drawEspBoxV2(thing.field_72450_a, thing.field_72448_b, thing.field_72449_c, 0.1, 0.1, 0.1, 1, 1, 1, 1, true))
-            this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => RenderLibV2.drawEspBoxV2(blockPos.func_177958_n() + 0.5, blockPos.func_177956_o(), blockPos.func_177952_p() + 0.5, 1, 1, 1, 1, 1, 1, 1, true))
+            this.renderShit?.forEach(thing => RenderLibV2.drawEspBoxV2(thing./* xCoord */field_72450_a, thing./* yCoord */field_72448_b, thing./* zCoord */field_72449_c, 0.1, 0.1, 0.1, 1, 1, 1, 1, true))
+            this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => RenderLibV2.drawEspBoxV2(blockPos./* getX */func_177958_n() + 0.5, blockPos./* getY */func_177956_o(), blockPos./* getZ */func_177952_p() + 0.5, 1, 1, 1, 1, 1, 1, 1, true))
         })
 
         register("packetSent", (packet, event) => {
-            let hitvec = [packet.func_149573_h(), packet.func_149569_i(), packet.func_149575_j()]
-            hitvec = new Vec3(...hitvec).func_178787_e(new Vec3(packet.func_179724_a()))
+            let hitvec = [packet./* getPlacedBlockOffsetX */func_149573_h(), packet./* getPlacedBlockOffsetY */func_149569_i(), packet./* getPlacedBlockOffsetZ */func_149575_j()]
+            hitvec = new Vec3(...hitvec)./* add */func_178787_e(new Vec3(packet./* getPosition */func_179724_a()))
             // this.renderShit.push(hitvec)
             // const blockpos = new Vec3(packet.func_179724_a())
             // const distance = blockpos.func_72438_d(new Vec3(pos[0], pos[1] + Player.getPlayer().func_70047_e(), pos[2]))
@@ -149,10 +147,10 @@ export default new class SecretAura {
     }
 
     isDoubleChest(blockPos) {
-        if (!(World.getWorld().func_180495_p(blockPos).func_177230_c() instanceof BlockChest)) return false
+        if (!(World.getWorld()./* getBlockState */func_180495_p(blockPos)./* getBlock */func_177230_c() instanceof BlockChest)) return false
         else {
             for (let enumFacing of horizontalEnumFacings) {
-                if (World.getWorld().func_180495_p(blockPos.func_177972_a(enumFacing)).func_177230_c() instanceof BlockChest) return true
+                if (World.getWorld()./* getBlockState */func_180495_p(blockPos./* offset */func_177972_a(enumFacing))./* getBlock */func_177230_c() instanceof BlockChest) return true
             }
         }
         return false
@@ -166,14 +164,14 @@ export default new class SecretAura {
         // while (this.renderShit.length) this.renderShit.pop()
     }
 
-    rightClickBlock(block, blockPos, eyePosition = Player.getPlayer().func_174824_e(1)) {
+    rightClickBlock(block, blockPos, eyePosition = Player.getPlayer()./* getPositionEyes */func_174824_e(1)) {
         const blockPosVec3 = new Vec3(blockPos)
-        block.func_180654_a(World.getWorld(), blockPos)
-        const centerPosition = new Vec3((block.func_149753_y() + block.func_149704_x()) / 2, (block.func_149665_z() + block.func_149669_A()) / 2, (block.func_149706_B() + block.func_149693_C()) / 2).func_178787_e(blockPosVec3)
-        const movingObjectPosition = block.func_180636_a(World.getWorld(), blockPos, eyePosition, centerPosition)
-        let [mopBlockPos, entityHit, hitVec, sideHit, typeOfHit] = [movingObjectPosition.field_178783_e, movingObjectPosition.field_72308_g, movingObjectPosition.field_72307_f.func_178788_d(blockPosVec3), movingObjectPosition.field_178784_b, movingObjectPosition.field_72313_a]
-        Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit.func_176745_a(), Player.getHeldItem()?.getItemStack() ?? null, hitVec.field_72450_a, hitVec.field_72448_b, hitVec.field_72449_c))
-        if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer().func_71038_i()
+        block./* setBlockBoundsBasedOnState */func_180654_a(World.getWorld(), blockPos)
+        const centerPosition = new Vec3((block./* getBlockBoundsMaxX */func_149753_y() + block./* getBlockBoundsMinX */func_149704_x()) / 2, (block./* getBlockBoundsMinY */func_149665_z() + block./* getBlockBoundsMaxY */func_149669_A()) / 2, (block./* getBlockBoundsMinZ */func_149706_B() + block./* getBlockBoundsMaxZ */func_149693_C()) / 2)./* add */func_178787_e(blockPosVec3)
+        const movingObjectPosition = block./* collisionRayTrace */func_180636_a(World.getWorld(), blockPos, eyePosition, centerPosition)
+        let [mopBlockPos, entityHit, hitVec, sideHit, typeOfHit] = [movingObjectPosition./* blockPos */field_178783_e, movingObjectPosition./* entityHit */field_72308_g, movingObjectPosition./* hitVec */field_72307_f./* subtract */func_178788_d(blockPosVec3), movingObjectPosition./* sideHit */field_178784_b, movingObjectPosition./* typeOfHit */field_72313_a]
+        Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit./* getIndex */func_176745_a(), Player.getHeldItem()?.getItemStack() ?? null, hitVec./* xCoord */field_72450_a, hitVec./* yCoord */field_72448_b, hitVec./* zCoord */field_72449_c))
+        if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
     }
 }
 
@@ -186,8 +184,8 @@ register("soundPlay", (pos, name, vol, pitch, category, event) => {
 })
 
 register("packetSent", (packet, event) => { // This only triggers on C03's sent from a Motion Update.
-    if (packet.func_149466_j()) {// If moving
-        const currentPosition = { x: packet.func_149464_c(), y: packet.func_149467_d(), z: packet.func_149472_e() }
+    if (packet./* isMoving */func_149466_j()) {// If moving
+        const currentPosition = { x: packet./* getPositionX */func_149464_c(), y: packet./* getPositionY */func_149467_d(), z: packet./* getPositionZ */func_149472_e() }
         pos[0] = currentPosition.x
         pos[1] = currentPosition.y
         pos[2] = currentPosition.z
