@@ -1,5 +1,6 @@
 import Settings from "../config"
 import FastLeap from "./FastLeap"
+import LeapHelper from "../utils/leapUtils"
 import SecretAura from "./SecretAura"
 import Blink from "./Blink"
 

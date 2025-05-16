@@ -33,8 +33,8 @@ export default new class SecretAura {
         this.redstoneKeyPickedUp = false
         this.ignoreRooms = ["Water Board", "Three Weirdos"]
 
-
-        register("tick", () => {
+        register(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent, (event) => {
+            if (event.phase !== net.minecraftforge.fml.common.gameevent.TickEvent.Phase.END) return
             if (this.threadRunning) return
             this.threadRunning = true
             new Thread(() => {
@@ -112,11 +112,6 @@ export default new class SecretAura {
                 this.clickedBlocks.add(blockPos)
             })
             console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
-        })
-
-        register("renderWorld", () => {
-            this.renderShit?.forEach(thing => RenderLibV2.drawEspBoxV2(thing./* xCoord */field_72450_a, thing./* yCoord */field_72448_b, thing./* zCoord */field_72449_c, 0.1, 0.1, 0.1, 1, 1, 1, 1, true))
-            this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => RenderLibV2.drawEspBoxV2(blockPos./* getX */func_177958_n() + 0.5, blockPos./* getY */func_177956_o(), blockPos./* getZ */func_177952_p() + 0.5, 1, 1, 1, 1, 1, 1, 1, true))
         })
 
         register("packetSent", (packet, event) => {
