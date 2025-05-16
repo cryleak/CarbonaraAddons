@@ -8,16 +8,15 @@ import { chat } from "../utils/utils"
 import { LivingUpdate } from "../utils/autoP3Utils"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
-const Blocks = Java.type("net.minecraft.init.Blocks")
 const System = Java.type("java.lang.System")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
 const BlockChest = Java.type("net.minecraft.block.BlockChest")
 const BlockLever = Java.type("net.minecraft.block.BlockLever")
 const BlockSkull = Java.type("net.minecraft.block.BlockSkull")
 const BlockCompressedPowered = Java.type("net.minecraft.block.BlockCompressedPowered") // Redstone block
-const EnumFacing = Java.type("net.minecraft.util.EnumFacing")
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 const HashSet = Java.type("java.util.HashSet")
+const EnumFacing = Java.type("net.minecraft.util.EnumFacing")
 const horizontalEnumFacings = [EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST]
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
 
@@ -174,21 +173,3 @@ export default new class SecretAura {
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
     }
 }
-
-/*
-let pos = [0, 0, 0]
-
-register("soundPlay", (pos, name, vol, pitch, category, event) => {
-    if (name !== "random.click" || vol !== 0.30000001192092896) return
-    ChatLib.chat("clicked lever")
-})
-
-register("packetSent", (packet, event) => { // This only triggers on C03's sent from a Motion Update.
-    if (packet./* isMoving */func_149466_j()) {// If moving
-        const currentPosition = { x: packet./* getPositionX */func_149464_c(), y: packet./* getPositionY */func_149467_d(), z: packet./* getPositionZ */func_149472_e() }
-        pos[0] = currentPosition.x
-        pos[1] = currentPosition.y
-        pos[2] = currentPosition.z
-    }
-}).setFilteredClass(C03PacketPlayer)
-*/

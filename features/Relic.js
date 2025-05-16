@@ -3,7 +3,7 @@ import FastLeap from "./FastLeap"
 import SecretAura from "./SecretAura"
 import Blink from "./Blink"
 
-import { LivingUpdate } from "../utils/autop3utils"
+import { LivingUpdate, getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/autop3utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 
@@ -24,8 +24,9 @@ export default new class Relic {
 
         this.relicPickupAura = register("renderWorld", () => {
             const armorStands = World.getAllEntitiesOfType(ArmorStand)
-            const entity = armorStands.find(e => new EntityLivingBase(e?.getEntity()).getItemInSlot(4)?.getNBT()?.toString()?.includes("Relic") && getDistanceToEntity(e) < 4.5)
+            let entity = armorStands.find(e => new EntityLivingBase(e?.getEntity()).getItemInSlot(4)?.getNBT()?.toString()?.includes("Relic") && getDistanceToEntity(e) < 4.5)
             if (!entity) return
+            entity = entity.getEntity()
             this.relicPickupAura.unregister()
             const objectMouseOver = Client.getMinecraft().field_71476_x.field_72307_f
             const dx = objectMouseOver.xCoord - entity.field_70165_t
@@ -35,14 +36,14 @@ export default new class Relic {
             Client.sendPacket(packet)
             const helmetName = ChatLib.removeFormatting(new Item(entity.func_82169_q(3)).getName())
             const relicColorPickedUp = Object.keys(this.cauldrons).find(relicName => helmetName.includes(relicName))
-            if (relicColorPickedUp) {
-                ChatLib.chat(`Picked up ${relicColorPickedUp}. Please tell me if this works even!!!!!!!!`)
-                this.pickedUpRelic = this.cauldrons[relicColorPickedUp]
-            }
+            if (relicColorPickedUp) this.pickedUpRelic = this.cauldrons[relicColorPickedUp]
 
-            if (Settings().blinkRelics) {
-                if (getDistanceToCoord(90.075, 6, 55.700) < 1.4) return Blink.executeBlink("Orange")
-                else if (getDistanceToCoord(22.925, 6, 57.700) < 1.4) return Blink.executeBlink("Red")
+
+            if (Settings().blinkRelics && getDistanceToCoord(90.075, 6, 55.700) < 1.4) {
+                Blink.executeBlink("Orange", true)
+                setVelocity(0, null, 0)
+                releaseMovementKeys()
+                return
             }
 
             const player = FastLeap.getPlayerToLeapTo(true)
@@ -79,6 +80,7 @@ export default new class Relic {
         onChatPacket(() => {
             if (Settings().relicPickupAura) this.relicPickupAura.register()
             if (Settings().relicPlaceAura) this.relicPlaceAura.register()
+            this.pickedUpRelic = null
         }).setCriteria("[BOSS] Necron: All this, for nothing...")
     }
 

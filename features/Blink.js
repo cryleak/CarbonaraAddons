@@ -201,8 +201,8 @@ class Blink {
     }
 
 
-    executeBlink(blinkroute) {
-        if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
+    executeBlink(blinkroute, ignoreToggleState = false) {
+        if (!global.cryleak.autop3.blinkEnabled && !ignoreToggleState) return chat("Blink is disabled!")
 
         const packets = this.blinkRoutes[blinkroute + ".sereniblink"]
         if (!packets) return chat(`Can't find route "${blinkroute}".`)

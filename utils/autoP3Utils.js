@@ -396,3 +396,8 @@ class Terminal {
 
 const terminalInstance = new Terminal()
 export { terminalInstance as Terminal }
+
+export function getDistanceToEntity(entity) {
+    if (entity instanceof Entity) entity = entity.getEntity()
+    return Player.getPlayer().func_70032_d(entity)
+}
