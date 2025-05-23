@@ -15,6 +15,7 @@ const BlockLever = Java.type("net.minecraft.block.BlockLever")
 const BlockSkull = Java.type("net.minecraft.block.BlockSkull")
 const BlockCompressedPowered = Java.type("net.minecraft.block.BlockCompressedPowered") // Redstone block
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+const SecretAuraScanner = Java.type("me.cryleak.SecretAura")
 const HashSet = Java.type("java.util.HashSet")
 const EnumFacing = Java.type("net.minecraft.util.EnumFacing")
 const horizontalEnumFacings = [EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST]
@@ -33,73 +34,26 @@ export default new class SecretAura {
         this.redstoneKeyPickedUp = false
         this.ignoreRooms = ["Water Board", "Three Weirdos"]
 
-        register(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent, (event) => {
-            if (event.phase !== net.minecraftforge.fml.common.gameevent.TickEvent.Phase.END) return
-            if (this.threadRunning) return
-            this.threadRunning = true
-            new Thread(() => {
-                const runStart = System.nanoTime()
-                if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly) return this.threadRunning = false
-                const eyePosition = Player.getPlayer()./* getPositionEyes */func_174824_e(1)
-                const scanRange = 12.5 // Takes about 17ms to scan on my 5800X3D
-                const boxCorner1 = new MCBlockPos(eyePosition./* xCoord */field_72450_a - scanRange, eyePosition./* yCoord */field_72448_b - scanRange, eyePosition./* zCoord */field_72449_c - scanRange)
-                const boxCorner2 = new MCBlockPos(eyePosition./* xCoord */field_72450_a + scanRange, eyePosition./* yCoord */field_72448_b + scanRange, eyePosition./* zCoord */field_72449_c + scanRange)
-
-                const squaredRange = scanRange ** 2
-
-                const clickableBlocks = []
-                MCBlockPos./* getAllInBox */func_177980_a(boxCorner1, boxCorner2).forEach(blockPos => {
-                    if (eyePosition./* squareDistanceTo */func_72436_e(new Vec3(blockPos)) > squaredRange) return
-                    const blockState = World.getWorld()./* getBlockState */func_180495_p(blockPos)
-                    const block = blockState./* getBlock */func_177230_c()
-                    if (block instanceof BlockChest || block instanceof BlockLever || block instanceof BlockCompressedPowered && this.redstoneKeyPickedUp) clickableBlocks.push({ blockPos, isSkull: false })
-                    else if (block instanceof BlockSkull) {
-                        const tileEntity = World.getWorld()./* getTileEntity */func_175625_s(blockPos)
-                        if (!tileEntity || !tileEntity./* getPlayerProfile */func_152108_a()) return
-                        const skullId = tileEntity./* getPlayerProfile */func_152108_a().getId().toString()
-                        if (skullId === "e0f3e929-869e-3dca-9504-54c666ee6f23" || skullId === "fed95410-aba1-39df-9b95-1d4f361eb66e") clickableBlocks.push({ blockPos, isSkull: true })
-                    }
-                })
-                this.clickableBlocksInRange = clickableBlocks
-                console.log(`Scanning took ${(System.nanoTime() - runStart) / 1000000}ms`)
-                this.threadRunning = false
-            }).start()
-        })
-
         register("tick", () => {
             const runStart = System.nanoTime()
             if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly || this.ignoreRooms.includes(dungeonUtils.currentRoomName)) return
-            const eyePosition = Player.getPlayer()./* getPositionEyes */func_174824_e(1)
-            const squaredRange = this.range ** 2
-            const squaredSkullRange = this.skullRange ** 2
 
-            let clicked = false
-            this.clickableBlocksInRange?.forEach(({ blockPos, isSkull }) => {
-                if (clicked || eyePosition./* squareDistanceTo */func_72436_e(new Vec3(blockPos)) > (isSkull ? squaredSkullRange : squaredRange)) return
+            const blockPos = SecretAuraScanner.findClickableBlock(this.clickedBlocks, this.redstoneKeyPickedUp)
+            if (blockPos) {
                 const blockState = World.getWorld()./* getBlockState */func_180495_p(blockPos)
                 const block = blockState./* getBlock */func_177230_c()
-                if (this.clickedBlocks.contains(blockPos)) return
-
-                clicked = true
-                const adjacentBlocks = []
-                if (this.isDoubleChest(blockPos)) horizontalEnumFacings.forEach(enumFacing => { // Fix double chest hitvecs... This is schizo as fuck I know
-                    const adjacentBlockPos = blockPos./* offset */func_177972_a(enumFacing)
-                    adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld()./* getBlockState */func_180495_p(adjacentBlockPos) })
-                    World.getWorld()./* setBlockToAir */func_175698_g(adjacentBlockPos)
-                })
 
                 const heldItemIndex = Player.getHeldItemIndex()
                 let secretAuraItemIndex
                 if (!isNaN(Settings().secretAuraItem)) secretAuraItemIndex = parseInt(Settings().secretAuraItem)
                 else {
                     secretAuraItemIndex = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(Settings().secretAuraItem?.toLowerCase()))
-                    if (secretAuraItemIndex === -1) return
+                    if (secretAuraItemIndex === -1 || secretAuraItemIndex > 7) return
                 }
                 if (!isNaN(secretAuraItemIndex)) Player.setHeldItemIndex(secretAuraItemIndex)
 
                 LivingUpdate.scheduleTask(0, () => { // This runs right before the next living update (same tick)
                     this.rightClickBlock(block, blockPos)
-                    if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))
                     if (block instanceof BlockSkull) {
                         const tileEntity = World.getWorld()./* getTileEntity */func_175625_s(blockPos)
                         const skullId = tileEntity?./* getPlayerProfile */func_152108_a()?.getId()?.toString()
@@ -110,7 +64,7 @@ export default new class SecretAura {
                     if (Settings().secretAuraSwapBack) Player.setHeldItemIndex(heldItemIndex)
                 })
                 this.clickedBlocks.add(blockPos)
-            })
+            }
             console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
         })
 
@@ -159,6 +113,12 @@ export default new class SecretAura {
     }
 
     rightClickBlock(block, blockPos, eyePosition = Player.getPlayer()./* getPositionEyes */func_174824_e(1)) {
+        const adjacentBlocks = []
+        if (this.isDoubleChest(blockPos)) horizontalEnumFacings.forEach(enumFacing => { // Fix double chest hitvecs... This is schizo as fuck I know
+            const adjacentBlockPos = blockPos./* offset */func_177972_a(enumFacing)
+            adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld()./* getBlockState */func_180495_p(adjacentBlockPos) })
+            World.getWorld()./* setBlockToAir */func_175698_g(adjacentBlockPos)
+        })
         const blockPosVec3 = new Vec3(blockPos)
         block./* setBlockBoundsBasedOnState */func_180654_a(World.getWorld(), blockPos)
         const centerPosition = new Vec3((block./* getBlockBoundsMaxX */func_149753_y() + block./* getBlockBoundsMinX */func_149704_x()) / 2, (block./* getBlockBoundsMinY */func_149665_z() + block./* getBlockBoundsMaxY */func_149669_A()) / 2, (block./* getBlockBoundsMinZ */func_149706_B() + block./* getBlockBoundsMaxZ */func_149693_C()) / 2)./* add */func_178787_e(blockPosVec3)
@@ -166,5 +126,6 @@ export default new class SecretAura {
         let [mopBlockPos, entityHit, hitVec, sideHit, typeOfHit] = [movingObjectPosition./* blockPos */field_178783_e, movingObjectPosition./* entityHit */field_72308_g, movingObjectPosition./* hitVec */field_72307_f./* subtract */func_178788_d(blockPosVec3), movingObjectPosition./* sideHit */field_178784_b, movingObjectPosition./* typeOfHit */field_72313_a]
         Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit./* getIndex */func_176745_a(), Player.getHeldItem()?.getItemStack() ?? null, hitVec./* xCoord */field_72450_a, hitVec./* yCoord */field_72448_b, hitVec./* zCoord */field_72449_c))
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
+        if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))
     }
 }

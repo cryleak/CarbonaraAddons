@@ -12,6 +12,13 @@ config
         category: "AutoP3"
     })
     .addSwitch({
+        configName: "goonMotion",
+        title: "Goon Motion?",
+        description: "Lets you go farther through the air but might watchdog sometimes idk I haven't really tested it",
+        category: "AutoP3",
+        value: false
+    })
+    .addSwitch({
         configName: "autoP3Enabled",
         title: "Toggle AutoP3",
         description: "",

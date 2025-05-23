@@ -39,6 +39,8 @@ export default new class Dungeons {
                 this.teamMembers[player] = { dungeonClass }
             })
 
+            // this is fucked
+            /*
             Scoreboard.getLines().map(line => removeUnicode(ChatLib.removeFormatting(line))).forEach(line => {
                 const match = line.match(/\[(\w)\] (\w{3,16}) [\d,]+/)
                 if (!match) return
@@ -48,6 +50,7 @@ export default new class Dungeons {
                 if (Object.keys(this.teamMembers).includes(player)) return
                 this.teamMembers[player] = { dungeonClass }
             })
+                */
         })
 
     }

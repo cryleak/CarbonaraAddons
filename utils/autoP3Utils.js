@@ -208,49 +208,59 @@ const C0EPacketClickWindow = Java.type("net.minecraft.network.play.client.C0EPac
 
 class Motion {
     constructor() {
-        this.airMotionFactor = 400
-
         this.airTicks = 0
         this.lastX = 0
         this.lastZ = 0
         this.running = false
         this.yaw = 0
+        this.updatesSinceJump = 0
+
+        register(net.minecraftforge.event.entity.living.LivingEvent$LivingJumpEvent, (event) => {
+            if (event.entity !== Player.getPlayer()) return
+            if (!this.running) return
+            this.updatesSinceJump = 0
+        })
     }
 
     onMotionUpdate() {
+        this.updatesSinceJump++
         if (!this.running) return
-        const clickingMelody = terminalInstance.currentWindowName === "Click the button on time!" && Date.now() - terminalInstance.lastMelodyClick < 350
 
         if (Player.getPlayer().field_70122_E) this.airTicks = 0
-        else this.airTicks += 1
+        else this.airTicks++
 
-        const speed = Player.isSneaking() ? Player.getPlayer().field_71075_bZ.func_75094_b() * 0.3 : Player.getPlayer().field_71075_bZ.func_75094_b()
+        const speed = (Player.isSneaking() ? Player.getPlayer().field_71075_bZ.func_75094_b() * 0.3 : Player.getPlayer().field_71075_bZ.func_75094_b())
 
         const radians = this.yaw * Math.PI / 180
-        const x = -Math.sin(radians) * speed * 2.806
-        const z = Math.cos(radians) * speed * 2.806
+        const x = -Math.sin(radians) * speed * (43 / 15)
+        const z = Math.cos(radians) * speed * (43 / 15)
 
         if (this.airTicks < 2) {
-            lastX = x
-            lastZ = z
-            if (!clickingMelody) setVelocity(x, null, z)
-        } else {
-            const factor = this.airMotionFactor / 10000
-            lastX = lastX * 0.91 + factor * speed * -Math.sin(radians)
-            lastZ = lastZ * 0.91 + factor * speed * Math.cos(radians)
-            // lastX *= 0.91
-            // lastZ *= 0.91
-            if (!clickingMelody) {
-                setVelocity(lastX * 0.91 + factor * speed * -Math.sin(radians), null, lastZ * 0.91 + factor * speed * Math.cos(radians))
-                // Player.getPlayer().field_70159_w = lastX
-                // Player.getPlayer().field_70179_y = lastZ
+            if (this.updatesSinceJump === 1 && Settings().goonMotion) {
+                this.lastX *= 1.13
+                this.lastZ *= 1.13
+            } else {
+                this.lastX = x
+                this.lastZ = z
             }
+        } else {
+            this.lastX = this.lastX * 1 * 0.91 + 0.02 * 1.3 * -Math.sin(radians)
+            this.lastZ = this.lastZ * 1 * 0.91 + 0.02 * 1.3 * Math.cos(radians)
         }
+        setVelocity(this.lastX, null, this.lastZ)
     }
 }
 
 const motionInstance = new Motion()
 export { motionInstance as Motion }
+/*
+const motionInstance = {
+    onMotionUpdate: () => {
+        return
+    }
+}
+export { motionInstance as Motion }
+*/
 
 export function jump() {
     KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), true)
