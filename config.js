@@ -13,8 +13,8 @@ config
     })
     .addSwitch({
         configName: "goonMotion",
-        title: "Goon Motion?",
-        description: "Lets you go farther through the air but might watchdog sometimes idk I haven't really tested it",
+        title: "Retard motion",
+        description: "Maybe works idk",
         category: "AutoP3",
         value: false
     })

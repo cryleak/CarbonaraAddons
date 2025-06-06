@@ -22,6 +22,7 @@ let inBoss = false
 let awaitingTerminal = false
 let awaitingLeap = false
 let awaitLeapExcludeClass = ""
+Motion.isReal = true // schizo
 
 register("renderWorld", () => {
     const settings = Settings()
