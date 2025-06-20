@@ -25,7 +25,7 @@ class AutoP3Config {
             ["stopvelocity", []],
             ["fullstop", []],
             ["blink", ["blinkRoute"]],
-            ["blinkvelo", ["ticks"]],
+            ["blinkvelo", ["ticks", "awaitLavaBounce"]],
             ["jump", []],
             ["hclip", ["yaw", "jumpOnHClip"]],
             ["awaitterminal", []],
@@ -38,6 +38,7 @@ class AutoP3Config {
         this.dependencyChecks = { // sigma
             showBlinkRoute: data => data.type === 7,
             showTicks: data => data.type === 8,
+            showAwaitLavaBounce: data => data.type === 8,
             showItemName: data => data.type === 3,
             showYaw: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("yaw") || data.look,
             showPitch: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.look,
@@ -100,6 +101,7 @@ class AutoP3Config {
             nodeCreation.excludeClass = node.excludeClass
             nodeCreation.jumpOnHClip = node.jumpOnHClip ?? false
             nodeCreation.lavaClipDistance = node.lavaClipDistance?.toString() ?? "0"
+            nodeCreation.awaitLavaBounce = node.awaitLavaBounce ?? true
             nodeCreation.openGUI()
             Client.scheduleTask(1, () => this.editing = true)
         })
@@ -141,7 +143,8 @@ class AutoP3Config {
                 once: false,
                 excludeClass: "",
                 jumpOnHClip: true,
-                lavaClipDistance: 0
+                lavaClipDistance: 0,
+                awaitLavaBounce: true
             }
 
             for (let i = 0; i < args.length; i++) {
@@ -183,6 +186,11 @@ class AutoP3Config {
                         break
                     case "distance":
                         argsObject.lavaClipDistance = parseInt(args[i + 1])
+                        break
+                    case "awaitlava":
+                    case "noawaitlava":
+                    case "noawaitlavabounce":
+                        argsObject.awaitLavaBounce = false
                         break
                 }
             }

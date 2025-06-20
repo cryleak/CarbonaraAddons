@@ -297,10 +297,9 @@ export { motionInstance as Motion }
 export function jump() {
     /*
     KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), true)
-    scheduleTask(1, () => {
-        KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), false)
-    })
-        */
+    scheduleTask(1, () => KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), false))
+    */
+    if (!Player.getPlayer().field_70122_E) return chat("You aren't on the ground!")
     Player.getPlayer().func_70664_aZ()
 }
 
@@ -445,3 +444,16 @@ export function getDistanceToEntity(entity) {
     if (entity instanceof Entity) entity = entity.getEntity()
     return Player.getPlayer().func_70032_d(entity)
 }
+
+export function setPlayerPositionNoInterpolation(x, y, z) {
+    const player = Player.getPlayer()
+    player.func_70107_b(x, y, z)
+    player.field_70169_q = x
+    player.field_70142_S = x
+    player.field_70167_r = y
+    player.field_70137_T = y
+    player.field_70166_s = z
+    player.field_70136_U = z
+}
+
+global.System = Java.type("java.lang.System")

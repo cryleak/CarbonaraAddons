@@ -2,10 +2,11 @@ import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import PogObject from "../../PogData"
 
-import { setVelocity } from "../utils/autop3utils"
+import { setPlayerPositionNoInterpolation, setVelocity } from "../utils/autop3utils"
 import { chat } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
 import { packetCounterGui } from "../config"
+import { getDistance3D } from "../../BloomCore/utils/Utils"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")
@@ -213,15 +214,16 @@ class Blink {
         for (let i = 0; i < packets.length; i++) {
             let packet = packets[i]
             if (packet.length < 4 || !packet.length) return chat("Couldn't parse file! Is it invalid?")
-            let [x, y, z, onGround] = [parseFloat(packet[0]), parseFloat(packet[1]), parseFloat(packet[2]), packet[3] === "true"]
+            let [x, y, z, onGround] = packet
             Client.sendPacket(new C03PacketPlayer.C04PacketPlayerPosition(x, y, z, onGround))
-            if (packet.length === 7) {
-                let motion = [parseFloat(packet[4]), parseFloat(packet[5]), parseFloat(packet[6])]
-                setVelocity(...motion)
-            }
+            // if (i < packets.length - 1) { let previousPacket = i === 0 ? [Player.x, Player.y, Player.z] : packets[i - 1]; ChatLib.chat(getDistance3D(x, y, z, previousPacket[0], previousPacket[1]), previousPacket[2])); }
         }
         const finalPacket = packets[packets.length - 1]
-        Player.getPlayer().func_70107_b(parseFloat(finalPacket[0]), parseFloat(finalPacket[1]), parseFloat(finalPacket[2]))
+        setPlayerPositionNoInterpolation(finalPacket[0], finalPacket[1], finalPacket[2])
+        if (finalPacket.length === 7) {
+            let motion = [finalPacket[4], finalPacket[5], finalPacket[6]]
+            setVelocity(...motion)
+        }
         chat(`Blinked with ${packets.length} packets.`)
         global.cryleak.autop3.lastBlink = Date.now()
     }
@@ -244,7 +246,12 @@ class Blink {
 
     parseBlinkFile(fileName) {
         try {
-            const packets = FileLib.read("CarbonaraAddons/BlinkRoutes", fileName).split("\n").map(str => str.split(", "))
+            const packets = FileLib.read("CarbonaraAddons/BlinkRoutes", fileName).split("\n").map(str => {
+                const packetData = str.split(", ")
+                const packet = [parseFloat(packetData[0]), parseFloat(packetData[1]), parseFloat(packetData[2]), packetData[3] === "true"]
+                if (packetData.length === 7) packet.concat([parseFloat(packetData[4]), parseFloat(packetData[5]), parseFloat(packetData[6])])
+                return packet
+            })
             packets.shift() // First line is always empty and I cba to make a better solution
             return packets
         } catch (e) {

@@ -1,7 +1,7 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import RenderLibV2 from "../../RenderLibV2"
-import { playerCoords, setVelocity } from "../utils/autoP3Utils"
+import { playerCoords, setPlayerPositionNoInterpolation, setVelocity } from "../utils/autoP3Utils"
 import { chat } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
 
@@ -46,7 +46,7 @@ export default new class Freecam {
             const isInSurvival = currentGamemode === "ADVENTURE" || currentGamemode === "SURVIVAL"
             Player.getPlayer().field_71075_bZ.field_75101_c = isInSurvival ? false : true
             if (isInSurvival) Player.getPlayer().field_71075_bZ.field_75100_b = false
-            Player.getPlayer().func_70107_b(...this.realPlayerPosition)
+            setPlayerPositionNoInterpolation(...this.realPlayerPosition)
             setVelocity(0, 0, 0)
             this.eventCancellers.forEach(register => register.unregister())
         } else {

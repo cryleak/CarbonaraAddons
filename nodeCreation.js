@@ -7,6 +7,7 @@ class Settings {
         this.setCategoryDescription("Route", "Node Creation")
         this.addDependency("Blink Route", "show blinkRoute")
         this.addDependency("Blink Velocity Ticks", "show ticks")
+        this.addDependency("Await Lava Bounce", "show awaitLavaBounce")
         this.addDependency("Item name to use", "show itemName")
         this.addDependency("Player/Class to exclude", "show excludeClass")
         this.addDependency("Look", "show look")
@@ -29,6 +30,13 @@ class Settings {
         category: "Route"
     })
     ticks = "";
+
+    @SwitchProperty({
+        name: "Await Lava Bounce",
+        description: "Only blink velocity after a lava bounce",
+        category: "Route"
+    })
+    awaitLavaBounce = false;
 
     @SwitchProperty({
         name: "Once",
@@ -142,6 +150,13 @@ class Settings {
         category: "Schizo vigilance shit ignore this"
     })
     showTicks = false;
+
+        @SwitchProperty({
+        name: "show awaitLavaBounce",
+        description: "",
+        category: "Schizo vigilance shit ignore this"
+    })
+    showAwaitLavaBounce = false;
 
     @SwitchProperty({
         name: "show itemName",

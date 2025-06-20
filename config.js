@@ -300,7 +300,7 @@ config
     .addSwitch({
         configName: "relicPlaceAura",
         title: "Relic Place Aura",
-        description: "Aura to place up the relic",
+        description: "Aura to place the relic",
         category: "Wither King"
     })
     .addSwitch({

@@ -8,7 +8,6 @@ import { chat } from "../utils/utils"
 import { LivingUpdate } from "../utils/autoP3Utils"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
-const System = Java.type("java.lang.System")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
 const BlockChest = Java.type("net.minecraft.block.BlockChest")
 const BlockLever = Java.type("net.minecraft.block.BlockLever")
@@ -65,7 +64,7 @@ export default new class SecretAura {
                 })
                 this.clickedBlocks.add(blockPos)
             }
-            console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
+           // console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
         })
 
         register("packetSent", (packet, event) => {

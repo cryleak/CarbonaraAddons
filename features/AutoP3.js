@@ -6,7 +6,7 @@ import fakeKeybinds from "../utils/fakeKeybinds"
 import Blink from "./Blink"
 
 import { clickAt } from "../utils/serverRotations"
-import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening, leftClick } from "../utils/autoP3Utils"
+import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening, leftClick, setPlayerPositionNoInterpolation } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -54,17 +54,17 @@ register("renderWorld", () => {
                 let packet1 = packets[i]
                 let packet2 = packets[i + 1]
                 if (!packet1 || !packet2) continue
-                RenderLibV2.drawLine(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 1, 1, 1, 1, 1, false)
+                RenderLibV2.drawLine(packet1[0], packet1[1], packet1[2], packet2[0], packet2[1], packet2[2], 1, 1, 1, 1, 1, false)
             }
             let packet1 = packets[0]
             let packet2 = packets[packets.length - 1]
-            if (!packet1 || !packet2) return
-            RenderLibV2.drawInnerEspBox(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), 0.5, 0.5, 0, 1, 0, 0.25, true)
-            RenderLibV2.drawEspBox(parseFloat(packet1[0]), parseFloat(packet1[1]), parseFloat(packet1[2]), 0.5, 0.5, 0, 1, 0, 1, true)
+            if (!packet1 || !packet2) continue
+            RenderLibV2.drawInnerEspBox(packet1[0], packet1[1], packet1[2], 0.5, 0.5, 0, 1, 0, 0.25, true)
+            RenderLibV2.drawEspBox(packet1[0], packet1[1], packet1[2], 0.5, 0.5, 0, 1, 0, 1, true)
             Tessellator.drawString(`Start of route "${name.split(".sereniblink")[0]}", route requires ${packets.length} packets`, packet1[0], packet1[1], packet1[2], 16777215, true, 0.02, false)
 
-            RenderLibV2.drawInnerEspBox(parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 0.5, 0.5, 1, 0, 0, 0.25, true)
-            RenderLibV2.drawEspBox(parseFloat(packet2[0]), parseFloat(packet2[1]), parseFloat(packet2[2]), 0.5, 0.5, 1, 0, 0, 1, true)
+            RenderLibV2.drawInnerEspBox(packet2[0], packet2[1], packet2[2], 0.5, 0.5, 1, 0, 0, 0.25, true)
+            RenderLibV2.drawEspBox(packet2[0], packet2[1], packet2[2], 0.5, 0.5, 1, 0, 0, 1, true)
         }
     }
     if (settings.editMode) return
@@ -142,7 +142,7 @@ const nodeTypes = {
         Motion.yaw = args.yaw
         Motion.lastX = 0
         Motion.lastZ = 0
-        Motion.airTicks = 0
+        Motion.airTicks = Settings().goonMotion ? -1 : 0 // Dumb fix to let you regain velocity midair with retard motion
 
         if (!Player.getPlayer().field_70122_E) {
             Motion.running = false
@@ -168,12 +168,15 @@ const nodeTypes = {
         if (args.stop) {
             setVelocity(0, null, 0)
             releaseMovementKeys()
-            Motion.running = false
         }
     },
     blinkvelo: args => {
         blinkVeloTicks = args.ticks
-        awaitVelocity.register()
+        if (args.awaitLavaBounce || !args.awaitLavaBounce && args.awaitLavaBounce !== false) awaitVelocity.register()
+        else {
+            awaitingBlinkVelo = true
+
+        }
     },
     jump: args => {
         jump()
@@ -219,7 +222,7 @@ const nodeTypes = {
             if (!Player.getPlayer().func_180799_ab()) return
             veloPacket.register()
             vclip.unregister()
-            Player.getPlayer().func_70107_b(Player.getX(), args.lavaClipDistance == 0 ? findAirOpening() : Player.getY() - args.lavaClipDistance, Player.getZ())
+            setPlayerPositionNoInterpolation(Player.getX(), args.lavaClipDistance == 0 ? findAirOpening() : Player.getY() - args.lavaClipDistance, Player.getZ())
         })
         scheduleTask(100, () => vclip.unregister())
 
@@ -332,7 +335,7 @@ registerSubCommand(["simulateterminalopen", "simulatetermopen", "simtermopen"], 
 })
 
 registerSubCommand("center", () => {
-    Player.getPlayer().func_70107_b(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5)
+    setPlayerPositionNoInterpolation(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5)
     setVelocity(0, null, 0)
     chat("Centered the player.")
 })
@@ -376,6 +379,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
         Player.getPlayer().func_175161_p()
         executeNodes(playerCoords().player)
     }
+    setPlayerPositionNoInterpolation(Player.getX(), Player.getY(), Player.getZ())
     chat(`Blinked ${blinkVeloTicks} physics ticks.`)
     global.cryleak.autop3.lastBlink = Date.now()
     blinkingVelo = false
