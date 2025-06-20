@@ -3,8 +3,9 @@ import FastLeap from "./FastLeap"
 import LeapHelper from "../utils/leapUtils"
 import SecretAura from "./SecretAura"
 import Blink from "./Blink"
+import LivingUpdate from "../events/LivingUpdate"
 
-import { LivingUpdate, getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/autop3utils"
+import { getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/autop3utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 

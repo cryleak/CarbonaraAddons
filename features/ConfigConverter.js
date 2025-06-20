@@ -2,8 +2,10 @@ import { registerSubCommand } from "../utils/commands"
 import { chat } from "../utils/utils"
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
+const File = Java.type("java.io.File")
 
 
+// CGA converter doesn't really work because of the AutoP3 working pretty different from mine and me being lazy
 registerSubCommand("convertconfig", (args) => {
     const configType = args.shift().toLowerCase()
     if (configType === "pepi") {
@@ -150,4 +152,14 @@ registerSubCommand("convertconfig", (args) => {
     }
 
     else return chat("Invalid config type.")
+}, args => {
+    if (!args[0].length) return ["pepi", "cga"]
+    const configs = new File("./config/ChatTriggers/modules/CarbonaraAddons/configs").list()
+    let convertableConfigs = []
+    for (let fileName of configs) {
+        let file = FileLib.read("CarbonaraAddons/configs", fileName)
+        // Lazy way to identify pepi or cga files in most circumstances
+        if (file.includes("stopMotion") || file.includes("bonzo") || file.includes("arguments") || file.includes("shift")) convertableConfigs.push(fileName)
+    }
+    return convertableConfigs
 })

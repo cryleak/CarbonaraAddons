@@ -4,9 +4,11 @@ import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../utils/Dungeons"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Blink from "./Blink"
+import Motion from "../utils/Motion"
+import LivingUpdate from "../events/LivingUpdate"
 
 import { clickAt } from "../utils/serverRotations"
-import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, LivingUpdate, getTermPhase, repressMovementKeys, termNames, setVelocity, Motion, findAirOpening, leftClick, setPlayerPositionNoInterpolation } from "../utils/autoP3Utils"
+import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, getTermPhase, repressMovementKeys, termNames, setVelocity, findAirOpening, leftClick, setPlayerPositionNoInterpolation } from "../utils/autoP3Utils"
 import { chat, debugMessage, scheduleTask } from "../utils/utils"
 import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
@@ -22,7 +24,6 @@ let inBoss = false
 let awaitingTerminal = false
 let awaitingLeap = false
 let awaitLeapExcludeClass = ""
-Motion.isReal = true // schizo
 
 register("renderWorld", () => {
     const settings = Settings()
@@ -275,7 +276,7 @@ registerSubCommand("start", (args) => {
         if (Settings().activateConfigOnBoss) Settings().getConfig().setConfigValue("AutoP3", "configName", Settings().bossStartConfig)
     } else return chat("Invalid phase!")
     Client.scheduleTask(1, resetTriggeredState)
-})
+}, () => ["p3", "boss"])
 
 registerSubCommand(["resetroutes", "rr"], () => {
     resetTriggeredState()

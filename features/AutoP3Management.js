@@ -104,7 +104,7 @@ class AutoP3Config {
             nodeCreation.awaitLavaBounce = node.awaitLavaBounce ?? true
             nodeCreation.openGUI()
             Client.scheduleTask(1, () => this.editing = true)
-        })
+        }, args => this.config.map((_0, index) => index.toString()))
 
         registerSubCommand(["createnode", "cn", "addnode", "an"], args => {
             if (!args.length || !args[0]) return chat([
@@ -196,6 +196,9 @@ class AutoP3Config {
             }
             this.editingNodeIndex = null
             this.addNode(argsObject, playerCoords().camera)
+        }, args => {
+            if (this.nodeTypes.includes(args[0])) return null
+            return this.nodeTypes
         })
 
         registerSubCommand(["deletenode", "dn", "removenode", "rn"], args => {
@@ -215,7 +218,7 @@ class AutoP3Config {
             chat(nodeString)
             this.config.splice(indexToDelete, 1)
             this.saveConfig()
-        })
+        }, args => this.config.map((_0, index) => index.toString()))
     }
 
     addNode(args, pos) {

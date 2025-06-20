@@ -5,7 +5,7 @@ import Dungeons from "../utils/Dungeons"
 
 import { registerSubCommand } from "../utils/commands"
 import { chat } from "../utils/utils"
-import { LivingUpdate } from "../utils/autoP3Utils"
+import LivingUpdate from "../events/LivingUpdate"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
@@ -64,7 +64,7 @@ export default new class SecretAura {
                 })
                 this.clickedBlocks.add(blockPos)
             }
-           // console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
+            // console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
         })
 
         register("packetSent", (packet, event) => {
@@ -81,9 +81,6 @@ export default new class SecretAura {
             this.clickedBlocks.clear()
             this.redstoneKeyPickedUp = false
         })
-
-
-        registerSubCommand("testsecretaura", () => this.toggle(!Settings().secretAuraEnabled))
 
         fakeKeybinds.onKeyPress("secretAuraToggleKeybind", () => this.toggle(!Settings().secretAuraEnabled))
 

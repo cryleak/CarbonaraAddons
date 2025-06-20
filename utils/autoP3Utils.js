@@ -4,7 +4,6 @@ import { debugMessage, chat, scheduleTask } from "./utils"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
-const CancellableEvent = com.chattriggers.ctjs.minecraft.listeners.CancellableEvent
 
 /**
  * Swaps to an item in your hotbar with the specified name.
@@ -207,93 +206,6 @@ const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPac
 const C0EPacketClickWindow = Java.type("net.minecraft.network.play.client.C0EPacketClickWindow")
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
 
-class Motion {
-    constructor() {
-        this.airTicks = 0
-        this.lastX = 0
-        this.lastZ = 0
-        this.running = false
-        this.yaw = 0
-        this.isReal = false
-        this.jumping = false
-
-        register(net.minecraftforge.event.entity.living.LivingEvent$LivingJumpEvent, (event) => {
-            if (!this.isReal) return
-            if (event.entity !== Player.getPlayer()) return
-            if (!this.running) return
-            this.jumping = true
-        })
-    }
-
-    onMotionUpdate() {
-        if (!this.isReal || !this.running) return
-
-        if (Player.getPlayer().field_70122_E) {
-            this.airTicks = 0;
-        } else {
-            this.airTicks++;
-        }
-
-        if (Player.getPlayer().func_70090_H() || Player.getPlayer().func_180799_ab()) return;
-
-        if (Settings().goonMotion) {
-            const sprintMultiplier = 1.3;
-            const speed = Player.isSneaking() ? Player.getPlayer().field_71075_bZ.func_75094_b() * 0.3 : Player.getPlayer().field_71075_bZ.func_75094_b()
-
-            if (this.airTicks < 1) {
-                const rad = this.yaw * Math.PI / 180;
-                let speedMultiplier = 2.806;
-
-                if (this.jumping) {
-                    this.jumping = false;
-                    speedMultiplier += 2;
-                    speedMultiplier *= 1.25;
-                }
-
-                Player.getPlayer().field_70159_w = -Math.sin(rad) * speed * speedMultiplier;
-                Player.getPlayer().field_70179_y = Math.cos(rad) * speed * speedMultiplier;
-                return;
-            }
-
-            const movementFactor = (Player.getPlayer().field_70122_E || (this.airTicks === 1 && Player.getPlayer().field_70181_x < 0)) ? speed * sprintMultiplier : 0.02 * sprintMultiplier;
-
-            const sinYaw = MathHelper.func_76126_a(this.yaw * Math.PI / 180);
-            const cosYaw = MathHelper.func_76134_b(this.yaw * Math.PI / 180);
-
-            Player.getPlayer().field_70159_w -= movementFactor * sinYaw;
-            Player.getPlayer().field_70179_y += movementFactor * cosYaw;
-        } else {
-            const speed = Player.isSneaking() ? Player.getPlayer().field_71075_bZ.func_75094_b() * 0.3 : Player.getPlayer().field_71075_bZ.func_75094_b()
-
-            const radians = this.yaw * Math.PI / 180
-            const x = -Math.sin(radians) * speed * 2.806
-            const z = Math.cos(radians) * speed * 2.806
-
-            if (this.airTicks < 2) {
-                this.lastX = x
-                this.lastZ = z
-                setVelocity(x, null, z)
-            } else {
-                const factor = 0.04
-                this.lastX = this.lastX * 0.91 + factor * speed * -Math.sin(radians)
-                this.lastZ = this.lastZ * 0.91 + factor * speed * Math.cos(radians)
-                setVelocity(this.lastX * 0.91 + factor * speed * -Math.sin(radians), null, this.lastZ * 0.91 + factor * speed * Math.cos(radians))
-            }
-        }
-    }
-}
-
-const motionInstance = new Motion()
-export { motionInstance as Motion }
-/*
-const motionInstance = {
-    onMotionUpdate: () => {
-        return
-    }
-}
-export { motionInstance as Motion }
-*/
-
 export function jump() {
     /*
     KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(), true)
@@ -303,60 +215,9 @@ export function jump() {
     Player.getPlayer().func_70664_aZ()
 }
 
-class LivingUpdate {
-    constructor() {
-        this.listeners = []
-        this.scheduledTasks = []
-        register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
-            if (event.entity !== Player.getPlayer()) return
-            this.onLivingUpdate(event)
-        })
-    }
-    /**
-     * Adds a listener that runs before every player update event.
-     * @param {Function} func 
-     */
-    addListener(func) {
-        this.listeners.push(func)
-    }
-    /**
-     * Schedules a task to run in the specified amount of living updates.
-     * @param {integer} ticks 
-     * @param {function} func
-     */
-    scheduleTask(ticks, func) {
-        this.scheduledTasks.push({ ticks, func })
-    }
-
-    /**
-     * (Internal use) Ran when the player position updates.
-     * @param {CancellableEvent} event The Event to use. If you don't specify this it will create a new event
-     * @returns The event used. You can check if it is canceled.
-     */
-    onLivingUpdate(event) {
-        if (!event) event = new CancellableEvent()
-        for (let i = this.scheduledTasks.length - 1; i >= 0; i--) {
-            let task = this.scheduledTasks[i]
-            if (task.ticks === 0) {
-                task.func(event)
-                this.scheduledTasks.splice(i, 1)
-            }
-            task.ticks--
-        }
-
-        for (let i = 0; i < this.listeners.length; i++) {
-            this.listeners[i](event)
-        }
-        if (!event.isCanceled()) motionInstance.onMotionUpdate()
-        return event
-    }
-}
-const LivingUpdateInstance = new LivingUpdate()
-export { LivingUpdateInstance as LivingUpdate }
-
 /**
  * Checks if the coordinates is inside of a terminal phase.
- * @param {[]} coords 
+ * @param {Number[]} coords 
  * @returns What terminals set a set of coordinates is in, or 0 if it isn't in any.
  */
 export function getTermPhase(coords) {
@@ -457,3 +318,4 @@ export function setPlayerPositionNoInterpolation(x, y, z) {
 }
 
 global.System = Java.type("java.lang.System")
+global.loadct = ChatTriggers.loadCT // HEre cause im lazy

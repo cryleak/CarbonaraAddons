@@ -136,7 +136,7 @@ class Blink {
         registerSubCommand(["playroute", "playblinkroute"], (args) => {
             const name = args.join(" ")
             this.executeBlink(name)
-        })
+        }, () => Object.keys(this.blinkRoutes))
 
         registerSubCommand("listblinkroutes", () => {
             chat(`Blink routes: ${Object.keys(this.blinkRoutes).map(route => route.split(".sereniblink")[0]).toString()}`)
