@@ -47,6 +47,7 @@ export default new class LeapHelper {
             if (title !== "Spirit Leap") return
             this.menuOpened = true
             this.clickedLeap = false
+            Client.getMinecraft().field_71462_r = null
             cancel(event)
         }).setFilteredClass(S2DPacketOpenWindow)
 
