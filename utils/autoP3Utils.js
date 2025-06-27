@@ -336,25 +336,27 @@ global.loadct = ChatTriggers.loadCT // HEre cause im lazy
  */
 export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance) {
     horizontalTolerance *= horizontalTolerance
-    const startHorizontalDistance = getDistance2DSq(start.x, start.z, target.x, target.z)
-    const startVerticalDistance = Settings().triggerFromBelow ? Math.abs(start.y - target.y) : start.y - target.y
 
-    const endHorizontalDistance = getDistance2DSq(end.x, end.z, target.x, target.z)
-    const endVerticalDistance = Settings().triggerFromBelow ? Math.abs(end.y - target.y) : end.y - target.y
-    if ((startHorizontalDistance <= horizontalTolerance && startVerticalDistance <= verticalTolerance && startVerticalDistance >= 0) || (endHorizontalDistance <= horizontalTolerance && endVerticalDistance <= verticalTolerance && endVerticalDistance >= 0)) return true
+    const isPointInBounds = (point) => {
+        const intersectedHorizontally = getDistance2DSq(point.x, point.z, target.x, target.z) <= horizontalTolerance
+        const verticalDist = Settings().triggerFromBelow ? Math.abs(point.y - target.y) : point.y - target.y
+        let intersectedVertically = verticalDist <= verticalTolerance && verticalDist >= 0
+        if (!intersectedVertically) {
+            const minY = Settings().triggerFromBelow ? Math.min(start.y, end.y) : start.y
+            const maxY = Settings().triggerFromBelow ? Math.max(start.y, end.y) : end.y
+            if (target.y >= minY && target.y <= maxY) intersectedVertically = true
+        }
+        return intersectedHorizontally && intersectedVertically
+    }
+
+    if (isPointInBounds(start) || isPointInBounds(end)) return true
 
     const direction = end.subtract(start).normalize()
-    const directionLength = direction.getLength()
-    const normalizedDirection = direction.normalize()
+    const dotProduct = target.subtract(start).dotProduct(direction)
 
-    const toTarget = target.subtract(start)
-    const t = toTarget.x * normalizedDirection.x + toTarget.y * normalizedDirection.y + toTarget.z * normalizedDirection.z
+    if (dotProduct < 0 || dotProduct > direction.getLength()) return false
 
-    if (t < 0 || t > directionLength) return false
+    const closestPoint = new Vector3(start.x + dotProduct * direction.x, start.y + dotProduct * direction.y, start.z + dotProduct * direction.z)
 
-
-    const closestPoint = new Vector3(start.x + t * normalizedDirection.x, start.y + t * normalizedDirection.y, start.z + t * normalizedDirection.z)
-    const horizontalDistance = getDistance2DSq(closestPoint.x, closestPoint.z, target.x, target.z)
-    const yDistance = Settings().triggerFromBelow ? Math.abs(closestPoint.y - target.y) : closestPoint.y - target.y
-    return horizontalDistance <= horizontalTolerance && yDistance <= verticalTolerance && yDistance >= 0
+    return isPointInBounds(closestPoint)
 }
