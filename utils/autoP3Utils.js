@@ -1,6 +1,8 @@
 
 import Settings from "../config"
-import { debugMessage, chat, scheduleTask } from "./utils"
+import Vector3 from "../../BloomCore/utils/Vector3"
+
+import { debugMessage, chat, getDistance2DSq } from "./utils"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
@@ -319,3 +321,40 @@ export function setPlayerPositionNoInterpolation(x, y, z) {
 
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy
+
+
+
+/**
+ * Checks if a straight line between a start and end vector intersects with an object of specified size, height and position.
+ * @author ChatGPT
+ * @param {Vector3} start 
+ * @param {Vector3} end 
+ * @param {Vector3} target 
+ * @param {Number} horizontalTolerance 
+ * @param {Number} verticalTolerance 
+ * @returns {Boolean} Whether it intersected or not
+ */
+export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance) {
+    horizontalTolerance *= horizontalTolerance
+    const startHorizontalDistance = getDistance2DSq(start.x, start.z, target.x, target.z)
+    const startVerticalDistance = Settings().triggerFromBelow ? Math.abs(start.y - target.y) : start.y - target.y
+
+    const endHorizontalDistance = getDistance2DSq(end.x, end.z, target.x, target.z)
+    const endVerticalDistance = Settings().triggerFromBelow ? Math.abs(end.y - target.y) : end.y - target.y
+    if ((startHorizontalDistance <= horizontalTolerance && startVerticalDistance <= verticalTolerance && startVerticalDistance >= 0) || (endHorizontalDistance <= horizontalTolerance && endVerticalDistance <= verticalTolerance && endVerticalDistance >= 0)) return true
+
+    const direction = end.subtract(start).normalize()
+    const directionLength = direction.getLength()
+    const normalizedDirection = direction.normalize()
+
+    const toTarget = target.subtract(start)
+    const t = toTarget.x * normalizedDirection.x + toTarget.y * normalizedDirection.y + toTarget.z * normalizedDirection.z
+
+    if (t < 0 || t > directionLength) return false
+
+
+    const closestPoint = new Vector3(start.x + t * normalizedDirection.x, start.y + t * normalizedDirection.y, start.z + t * normalizedDirection.z)
+    const horizontalDistance = getDistance2DSq(closestPoint.x, closestPoint.z, target.x, target.z)
+    const yDistance = Settings().triggerFromBelow ? Math.abs(closestPoint.y - target.y) : closestPoint.y - target.y
+    return horizontalDistance <= horizontalTolerance && yDistance <= verticalTolerance && yDistance >= 0
+}

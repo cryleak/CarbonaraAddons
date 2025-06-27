@@ -6,32 +6,26 @@ import fakeKeybinds from "../utils/fakeKeybinds"
 import Blink from "./Blink"
 import Motion from "../utils/Motion"
 import LivingUpdate from "../events/LivingUpdate"
+import Vector3 from "../../BloomCore/utils/Vector3"
 
 import { clickAt } from "../utils/serverRotations"
-import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, getTermPhase, repressMovementKeys, termNames, setVelocity, findAirOpening, leftClick, setPlayerPositionNoInterpolation } from "../utils/autoP3Utils"
-import { chat, debugMessage, scheduleTask } from "../utils/utils"
-import { getDistance2D, getDistanceToCoord } from "../../BloomCore/utils/Utils"
+import { Terminal, jump, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, getTermPhase, repressMovementKeys, termNames, setVelocity, findAirOpening, leftClick, setPlayerPositionNoInterpolation, checkIntersection } from "../utils/autoP3Utils"
+import { chat, scheduleTask } from "../utils/utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { registerSubCommand } from "../utils/commands"
 
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
-const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
-const S2EPacketCloseWindow = Java.type("net.minecraft.network.play.server.S2EPacketCloseWindow")
-const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
 const activeBlinkRoutes = new Set()
 let inP3 = false
 let inBoss = false
 let awaitingTerminal = false
 let awaitingLeap = false
 let awaitLeapExcludeClass = ""
+let previousCoords = new Vector3(Player.x, Player.y, Player.z)
 
 register("renderWorld", () => {
     const settings = Settings()
-    if (!settings.autoP3Enabled) return
-    if (!World.isLoaded()) return
-    if (settings.onlyP3 && !inP3) return
-    if (!inBoss) return
-    if (!AutoP3Config.config) return
+    if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !inBoss || !AutoP3Config.config) return
     const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices
     for (let i = 0; i < AutoP3Config.config.length; i++) {
         let node = AutoP3Config.config[i]
@@ -68,49 +62,53 @@ register("renderWorld", () => {
             RenderLibV2.drawEspBox(packet2[0], packet2[1], packet2[2], 0.5, 0.5, 1, 0, 0, 1, true)
         }
     }
-    if (settings.editMode) return
-    executeNodes(playerCoords().camera)
+})
+
+register("tick", () => {
+    const settings = Settings()
+    if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !inBoss || !AutoP3Config.config || settings.editMode) return
+    executeNodes(playerCoords().player)
 })
 
 function executeNodes(playerPosition) {
-    if (awaitingTerminal || awaitingLeap) return
-    for (let i = 0; i < AutoP3Config.config.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
-        let node = AutoP3Config.config[i]
-        let nodePosition = node.position
-        let distance = getDistance2D(playerPosition[0], playerPosition[2], nodePosition[0], nodePosition[2])
-        let yDistance = Settings().triggerFromBelow ? Math.abs(playerPosition[1] - nodePosition[1]) : playerPosition[1] - nodePosition[1]
-        if (distance < node.radius && yDistance <= node.height && yDistance >= 0) {
-            if (node.triggered) continue
-            if (Date.now() - node.lastTriggered < 1000) continue
-            if (blinkingVelo && node.delay) continue
-            if (blinkingVelo && ["blink", "blinkvelo", "superboom", "useitem", "awaitterminal", "awaitleap"].includes(node.type)) continue
-            node.triggered = true
-            if (node.center) {
-                debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
-                Player.getPlayer().func_70107_b(nodePosition[0], nodePosition[1], nodePosition[2])
-                Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-            }
-            if (node.stop) {
-                Motion.running = false
-                releaseMovementKeys()
-                Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
-            }
-            let performNode = () => {
-                if (awaitingTerminal || awaitingLeap) {
-                    node.triggered = false
-                    return
+    if (!awaitingTerminal && !awaitingLeap) {
+        // Sort this shit because I need to trigger await nodes first and I no longer care about performance
+        const nodes = [...AutoP3Config.config].sort((a, b) => (a.type === "awaitterminal" || a.type === "awaitleap" ? -1 : (b.type === "awaitterminal" || b.type === "awaitleap" ? 1 : 0)))
+        for (let i = 0; i < nodes.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
+            let node = nodes[i]
+            let nodePosition = node.position
+            let hasPassedThroughRing = checkIntersection(previousCoords, new Vector3(...playerPosition), new Vector3(...nodePosition), node.radius, node.height)
+            if (hasPassedThroughRing) {
+                if (node.triggered) continue
+                if (Date.now() - node.lastTriggered < 1000) continue
+                if (blinkingVelo && node.delay) continue
+                if (blinkingVelo && ["blink", "blinkvelo", "superboom", "useitem", "awaitterminal", "awaitleap"].includes(node.type)) continue
+                node.triggered = true
+                if (node.center) {
+                    // debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
+                    Player.getPlayer().func_70107_b(nodePosition[0], nodePosition[1], nodePosition[2])
+                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
                 }
-                node.lastTriggered = Date.now()
-                if (node.look) rotate(node.yaw, node.pitch)
-                nodeTypes[node.type](node)
-            }
-            if (node.delay) scheduleTask(Math.ceil(parseInt(node.delay) / 50), performNode)
-            else {
-                if (blinkingVelo || node.type === "awaitterminal" || node.type === "awaitleap") performNode()
-                else scheduleTask(0, performNode)
-            }
-        } else if (!node.once) node.triggered = false
+                if (node.stop) {
+                    Motion.running = false
+                    releaseMovementKeys()
+                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                }
+                let performNode = () => {
+                    if (awaitingTerminal || awaitingLeap) {
+                        node.triggered = false
+                        return
+                    }
+                    node.lastTriggered = Date.now()
+                    if (node.look) rotate(node.yaw, node.pitch)
+                    nodeTypes[node.type](node)
+                }
+                if (node.delay) scheduleTask(Math.round(parseInt(node.delay) / 50), performNode)
+                else performNode()
+            } else if (!node.once) node.triggered = false
+        }
     }
+    previousCoords = new Vector3(Player.x, Player.y, Player.z)
 }
 
 const nodeTypes = {
@@ -371,6 +369,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     awaitingBlinkVelo = false
     if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
     if (blinkVeloTicks > global.cryleak.autop3.missingPackets.length) return chat("Not enough packets!")
+    const start = System.nanoTime()
 
     cancel(event)
     blinkingVelo = true
@@ -381,7 +380,8 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
         executeNodes(playerCoords().player)
     }
     setPlayerPositionNoInterpolation(Player.getX(), Player.getY(), Player.getZ())
-    chat(`Blinked ${blinkVeloTicks} physics ticks.`)
+    const end = System.nanoTime()
+    chat(`Blinked ${blinkVeloTicks} physics ticks. (Took ${(end - start) / 1000000}ms to calculate physics)`)
     global.cryleak.autop3.lastBlink = Date.now()
     blinkingVelo = false
 })
