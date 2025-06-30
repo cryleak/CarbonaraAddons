@@ -1,0 +1,41 @@
+
+// For those who want the bleeding edge
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'java' // Ensure Java plugin for JAR task
+
+version = "1.0"
+group = "me.cryleak.test"
+archivesBaseName = "SecretAuraScanner"
+
+sourceCompatibility = targetCompatibility = '1.8'
+
+minecraft {
+    version = "1.8.9-11.15.1.2318-1.8.9"
+    runDir = "run"
+    mappings = "stable_20" // Required for 1.8.9
+}
+
+jar {
+    destinationDir file('../features') // Outputs to parent directory
+    manifest {
+        attributes 'FMLModType': 'MOD'
+    }
+}
+
+reobf {
+    jar {
+        mappingType = 'searge' // Ensure reobfuscation with SRG mappings
+    }
+}
