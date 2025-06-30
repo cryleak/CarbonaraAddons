@@ -22,8 +22,6 @@ const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils"
 
 export default new class SecretAura {
     constructor() {
-        this.range = 6.0
-        this.skullRange = 4.5
         this.clickedBlocks = new HashSet()
         this.blocksToClick = []
         this.toggled = false
