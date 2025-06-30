@@ -128,7 +128,7 @@ function renderSquare(x, y, z, width, color, thickness, phase = true) {
 const codeToExec = []
 /**
  * Schedules a task to run in the specified number of ticks. This variant of scheduleTask lets you nest scheduleTasks inside of eachother. Note that it won't work if you trigger it inside a Client.scheduleTask.
- * @param {int} delay Delay in ticks
+ * @param {Number} delay Delay in ticks
  * @param {Function} task Code to execute
  */
 export function scheduleTask(delay, task) {
@@ -138,3 +138,5 @@ export function scheduleTask(delay, task) {
 register("tick", () => {
     while (codeToExec.length) codeToExec.shift()()
 }).setPriority(Priority.HIGHEST)
+
+export const getDistance2DSq = (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2

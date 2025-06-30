@@ -1,6 +1,8 @@
 
 import Settings from "../config"
-import { debugMessage, chat, scheduleTask } from "./utils"
+import Vector3 from "../../BloomCore/utils/Vector3"
+
+import { debugMessage, chat, getDistance2DSq } from "./utils"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
@@ -319,3 +321,42 @@ export function setPlayerPositionNoInterpolation(x, y, z) {
 
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy
+
+
+
+/**
+ * Checks if a straight line between a start and end vector intersects with an object of specified size, height and position.
+ * @author ChatGPT
+ * @param {Vector3} start 
+ * @param {Vector3} end 
+ * @param {Vector3} target 
+ * @param {Number} horizontalTolerance 
+ * @param {Number} verticalTolerance 
+ * @returns {Boolean} Whether it intersected or not
+ */
+export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance) {
+    horizontalTolerance *= horizontalTolerance
+
+    const isPointInBounds = (point) => {
+        const intersectedHorizontally = getDistance2DSq(point.x, point.z, target.x, target.z) <= horizontalTolerance
+        const verticalDist = Settings().triggerFromBelow ? Math.abs(point.y - target.y) : point.y - target.y
+        let intersectedVertically = verticalDist <= verticalTolerance && verticalDist >= 0
+        if (!intersectedVertically) {
+            const minY = Settings().triggerFromBelow ? Math.min(start.y, end.y) : start.y
+            const maxY = Settings().triggerFromBelow ? Math.max(start.y, end.y) : end.y
+            if (target.y >= minY && target.y <= maxY) intersectedVertically = true
+        }
+        return intersectedHorizontally && intersectedVertically
+    }
+
+    if (isPointInBounds(start) || isPointInBounds(end)) return true
+
+    const direction = end.subtract(start).normalize()
+    const dotProduct = target.subtract(start).dotProduct(direction)
+
+    if (dotProduct < 0 || dotProduct > direction.getLength()) return false
+
+    const closestPoint = new Vector3(start.x + dotProduct * direction.x, start.y + dotProduct * direction.y, start.z + dotProduct * direction.z)
+
+    return isPointInBounds(closestPoint)
+}
