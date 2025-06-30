@@ -17,8 +17,7 @@ public class SecretAura {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayerSP player = mc.thePlayer;
         Vec3 eyePosition = player.getPositionEyes(1f);
-        float scanRange = 6.0f;
-        float skullRange = 4.5f;
+        double scanRange = 6.0;
         BlockPos boxCorner1 = new BlockPos(eyePosition.xCoord - scanRange, eyePosition.yCoord - scanRange, eyePosition.zCoord - scanRange);
         BlockPos boxCorner2 = new BlockPos(eyePosition.xCoord + scanRange, eyePosition.yCoord + scanRange, eyePosition.zCoord + scanRange);
         Iterable<BlockPos> blocks = BlockPos.getAllInBox(boxCorner1, boxCorner2);
@@ -32,6 +31,7 @@ public class SecretAura {
             if (block instanceof BlockLever || block instanceof BlockChest || block instanceof BlockCompressedPowered && redstoneKeyPickedUp)
                 return currentBlock;
             else if (block instanceof BlockSkull) {
+                if (eyePosition.squareDistanceTo(new Vec3(currentBlock)) > 20.25) continue;
                 TileEntity tileEntity = mc.theWorld.getTileEntity(currentBlock);
                 if (!(tileEntity instanceof TileEntitySkull)) continue;
                 GameProfile profile = ((TileEntitySkull) tileEntity).getPlayerProfile();
