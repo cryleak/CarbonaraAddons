@@ -335,4 +335,5 @@ config
 
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")
+
 export default () => mySettings.settings

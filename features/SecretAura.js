@@ -3,7 +3,6 @@ import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"
 
-import { registerSubCommand } from "../utils/commands"
 import { chat } from "../utils/utils"
 import LivingUpdate from "../events/LivingUpdate"
 

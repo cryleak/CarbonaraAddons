@@ -1,5 +1,6 @@
 import Settings from "../config"
-import nodeCreation from "../nodeCreation"
+import nodeCreation, { availableArgs, nodeTypes } from "../nodeCreation"
+import AmaterasuUtils from "../utils/AmaterasuUtils"
 
 import { registerSubCommand } from "../utils/commands"
 import { playerCoords } from "../utils/autop3utils"
@@ -15,62 +16,8 @@ class AutoP3Config {
             this.config = []
         }
         this.defineTransientProperties()
-        this.nodeTypes = ["look", "walk", "useitem", "superboom", "motion", "stopvelocity", "fullstop", "blink", "blinkvelo", "jump", "hclip", "awaitterminal", "awaitleap", "lavaclip"]
-        this.availableArgs = new Map([
-            ["look", ["yaw", "pitch"]],
-            ["walk", []],
-            ["useitem", ["yaw", "pitch", "itemName"]],
-            ["superboom", ["yaw", "pitch"]],
-            ["motion", ["yaw", "pitch"]],
-            ["stopvelocity", []],
-            ["fullstop", []],
-            ["blink", ["blinkRoute"]],
-            ["blinkvelo", ["ticks", "awaitLavaBounce"]],
-            ["jump", []],
-            ["hclip", ["yaw", "jumpOnHClip"]],
-            ["awaitterminal", []],
-            ["awaitleap", ["excludeClass"]],
-            ["lavaclip", ["lavaClipDistance"]]
-        ])
         this.nodeCoords = null
         this.editingNodeIndex = null
-        this.editing = false
-        this.dependencyChecks = { // sigma
-            showBlinkRoute: data => data.type === 7,
-            showTicks: data => data.type === 8,
-            showAwaitLavaBounce: data => data.type === 8,
-            showItemName: data => data.type === 3,
-            showYaw: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("yaw") || data.look,
-            showPitch: data => this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.look,
-            showLook: data => !this.availableArgs.get(this.nodeTypes[data.type]).includes("pitch") || data.type === 4,
-            showExcludeClass: data => data.type === 12,
-            showJumpOnHClip: data => data.type === 10,
-            showLavaClipDistance: data => data.type === 13
-        }
-
-        register("guiClosed", (gui) => {
-            if (!this.editing) return
-            if (!(gui instanceof Java.type("gg.essential.vigilance.gui.SettingsGui"))) return
-            this.editing = false
-            this.addNode(nodeCreation, this.nodeCoords)
-        })
-
-        register("tick", () => {
-            if (!this.editing) return
-            let reopen = false
-            Object.getOwnPropertyNames(this.dependencyChecks).forEach(value => {
-                const state = this.dependencyChecks[value](nodeCreation)
-                if (nodeCreation[value] !== state) {
-                    reopen = true
-                    nodeCreation[value] = state
-                }
-            })
-            if (reopen) {
-                this.editing = false
-                nodeCreation.openGUI()
-                Client.scheduleTask(1, () => this.editing = true)
-            }
-        })
 
         registerSubCommand(["editnode", "en"], args => {
             let nearestNodeIndex
@@ -85,25 +32,27 @@ class AutoP3Config {
             this.editingNodeIndex = nearestNodeIndex
             this.nodeCoords = node.position
 
-            nodeCreation.blinkRoute = node.blinkRoute ?? ""
-            nodeCreation.ticks = node.ticks?.toString() ?? "15"
-            nodeCreation.center = node.center
-            nodeCreation.stop = node.stop
-            nodeCreation.radius = node.radius.toString()
-            nodeCreation.height = node.height.toString()
-            nodeCreation.type = this.nodeTypes.indexOf(node.type)
-            nodeCreation.itemName = node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting()
-            nodeCreation.yaw = node.yaw?.toString() ?? Player.getYaw().toFixed(3)
-            nodeCreation.pitch = node.pitch?.toString() ?? Player.getPitch().toFixed(3)
-            nodeCreation.delay = node.delay.toString()
-            nodeCreation.look = node.look ?? false
-            nodeCreation.once = node.once ?? false
-            nodeCreation.excludeClass = node.excludeClass
-            nodeCreation.jumpOnHClip = node.jumpOnHClip ?? false
-            nodeCreation.lavaClipDistance = node.lavaClipDistance?.toString() ?? "0"
-            nodeCreation.awaitLavaBounce = node.awaitLavaBounce ?? true
-            nodeCreation.openGUI()
-            Client.scheduleTask(1, () => this.editing = true)
+            AmaterasuUtils.setConfigValue("blinkRoute", node.blinkRoute ?? "")
+            AmaterasuUtils.setConfigValue("ticks", node.ticks?.toString() ?? "15")
+            AmaterasuUtils.setConfigValue("center", node.center)
+            AmaterasuUtils.setConfigValue("stop", node.stop)
+            AmaterasuUtils.setConfigValue("radius", node.radius.toString())
+            AmaterasuUtils.setConfigValue("height", node.height.toString())
+            AmaterasuUtils.setConfigValue("type", nodeTypes.indexOf(node.type))
+            AmaterasuUtils.setConfigValue("itemName", node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting())
+            AmaterasuUtils.setConfigValue("yaw", node.yaw?.toString() ?? Player.getYaw().toFixed(3))
+            AmaterasuUtils.setConfigValue("pitch", node.pitch?.toString() ?? Player.getPitch().toFixed(3))
+            AmaterasuUtils.setConfigValue("delay", node.delay.toString())
+            AmaterasuUtils.setConfigValue("look", node.look ?? false)
+            AmaterasuUtils.setConfigValue("once", node.once ?? false)
+            AmaterasuUtils.setConfigValue("excludeClass", node.excludeClass)
+            AmaterasuUtils.setConfigValue("jumpOnHClip", node.jumpOnHClip ?? false)
+            AmaterasuUtils.setConfigValue("lavaClipDistance", node.lavaClipDistance?.toString() ?? "0")
+            AmaterasuUtils.setConfigValue("awaitLavaBounce", node.awaitLavaBounce ?? true)
+            AmaterasuUtils.applyConfigChanges()
+
+            nodeCreation().getConfig().onCloseGui(() => this.onGuiClose())
+            nodeCreation().getConfig().openGui()
         }, args => this.config.map((_0, index) => index.toString()))
 
         registerSubCommand(["createnode", "cn", "addnode", "an"], args => {
@@ -127,7 +76,7 @@ class AutoP3Config {
 
             const type = args.shift()
             const argsObject = {
-                type: this.nodeTypes.indexOf(type),
+                type: nodeTypes.indexOf(type),
                 yaw: Player.getYaw().toFixed(3),
                 pitch: Player.getPitch().toFixed(3),
                 radius: 0.5,
@@ -197,8 +146,8 @@ class AutoP3Config {
             this.editingNodeIndex = null
             this.addNode(argsObject, playerCoords().camera)
         }, args => {
-            if (this.nodeTypes.includes(args[0])) return null
-            return this.nodeTypes
+            if (nodeTypes.includes(args[0])) return null
+            return nodeTypes
         })
 
         registerSubCommand(["deletenode", "dn", "removenode", "rn"], args => {
@@ -223,11 +172,11 @@ class AutoP3Config {
 
     addNode(args, pos) {
         if (Settings().centerNodes) pos[0] = Math.floor(pos[0]) + 0.5, pos[2] = Math.floor(pos[2]) + 0.5
-        const nodeType = this.nodeTypes[parseInt(args.type)]?.toLowerCase()
+        const nodeType = nodeTypes[parseInt(args.type)]?.toLowerCase()
         if (!nodeType) return chat("what the fuck is your nodetype")
 
 
-        const nodeSpecificArgs = this.availableArgs.get(nodeType) // Args specific to the current node type
+        const nodeSpecificArgs = availableArgs.get(nodeType) // Args specific to the current node type
 
 
         let node = { type: nodeType, position: pos, radius: parseFloat(args.radius), height: parseFloat(args.height), delay: parseInt(args.delay), stop: args.stop, center: args.center, once: args.once }
@@ -287,22 +236,32 @@ class AutoP3Config {
             }
         }))
     }
+
+    onGuiClose() {
+        try {
+            this.addNode(nodeCreation(), this.nodeCoords)
+        } catch (e) {
+            console.log(e)
+            chat("Error while editing node! Report this or something (/ct console js)")
+        }
+    }
 }
 
 export default new AutoP3Config()
 
-nodeCreation.blinkRoute = ""
-nodeCreation.ticks = "15"
-nodeCreation.center = false
-nodeCreation.stop = false
-nodeCreation.radius = "0.5"
-nodeCreation.height = "0.1"
-nodeCreation.type = 5
-nodeCreation.itemName = "Bonzo's Staff"
-nodeCreation.yaw = "0"
-nodeCreation.pitch = "0"
-nodeCreation.delay = "0"
-nodeCreation.look = false
-nodeCreation.once = true
-nodeCreation.excludeClass = "Mage"
-nodeCreation.jumpOnHClip = true
+AmaterasuUtils.setConfigValue("blinkRoute", "")
+AmaterasuUtils.setConfigValue("ticks", "15")
+AmaterasuUtils.setConfigValue("center", false)
+AmaterasuUtils.setConfigValue("stop", false)
+AmaterasuUtils.setConfigValue("radius", "0.5")
+AmaterasuUtils.setConfigValue("height", "0.1")
+AmaterasuUtils.setConfigValue("type", 5)
+AmaterasuUtils.setConfigValue("itemName", "Bonzo's Staff")
+AmaterasuUtils.setConfigValue("yaw", "0")
+AmaterasuUtils.setConfigValue("pitch", "0")
+AmaterasuUtils.setConfigValue("delay", "0")
+AmaterasuUtils.setConfigValue("look", false)
+AmaterasuUtils.setConfigValue("once", true)
+AmaterasuUtils.setConfigValue("excludeClass", "Mage")
+AmaterasuUtils.setConfigValue("jumpOnHClip", true)
+AmaterasuUtils.applyConfigChanges()
