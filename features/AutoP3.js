@@ -15,6 +15,7 @@ import { onChatPacket } from "../../BloomCore/utils/Events"
 import { registerSubCommand } from "../utils/commands"
 
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 const activeBlinkRoutes = new Set()
 let inP3 = false
 let inBoss = false
@@ -69,6 +70,10 @@ register("tick", () => {
     if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !inBoss || !AutoP3Config.config || settings.editMode) return
     executeNodes(playerCoords().player)
 })
+
+register("packetReceived", (packet, event) => { // Avoid checking for intersections when you get teleported by the server.
+    previousCoords = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e())
+}).setFilteredClass(S08PacketPlayerPosLook)
 
 function executeNodes(playerPosition) {
     if (!awaitingTerminal && !awaitingLeap) {
