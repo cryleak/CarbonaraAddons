@@ -67,10 +67,8 @@ export function makeConfig() {
             title: "Blink Velocity Ticks",
             description: "Ticks to blink.",
             category: "Route",
-            shouldShow: data => {
-                ChatLib.chat(availableArgs.get(nodeTypes[data.type]).includes("ticks"))
-                return availableArgs.get(nodeTypes[data.type]).includes("ticks")
-            }
+            shouldShow: data => availableArgs.get(nodeTypes[data.type]).includes("ticks")
+
         })
         .addSwitch({
             configName: "awaitLavaBounce",
