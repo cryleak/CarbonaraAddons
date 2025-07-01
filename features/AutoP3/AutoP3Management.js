@@ -1,11 +1,10 @@
-import Settings from "../config"
-import nodeCreation, { availableArgs, nodeTypes } from "../nodeCreation"
-import AmaterasuUtils from "../utils/AmaterasuUtils"
+import Settings from "../../config"
+import nodeCreation, { availableArgs, nodeTypes } from "./nodeCreation"
+import AmaterasuUtils from "./AmaterasuUtils"
 
-import { registerSubCommand } from "../utils/commands"
-import { playerCoords } from "../utils/autop3utils"
-import { chat } from "../utils/utils"
-import { getDistance3D } from "../../BloomCore/utils/Utils"
+import { registerSubCommand } from "../../utils/commands"
+import { chat, playerCoords } from "../../utils/utils"
+import { getDistance3D } from "../../../BloomCore/utils/Utils"
 class AutoP3Config {
     constructor() {
         // this.yawRequiredTypes = ["look", "useitem", "walk", "superboom"]

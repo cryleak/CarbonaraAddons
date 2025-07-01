@@ -1,5 +1,5 @@
 import Settings from "../config"
-import { setVelocity } from "./autoP3Utils"
+import { setVelocity } from "../utils/utils"
 import LivingUpdate from "../events/LivingUpdate"
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")

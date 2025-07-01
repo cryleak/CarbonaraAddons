@@ -1,6 +1,8 @@
 import Settings from "../config"
+import Vector3 from "../../BloomCore/utils/Vector3"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
+const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
 
 
 const defaultColor = "§f"
@@ -142,9 +144,256 @@ register("tick", () => {
 export const getDistance2DSq = (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2
 
 export function getYawBetweenPoints(from, to) {
-	const MathHelper = Java.type("net.minecraft.util.MathHelper");
-	const MathJava = Java.type("java.lang.Math");
+    const MathHelper = Java.type("net.minecraft.util.MathHelper");
+    const MathJava = Java.type("java.lang.Math");
 
-	let yaw = -90.0 - MathJava.toDegrees(MathJava.atan2(-(to.z - from.z), to.x - from.x));
-	return yaw;
+    let yaw = -90.0 - MathJava.toDegrees(MathJava.atan2(-(to.z - from.z), to.x - from.x));
+    return yaw;
 }
+
+/**
+ * Checks if a straight line between a start and end vector intersects with an object of specified size, height and position.
+ * @author ChatGPT
+ * @param {Vector3} start 
+ * @param {Vector3} end 
+ * @param {Vector3} target 
+ * @param {Number} horizontalTolerance 
+ * @param {Number} verticalTolerance 
+ * @returns {Boolean} Whether it intersected or not
+ */
+export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance) {
+    horizontalTolerance *= horizontalTolerance
+
+    const isPointInBounds = (point) => {
+        const intersectedHorizontally = getDistance2DSq(point.x, point.z, target.x, target.z) <= horizontalTolerance
+        const verticalDist = Settings().triggerFromBelow ? Math.abs(point.y - target.y) : point.y - target.y
+        let intersectedVertically = verticalDist <= verticalTolerance && verticalDist >= 0
+        if (!intersectedVertically) {
+            const minY = Settings().triggerFromBelow ? Math.min(start.y, end.y) : start.y
+            const maxY = Settings().triggerFromBelow ? Math.max(start.y, end.y) : end.y
+            if (target.y >= minY && target.y <= maxY) intersectedVertically = true
+        }
+        return intersectedHorizontally && intersectedVertically
+    }
+
+    if (isPointInBounds(start) || isPointInBounds(end)) return true
+
+    const direction = end.subtract(start).normalize()
+    const dotProduct = target.subtract(start).dotProduct(direction)
+
+    if (dotProduct < 0 || dotProduct > direction.getLength()) return false
+
+    const closestPoint = new Vector3(start.x + dotProduct * direction.x, start.y + dotProduct * direction.y, start.z + dotProduct * direction.z)
+
+    return isPointInBounds(closestPoint)
+}
+
+export function setPlayerPositionNoInterpolation(x, y, z) {
+    const player = Player.getPlayer()
+    player.func_70107_b(x, y, z)
+    player.field_70169_q = x
+    player.field_70142_S = x
+    player.field_70167_r = y
+    player.field_70137_T = y
+    player.field_70166_s = z
+    player.field_70136_U = z
+}
+
+export function getDistanceToEntity(entity) {
+    if (entity instanceof Entity) entity = entity.getEntity()
+    return Player.getPlayer().func_70032_d(entity)
+}
+
+export const findAirOpening = () => {
+    const playerPos = [Math.floor(Player.getX()), Math.floor(Player.getY()), Math.floor(Player.getZ())]
+    for (let i = Math.floor(playerPos[1]); i > 0; i--) {
+        let block1 = World.getBlockAt(playerPos[0], i, playerPos[2]).type.getID()
+        let block2 = World.getBlockAt(playerPos[0], i - 1, playerPos[2]).type.getID()
+        let block3 = World.getBlockAt(playerPos[0], i - 2, playerPos[2]).type.getID()
+        if (block1 === 0 && block2 === 0 && block3 !== 0) return i - 1
+    }
+    return null
+}
+
+export function setVelocity(x, y, z) {
+    if (typeof x === "number") Player.getPlayer().field_70159_w = x
+    if (typeof y === "number") Player.getPlayer().field_70181_x = y
+    if (typeof z === "number") Player.getPlayer().field_70179_y = z
+}
+
+const rightClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147121_ag", null)
+rightClickMethod.setAccessible(true);
+export const rightClick = () => rightClickMethod.invoke(Client.getMinecraft(), null);
+
+const PlayerControllerMP = Java.type("net.minecraft.client.multiplayer.PlayerControllerMP")
+
+const syncCurrentPlayItemMethod = PlayerControllerMP.class.getDeclaredMethod("func_78750_j")
+syncCurrentPlayItemMethod.setAccessible(true)
+export const syncCurrentPlayItem = () => syncCurrentPlayItemMethod.invoke(Client.getMinecraft().field_71442_b, null)
+
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+/**
+ * Sends a C08 with no target block.
+ * @param {Function} exec A specified function to run before the C08 is sent
+ * @returns Success of the air click, false if it didn't click, true if it did
+ */
+export const sendAirClick = (exec) => {
+    if (exec) exec()
+    syncCurrentPlayItem() // sends c09 if you arent holding the correct item already
+    Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
+    return true
+}
+
+export const getEyeHeightSneaking = () => { // Peak schizo
+    return 1.5399999618530273
+}
+
+export const getEyeHeight = () => {
+    return Player.getPlayer().func_70047_e()
+}
+
+export const releaseMovementKeys = () => {
+    WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, false))
+    wrappedWASDKeys.forEach(keybind => keybind.setState(false)) // I have no clue if this does anything but keybind behavior is so fucking weird
+}
+
+export const WASDKeys = [
+    Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i()
+]
+
+export const wrappedWASDKeys = [
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74351_w),
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74370_x),
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74366_z),
+    new KeyBind(Client.getMinecraft().field_71474_y.field_74368_y)
+]
+
+export const movementKeys = [
+    Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74370_x.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74366_z.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74368_y.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74314_A.func_151463_i(),
+    Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i()
+]
+export const repressMovementKeys = () => WASDKeys.forEach(keybind => KeyBinding.func_74510_a(keybind, Keyboard.isKeyDown(keybind)))
+
+export const sneakKey = Client.getMinecraft().field_71474_y.field_74311_E.func_151463_i()
+const sneakKeybind = new KeyBind(Client.getMinecraft().field_71474_y.field_74311_E)
+
+let desiredState = false
+export const getDesiredSneakState = () => {
+    return desiredState
+}
+
+export const setSneaking = (state) => {
+    desiredState = state
+    sneakKeybind.setState(state)
+    KeyBinding.func_74510_a(sneakKey, state)
+}
+
+register("worldUnload", () => desiredState = false)
+
+export const setWalking = (state) => KeyBinding.func_74510_a(Client.getMinecraft().field_71474_y.field_74351_w.func_151463_i(), state)
+
+/**
+ * Calculates yaw and pitch of a specified block from the player position
+ * @param {Number} x 
+ * @param {Number} y 
+ * @param {Number} z 
+ * @param {Number} sneaking - Whether to calculate based off the fact that you are sneaking or not, otherwise it uses eye height
+ * @returns The yaw and pitch to aim at the specified coordinates.
+ */
+export const calcYawPitch = (x, y, z, sneaking = false) => {
+    let d = {
+        x: x - Player.getX(),
+        y: y - (Player.getY() + (sneaking ? getEyeHeightSneaking() : getEyeHeight())),
+        z: z - Player.getZ()
+    }
+    let yaw = 0
+    let pitch = 0
+    if (d.x != 0) {
+        if (d.x < 0) { yaw = 1.5 * Math.PI; } else { yaw = 0.5 * Math.PI; }
+        yaw = yaw - Math.atan(d.z / d.x)
+    } else if (d.z < 0) { yaw = Math.PI }
+    d.xz = Math.sqrt(Math.pow(d.x, 2) + Math.pow(d.z, 2))
+    pitch = -Math.atan(d.y / d.xz)
+    yaw = -yaw * 180 / Math.PI
+    pitch = pitch * 180 / Math.PI
+    if (pitch < -90 || pitch > 90 || isNaN(yaw) || isNaN(pitch) || yaw == null || pitch == null || yaw == undefined || pitch == null) return;
+
+    return { yaw, pitch }
+
+}
+
+/**
+ * Gets the player coordinates
+ * @returns An object containing the current coordinates of the Player and the camera
+ */
+export const playerCoords = () => {
+    return {
+        camera: [renderManager.field_78730_l, renderManager.field_78731_m, renderManager.field_78728_n],
+        player: [Player.getX(), Player.getY(), Player.getZ()]
+    }
+}
+
+/**
+ * Rotates the camera clientside to a specified yaw and pitch. Will also update serverside rotation on the next tick if nothing else is affecting it.
+ * @param {Number} origYaw - Yaw 
+ * @param {Number} origPitch - Pitch
+ * @returns 
+ */
+export function rotate(origYaw, origPitch) {
+    const player = Player.getPlayer()
+
+    const yaw = parseFloat(origYaw)
+    const pitch = parseFloat(origPitch)
+    if (!yaw && yaw !== 0 || !pitch && pitch !== 0) return chat("Invalid rotation!")
+    player.field_70177_z = parseFloat(yaw)
+    player.field_70125_A = parseFloat(pitch)
+}
+
+/**
+ * Swaps to an item in your hotbar with the specified name.
+ * @param {String} targetItemName - Target item name
+ * @returns An array containing 2 items: the success of the swap and the slot index.
+ */
+export const swapFromName = (targetItemName) => {
+    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(targetItemName.removeFormatting().toLowerCase()))
+    if (itemSlot === -1 || itemSlot > 7) {
+        chat(`Unable to find "${targetItemName}" in your hotbar`)
+        return ["CANT_FIND", itemSlot]
+    } else {
+        return swapToSlot(itemSlot)
+    }
+}
+
+/**
+ * Swaps to an item in your hotbar with the specified Item ID.
+ * @param {String} targetItemID - Target Item ID
+ * @returns An array containing 2 items: the success of the swap and the slot index.
+ */
+export const swapFromItemID = (targetItemID) => {
+    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getID() == targetItemID)
+    if (itemSlot === -1 || itemSlot > 7) {
+        chat(`Unable to find Item ID ${targetItemID} in your hotbar`)
+        return ["CANT_FIND", itemSlot]
+    } else {
+        return swapToSlot(itemSlot)
+    }
+}
+
+let lastSwap = Date.now()
+const swapToSlot = (slot) => {
+    if (Player.getHeldItemIndex() === slot) return ["ALREADY_HOLDING", slot]
+    debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
+    lastSwap = Date.now()
+    Player.setHeldItemIndex(slot)
+    return ["SWAPPED", slot]
+}
+
+global.System = Java.type("java.lang.System")
+global.loadct = ChatTriggers.loadCT // HEre cause im lazy

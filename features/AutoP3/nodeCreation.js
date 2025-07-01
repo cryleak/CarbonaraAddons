@@ -1,5 +1,5 @@
-import DefaultConfig from "../Amaterasu/core/DefaultConfig"
-import Settings from "../Amaterasu/core/Settings"
+import DefaultConfig from "../../../Amaterasu/core/DefaultConfig"
+import Settings from "../../../Amaterasu/core/Settings"
 
 export const availableArgs = new Map([
     ["look", ["yaw", "pitch"]],
