@@ -3,7 +3,7 @@ import nodeCreation, { availableArgs, nodeTypes } from "./nodeCreation"
 import AmaterasuUtils from "./AmaterasuUtils"
 
 import { registerSubCommand } from "../../utils/commands"
-import { chat, playerCoords } from "../../utils/utils"
+import { chat, clampYaw, playerCoords } from "../../utils/utils"
 import { getDistance3D } from "../../../BloomCore/utils/Utils"
 class AutoP3Config {
     constructor() {

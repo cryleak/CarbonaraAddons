@@ -152,6 +152,15 @@ export function getYawBetweenPoints(from, to) {
 }
 
 /**
+ * Clamps the yaw to between -180 and 180.
+ * @param {Number} yaw 
+ * @returns {Number} clampedYaw
+ */
+export function clampYaw(yaw) {
+    return ((yaw + 180) % 360 + 360) % 360 - 180
+}
+
+/**
  * Checks if a straight line between a start and end vector intersects with an object of specified size, height and position.
  * @author ChatGPT
  * @param {Vector3} start 
