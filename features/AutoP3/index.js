@@ -1,6 +1,6 @@
 import "./ConfigConverter"
 
-import RenderLibV2 from "../../../RenderLibV2"
+import RenderLibV2 from "../../../RenderLibV2J"
 import Settings from "../../config"
 import AutoP3Config from "./AutoP3Management"
 import Dungeons from "../../utils/Dungeons"
@@ -52,7 +52,8 @@ register("renderWorld", () => {
                 let packet1 = packets[i]
                 let packet2 = packets[i + 1]
                 if (!packet1 || !packet2) continue
-                RenderLibV2.drawLine(packet1[0], packet1[1], packet1[2], packet2[0], packet2[1], packet2[2], 1, 1, 1, 1, 1, false)
+                //     drawLine(double x1, double y1, double z1, double x2, double y2, double z2, float red, float green, float blue, float alpha, boolean phase) {
+                RenderLibV2.drawLine(packet1[0], packet1[1], packet1[2], packet2[0], packet2[1], packet2[2], 1, 1, 1, 1, false, 2)
             }
             let packet1 = packets[0]
             let packet2 = packets[packets.length - 1]
@@ -376,8 +377,8 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     if (event.entity !== Player.getPlayer()) return
     if (!awaitingBlinkVelo) return
     awaitingBlinkVelo = false
-    if (!global.cryleak.autop3.blinkEnabled) return chat("Blink is disabled!")
-    if (blinkVeloTicks > global.cryleak.autop3.missingPackets.length) return chat("Not enough packets!")
+    if (!global.carbonara.autop3.blinkEnabled) return chat("Blink is disabled!")
+    if (blinkVeloTicks > global.carbonara.autop3.missingPackets.length) return chat("Not enough packets!")
     const start = System.nanoTime()
 
     cancel(event)
@@ -391,6 +392,6 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     setPlayerPositionNoInterpolation(Player.getX(), Player.getY(), Player.getZ())
     const end = System.nanoTime()
     chat(`Blinked ${blinkVeloTicks} physics ticks. (Took ${(end - start) / 1000000}ms to calculate physics)`)
-    global.cryleak.autop3.lastBlink = Date.now()
+    global.carbonara.autop3.lastBlink = Date.now()
     blinkingVelo = false
 })

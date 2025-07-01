@@ -9,11 +9,11 @@ import OnUpdateWalkingPlayerPre from "../../events/onUpdateWalkingPlayerPre"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")
-global.cryleak ??= {}
-global.cryleak.autop3 ??= {}
-global.cryleak.autop3.lastBlink = Date.now()
-global.cryleak.autop3.missingPackets = []
-global.cryleak.autop3.blinkEnabled = false
+global.carbonara ??= {}
+global.carbonara.autop3 ??= {}
+global.carbonara.autop3.lastBlink = Date.now()
+global.carbonara.autop3.missingPackets = []
+global.carbonara.autop3.blinkEnabled = false
 
 class Blink {
     constructor() {
@@ -36,17 +36,17 @@ class Blink {
 
         register("tick", () => {
             const packetsGained = 1 - this.movementPacketsSent
-            if (packetsGained < 0) for (let i = 0; i < Math.abs(packetsGained); i++) global.cryleak.autop3.missingPackets.pop()
-            else for (let i = 0; i < packetsGained; i++) global.cryleak.autop3.missingPackets.push(Date.now())
+            if (packetsGained < 0) for (let i = 0; i < Math.abs(packetsGained); i++) global.carbonara.autop3.missingPackets.pop()
+            else for (let i = 0; i < packetsGained; i++) global.carbonara.autop3.missingPackets.push(Date.now())
 
 
             this.movementPacketsSent = 0
-            while (Date.now() - global.cryleak.autop3.missingPackets[0] > 120000) global.cryleak.autop3.missingPackets.shift()
+            while (Date.now() - global.carbonara.autop3.missingPackets[0] > 120000) global.carbonara.autop3.missingPackets.shift()
         })
 
         registerSubCommand("spawnpackets", () => {
             const time = Date.now() + 1000000000
-            global.cryleak.autop3.missingPackets = new Array(100000).fill(time)
+            global.carbonara.autop3.missingPackets = new Array(100000).fill(time)
             chat("Spawned 100000 permanent packets. Is this enough?")
         })
 
@@ -67,9 +67,9 @@ class Blink {
                 Renderer.drawString(text, Renderer.screen.getWidth() * this.data.packetCounter.x, Renderer.screen.getHeight() * this.data.packetCounter.y)
                 return
             }
-            if (!global.cryleak.autop3.blinkEnabled) return
+            if (!global.carbonara.autop3.blinkEnabled) return
             Renderer.scale(this.data.packetCounter.scale)
-            const text = `${global.cryleak.autop3.missingPackets.length}`
+            const text = `${global.carbonara.autop3.missingPackets.length}`
             Renderer.drawString(text, Renderer.screen.getWidth() * this.data.packetCounter.x, Renderer.screen.getHeight() * this.data.packetCounter.y)
         })
 
@@ -91,16 +91,16 @@ class Blink {
             this.data.save()
         })
 
-        fakeKeybinds.onKeyPress("packetChargeKeybind", () => this.toggleCharge(!global.cryleak.autop3.blinkEnabled))
+        fakeKeybinds.onKeyPress("packetChargeKeybind", () => this.toggleCharge(!global.carbonara.autop3.blinkEnabled))
 
         registerSubCommand(["togglecharge"], (args) => {
             if (args.length && args[0]) this.toggleCharge(args[0] === "true")
-            else this.toggleCharge(!global.cryleak.autop3.blinkEnabled)
+            else this.toggleCharge(!global.carbonara.autop3.blinkEnabled)
         })
 
         this.packetCollector = OnUpdateWalkingPlayerPre.register(event => {
             const packet = event.data.packet
-            if (Settings().pauseCharging && Date.now() - global.cryleak.autop3.lastBlink < 1000) return
+            if (Settings().pauseCharging && Date.now() - global.carbonara.autop3.lastBlink < 1000) return
             if (this.recordingRouteName) return
 
             let cancelPacket = true
@@ -175,10 +175,10 @@ class Blink {
         })
 
         register("worldUnload", () => {
-            global.cryleak.autop3.missingPackets = []
+            global.carbonara.autop3.missingPackets = []
             this.recordingRouteName = null
             this.packetLogger.unregister()
-            global.cryleak.autop3.blinkEnabled = false
+            global.carbonara.autop3.blinkEnabled = false
             this.packetCollector.unregister()
         })
 
@@ -189,19 +189,19 @@ class Blink {
     }
 
     toggleCharge(state) {
-        global.cryleak.autop3.blinkEnabled = state
-        if (global.cryleak.autop3.blinkEnabled) this.packetCollector.register()
+        global.carbonara.autop3.blinkEnabled = state
+        if (global.carbonara.autop3.blinkEnabled) this.packetCollector.register()
         else this.packetCollector.unregister()
     }
 
 
     executeBlink(blinkroute, ignoreToggleState = false) {
-        if (!global.cryleak.autop3.blinkEnabled && !ignoreToggleState) return chat("Blink is disabled!")
+        if (!global.carbonara.autop3.blinkEnabled && !ignoreToggleState) return chat("Blink is disabled!")
 
         const packets = this.blinkRoutes[blinkroute + ".sereniblink"]
         if (!packets) return chat(`Can't find route "${blinkroute}".`)
 
-        if (packets.length > global.cryleak.autop3.missingPackets.length) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
+        if (packets.length > global.carbonara.autop3.missingPackets.length) return chat(`Not enough packets saved! Required packets: ${packets.length}`)
 
 
         for (let i = 0; i < packets.length; i++) {
@@ -218,7 +218,7 @@ class Blink {
             setVelocity(...motion)
         }
         chat(`Blinked with ${packets.length} packets.`)
-        global.cryleak.autop3.lastBlink = Date.now()
+        global.carbonara.autop3.lastBlink = Date.now()
     }
 
     renameFile(oldname, newname) {

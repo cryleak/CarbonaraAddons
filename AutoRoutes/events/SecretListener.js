@@ -3,13 +3,14 @@ import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/u
 import { movementKeys } from "../utils/RouteUtils"
 import { scheduleTask } from "../utils/utils"
 import { Event } from "../../CarbonaraAddons/events/CustomEvents"
+import { SecretAuraBlockClickEventPost } from "../../events/SecretAuraBlockClick"
 
 export const SecretEvent = new Event();
 export const BatSpawnEvent = new Event();
 
 let moveKeyCooldown = Date.now()
 
-global.cryleak.secretauraclickeventpost.register(event => {
+SecretAuraBlockClickEventPost.register(event => {
     // send fake useitem
     Client.sendPacket(new C08PacketPlayerBlockPlacement(event.itemStack));
 
