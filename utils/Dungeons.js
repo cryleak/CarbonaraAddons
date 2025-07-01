@@ -3,6 +3,7 @@ import Vector3 from "../../BloomCore/utils/Vector3.js"
 
 import { onScoreboardLine } from "../../BloomCore/utils/Events"
 import { removeUnicode } from "../../BloomCore/utils/Utils"
+import { clampYaw } from "./utils.js"
 
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
 
@@ -113,7 +114,7 @@ export default new class Dungeons {
         const currRoom = this.getCurrentRoom()
         if (!currRoom) return yaw
         const roomRotation = currRoom.rotation
-        return yaw + (rotationNumber.get(roomRotation.toString()) * 90)
+        return clampYaw(yaw + (rotationNumber.get(roomRotation.toString()) * 90))
     }
 
     /**
@@ -125,7 +126,7 @@ export default new class Dungeons {
         const currRoom = this.getCurrentRoom()
         if (!currRoom) return yaw
         const roomRotation = currRoom.rotation
-        return yaw - (rotationNumber.get(roomRotation.toString()) * 90)
+        return clampYaw(yaw - (rotationNumber.get(roomRotation.toString()) * 90))
     }
 
     /**
