@@ -1,5 +1,9 @@
 import { CancellableEvent } from './CustomEvents.js';
 
-export default const SecretAuraBlockClickEvent = new CancellableEvent();
+const SecretAuraBlockClickEventPre = new CancellableEvent();
+const SecretAuraBlockClickEventPost = new CancellableEvent();
 
-global.cryleak.secretauraclickevent = SecretAuraBlockClickEvent;
+global.cryleak.secretauraclickeventpre = SecretAuraBlockClickEventPre;
+global.cryleak.secretauraclickeventpost = SecretAuraBlockClickEventPost;
+
+export { SecretAuraBlockClickEventPre, SecretAuraBlockClickEventPost };

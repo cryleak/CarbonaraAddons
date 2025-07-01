@@ -2,7 +2,7 @@ import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"
-import SecretAuraBlockClickEvent from '../events/SecretAuraBlockClick.js';
+import { SecretAuraBlockClickEventPre, SecretAuraBlockClickEventPost } from '../events/SecretAuraBlockClick.js';
 
 import { chat } from "../utils/utils"
 import LivingUpdate from "../events/LivingUpdate"
@@ -120,12 +120,18 @@ export default new class SecretAura {
         const movingObjectPosition = block./* collisionRayTrace */func_180636_a(World.getWorld(), blockPos, eyePosition, centerPosition)
         let [mopBlockPos, entityHit, hitVec, sideHit, typeOfHit] = [movingObjectPosition./* blockPos */field_178783_e, movingObjectPosition./* entityHit */field_72308_g, movingObjectPosition./* hitVec */field_72307_f./* subtract */func_178788_d(blockPosVec3), movingObjectPosition./* sideHit */field_178784_b, movingObjectPosition./* typeOfHit */field_72313_a]
 
-        if (!SecretAuraBlockClickEvent.trigger({block, blockPos, sideHit})) {
+        const itemStack = Player.getHeldItem()?.getItemStack() ?? null
+
+        if (!SecretAuraBlockClickEventPre.trigger({block, blockPos, sideHit, itemStack})) {
             return
         }
 
-        Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit./* getIndex */func_176745_a(), Player.getHeldItem()?.getItemStack() ?? null, hitVec./* xCoord */field_72450_a, hitVec./* yCoord */field_72448_b, hitVec./* zCoord */field_72449_c))
+        Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit./* getIndex */func_176745_a(), itemStack, hitVec./* xCoord */field_72450_a, hitVec./* yCoord */field_72448_b, hitVec./* zCoord */field_72449_c))
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
         if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))
+
+        if (!SecretAuraBlockClickEventPost.trigger({block, blockPos, sideHit, itemStack})) {
+            return
+        }
     }
 }
