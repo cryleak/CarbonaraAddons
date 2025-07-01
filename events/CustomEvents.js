@@ -4,6 +4,10 @@ export class Event {
 		this.tasks = [];
 	}
 
+	hasListeners() {
+		return this.listeners.length > 0 || this.tasks.length > 0;
+	}
+
 	scheduleTask(delay, func) {
 		this.tasks.push({ func, delay });
 	}

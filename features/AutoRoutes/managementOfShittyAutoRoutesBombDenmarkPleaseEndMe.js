@@ -1,76 +1,9 @@
-import { nodeTypes, availableArgs } from "../nodeCreation"
-import { chat } from "../utils/utils"
-import { convertToRelative, convertFromRelative, getRoomName, convertToRelativeYaw, convertToRealYaw } from "../utils/RoomUtils"
-import { playerCoords, rayTraceEtherBlock } from "../utils/RouteUtils"
-import { data } from "../utils/routesData"
+import { nodeTypes, availableArgs } from "../../AutoRoutes/nodeCreation"
+import { chat } from "../../AutoRoutes/utils/utils"
+import { convertToRelative, convertFromRelative, getRoomName, convertToRelativeYaw, convertToRealYaw } from "./RoomUtils"
+import { playerCoords, rayTraceEtherBlock } from "../../AutoRoutes/utils/RouteUtils"
+import { data } from "../../AutoRoutes/utils/routesData"
 import { getDistance3D } from "../../BloomCore/utils/utils"
-import nodeCreation from "../nodeCreation"
-
-const dependencyChecks = { // sigma
-    showItemName: (data) => data.type === 2,
-    showStopSneaking: (data) => data.type === 2,
-    showEtherCoordMode: (data) => data.type === 1,
-    showYaw: (data) => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4,
-    showPitch: (data) => data.type === 0 || data.type === 1 && data.etherCoordMode === 1 || data.type === 2 || data.type === 3 || data.type === 4,
-    showEtherBlock: (data) => data.type === 1 && (data.etherCoordMode === 0 || data.etherCoordMode === 2),
-    showAwaitSecret: (data) => !data.awaitBatSpawn || data.type !== 2,
-    showAwaitBatSpawn: (data) => !data.awaitSecret && data.type === 2,
-    showPearlClipDistance: (data) => data.type === 5,
-    showCommandArgs: (data) => data.type === 6,
-    showBlockArg: (data) => data.type === 1 && (data.etherCoordMode === 0 || data.etherCoordMode === 2)
-}
-
-let nodeCoords = null
-let editingNodeIndex = null
-let editing = false
-
-register("guiClosed", (gui) => {
-    if (!editing) return
-    if (!(gui instanceof Java.type("gg.essential.vigilance.gui.SettingsGui"))) return
-    editing = false
-    addNode(nodeCreation, nodeCoords)
-})
-
-register("tick", () => {
-    if (!editing) return
-    let reopen = false
-    Object.getOwnPropertyNames(dependencyChecks).forEach(value => {
-        const state = dependencyChecks[value](nodeCreation)
-        if (nodeCreation[value] !== state) {
-            reopen = true
-            nodeCreation[value] = state
-        }
-    })
-    if (reopen) {
-        editing = false
-        nodeCreation.openGUI()
-        Client.scheduleTask(1, () => editing = true)
-    }
-})
-
-register("command", () => {
-    nodeCoords = playerCoords().camera
-    editingNodeIndex = null
-
-    nodeCreation.center = false
-    nodeCreation.stop = false
-    nodeCreation.itemName = Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void"
-    nodeCreation.etherCoordMode = 2
-    nodeCreation.yaw = Player.getYaw().toFixed(3)
-    nodeCreation.pitch = Player.getPitch().toFixed(3)
-    nodeCreation.etherBlock = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0"
-    nodeCreation.awaitSecret = false
-    nodeCreation.awaitBatSpawn = false
-    nodeCreation.commandArgs = ""
-    nodeCreation.delay = "0"
-    nodeCreation.pearlClipDistance = "20"
-    nodeCreation.block = false
-
-
-
-    nodeCreation.openGUI()
-    Client.scheduleTask(1, () => editing = true)
-}).setName("createnodegui").setAliases("cngui")
 
 register("command", (...args) => { // this is terrible
     if (!args.length || !args[0]) return chat([
@@ -177,52 +110,6 @@ register("command", (...args) => { // this is terrible
     addNode(argsObject, playerCoords().camera)
 }).setName("createnode").setAliases("cn")
 
-register("command", (...args) => {
-    const roomNodes = data.nodes[getRoomName()]
-    if (!roomNodes || !roomNodes.length) return chat("No nodes found for this room!")
-
-    let nearestNodeIndex
-    let yaw
-    if (args && args.length) {
-        const index = args.shift()
-        if (!isNaN(index)) nearestNodeIndex = parseInt(index)
-        else if (args.some(arg => arg.includes("resetrot"))) yaw = Player.getYaw().toFixed(3)
-    }
-    if (!nearestNodeIndex) nearestNodeIndex = getNearestNodeIndex()
-
-    const node = roomNodes[nearestNodeIndex]
-    if (!node) return chat("Node doesn't exist!")
-    if (!yaw) yaw = (convertToRealYaw(node.yaw) ?? Player.getYaw()).toFixed(3)
-    editingNodeIndex = nearestNodeIndex
-    nodeCoords = convertFromRelative(node.position)
-    nodeCoords[1] = Math.floor(nodeCoords[1]) + node.yOffset
-
-
-    nodeCreation.center = node.center
-    nodeCreation.stop = node.stop
-    nodeCreation.radius = node.radius
-    nodeCreation.height = node.height.toString()
-    nodeCreation.type = nodeTypes.indexOf(node.type)
-    nodeCreation.yaw = yaw
-    nodeCreation.pitch = (parseFloat(node.pitch) ?? Player.getPitch()).toFixed(3)
-    const prediction = rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch()) ?? "0,0,0"
-    const etherBlock = convertFromRelative(node.etherBlock) ?? prediction
-    nodeCreation.itemName = node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting()
-    nodeCreation.stopSneaking = node.stopSneaking ?? false
-    nodeCreation.awaitBatSpawn = node.awaitBatSpawn ?? false
-    nodeCreation.etherCoordMode = node.etherCoordMode ?? 0
-    nodeCreation.etherBlock = etherBlock?.toString() ?? "0,0,0"
-    nodeCreation.awaitSecret = node.awaitSecret ?? false
-    nodeCreation.commandArgs = node.commandArgs ?? ""
-    nodeCreation.delay = node.delay?.toString() ?? "0"
-    nodeCreation.pearlClipDistance = node.pearlClipDistance ?? "0"
-    nodeCreation.chained = node.chained ?? false
-    nodeCreation.block = node.block ?? false
-
-    nodeCreation.openGUI()
-    Client.scheduleTask(1, () => editing = true)
-}).setName("editnode").setAliases("en")
-
 register("command", (index) => {
     const roomNodes = data.nodes[getRoomName()]
     if (!roomNodes || !roomNodes.length) return chat("No nodes found for this room!")
@@ -295,23 +182,3 @@ function getNearestNodeIndex() {
     const sortedNodeDistances = nodeDistances.sort((a, b) => a.distance - b.distance)
     return sortedNodeDistances[0].nodeIndex
 }
-
-
-
-// Reset everything
-nodeCreation.center = false
-nodeCreation.stop = false
-nodeCreation.radius = 0.5
-nodeCreation.height = "0.1"
-nodeCreation.type = 0
-nodeCreation.itemName = Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void"
-nodeCreation.stopSneaking = false
-nodeCreation.etherCoordMode = 2
-nodeCreation.yaw = 0
-nodeCreation.pitch = 0
-nodeCreation.etherBlock = "0,0,0"
-nodeCreation.awaitSecret = false
-nodeCreation.commandArgs = ""
-nodeCreation.delay = 0
-nodeCreation.pearlClipDistance = 20
-nodeCreation.chained = false
