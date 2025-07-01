@@ -2,7 +2,8 @@ import Settings from "../config"
 import LeapHelper from "../utils/leapUtils"
 import Dungeons from "../utils/Dungeons"
 
-import { Terminal, getHeldItemID, getTermPhase, playerCoords, sendAirClick } from "../utils/autop3utils"
+import { getTermPhase, Terminal } from "./AutoP3/autoP3Utils"
+import { getHeldItemID, playerCoords, sendAirClick } from "../utils/utils"
 import { chat } from "../utils/utils"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 

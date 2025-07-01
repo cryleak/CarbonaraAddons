@@ -1,10 +1,10 @@
 import "./features/AutoP3"
 import "./features/Simulation"
 import "./features/FastLeap"
-import "./features/ConfigConverter"
 import "./features/Freecam"
 import "./features/SecretAura"
 import "./features/Relic"
+import "./features/AutoRoutes"
 
 
 /*

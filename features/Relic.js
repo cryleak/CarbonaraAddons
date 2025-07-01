@@ -2,10 +2,10 @@ import Settings from "../config"
 import FastLeap from "./FastLeap"
 import LeapHelper from "../utils/leapUtils"
 import SecretAura from "./SecretAura"
-import Blink from "./Blink"
+import Blink from "./AutoP3/Blink"
 import LivingUpdate from "../events/LivingUpdate"
 
-import { getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/autop3utils"
+import { getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 

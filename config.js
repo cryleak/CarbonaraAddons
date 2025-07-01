@@ -331,6 +331,56 @@ config
         description: "More leniency than cgy for where you can stand.",
         category: "Wither King"
     })
+    .addSwitch({
+        configName: "zeroPingHype",
+        title: "Zero Ping TP On All Items",
+        description: "Uses ZPH to use zero ping teleport for Instant Transmission and Wither Impact on node-triggered teleports. You must toggle Zero Ping TP in AutoRoutes to make it work. Disable other zpews if you have any.",
+        category: "Zero Ping TP",
+        value: false
+    })
+    .addSwitch({
+        configName: "zpewEnabled",
+        title: "Toggle",
+        description: "",
+        category: "Zero Ping TP",
+    })
+    .addSwitch({
+        configName: "singleplayer",
+        title: "Singleplayer mode",
+        description: "Detects Iron Sword and Diamond Shovel as teleport items. This mode also disables all failsafes so disable it before you log on Hypixel probably",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSlider({
+        configName: "maxFails",
+        title: "Max fails in last 20 seconds",
+        description: "Note that you will probably get banned regardless of if you fail 1000 times in 20 minutes or 1 minute (on the same server) due to how timer balance works. You can try using the option to cancel movement packets in this mod.",
+        category: "Zero Ping TP",
+        options: [3, 20],
+        value: 3,
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "aotv",
+        title: "Toggle Instant Transmission",
+        description: "This will still trigger if you enable Zero Ping TP On All Items",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "ether",
+        title: "Toggle Etherwarp",
+        description: "This will still trigger if you enable Zero Ping TP On All Items",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "hype",
+        title: "Toggle Hyperion",
+        description: "This will still trigger if you enable Zero Ping TP On All Items",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
 
 
 

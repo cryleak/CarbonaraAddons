@@ -1,3 +1,5 @@
+import "./ConfigConverter"
+
 import RenderLibV2 from "../../../RenderLibV2"
 import Settings from "../../config"
 import AutoP3Config from "./AutoP3Management"
@@ -7,10 +9,10 @@ import Blink from "./Blink"
 import Motion from "../../utils/Motion"
 import LivingUpdate from "../../events/LivingUpdate"
 import Vector3 from "../../../BloomCore/utils/Vector3"
+import Rotations from "../../utils/Rotations"
 
-import { clickAt } from "../utils/serverRotations"
-import { Terminal, jump, getTermPhase, repressMovementKeys} from "./autoP3Utils"
-import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPositionNoInterpolation, checkIntersection } from "../../utils/utils"
+import { Terminal, jump, getTermPhase } from "./autoP3Utils"
+import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPositionNoInterpolation, checkIntersection, sendAirClick } from "../../utils/utils"
 import { onChatPacket } from "../../../BloomCore/utils/Events"
 import { registerSubCommand } from "../../utils/commands"
 
@@ -128,7 +130,9 @@ const nodeTypes = {
         const success = swapFromName(args.itemName)
         if (success[0] === "CANT_FIND") return
 
-        clickAt(args.yaw, args.pitch)
+        Rotations.rotate(args.yaw, args.pitch, () => {
+            sendAirClick()
+        })
     },
     superboom: args => {
         const success = swapFromItemID(46)
@@ -379,7 +383,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     cancel(event)
     blinkingVelo = true
     for (let i = 0; i < blinkVeloTicks; i++) {
-        if (LivingUpdate.onLivingUpdate().isCanceled()) continue
+        if (!LivingUpdate.trigger()) continue
         Player.getPlayer().func_70636_d()
         Player.getPlayer().func_175161_p()
         executeNodes(playerCoords().player)
