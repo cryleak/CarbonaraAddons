@@ -1,12 +1,6 @@
-<<<<<<< HEAD:features/AutoP3/AutoP3Management.js
 import Settings from "../../config"
 import nodeCreation, { availableArgs, nodeTypes } from "./nodeCreation"
 import AmaterasuUtils from "./AmaterasuUtils"
-=======
-import Settings from "../config"
-import nodeCreation, { availableArgs, nodeTypes } from "../nodeCreation"
-import AmaterasuUtils from "../utils/AmaterasuUtils"
->>>>>>> 0863fd7 (Refactor node creation config and management):features/AutoP3Management.js
 
 import { registerSubCommand } from "../../utils/commands"
 import { chat, playerCoords } from "../../utils/utils"
