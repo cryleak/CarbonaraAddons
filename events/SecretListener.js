@@ -1,15 +1,14 @@
-import Settings from "../config"
-import { getDistanceToCoord, getDistanceToEntity } from "../../BloomCore/utils/utils"
-import { movementKeys } from "../utils/RouteUtils"
-import { scheduleTask } from "../utils/utils"
-import { Event } from "../../CarbonaraAddons/events/CustomEvents"
-import { SecretAuraBlockClickEventPost } from "../../events/SecretAuraBlockClick"
+import { getDistanceToEntity } from "../../BloomCore/utils/utils"
+import { movementKeys } from "../utils/utils"
+import { Event } from "./CustomEvents"
+import { SecretAuraBlockClickEventPost } from "./SecretAuraBlockClick"
 
 export const SecretEvent = new Event();
 export const BatSpawnEvent = new Event();
 
 let moveKeyCooldown = Date.now()
 
+// This probably shouldn't be here?
 SecretAuraBlockClickEventPost.register(event => {
     // send fake useitem
     Client.sendPacket(new C08PacketPlayerBlockPlacement(event.itemStack));
@@ -42,11 +41,10 @@ register("tick", () => { // Wait for bat spawn
     const bats = World.getAllEntitiesOfType(net.minecraft.entity.passive.EntityBat)
 
     for (let bat of bats) {
-
         if (getDistanceToEntity(bat) > 15) continue
 
         BatSpawnEvent.trigger(bat)
-        return
+        break
     }
 })
 
@@ -55,9 +53,10 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
     const state = event.buttonstate
     if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return
 
-    if (listeners.length) {
+    if (SecretEvent.hasListeners()) {
         SecretEvent.trigger()
-    } else ChatLib.command("cleartriggerednodes", true)
+        // todo: implement cleartriggerednodes
+    } else // ChatLib.command("cleartriggerednodes", true)
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
