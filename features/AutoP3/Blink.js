@@ -1,12 +1,10 @@
-import Settings from "../config"
-import fakeKeybinds from "../utils/fakeKeybinds"
-import PogObject from "../../PogData"
+import Settings from "../../config"
+import fakeKeybinds from "../../utils/fakeKeybinds"
+import PogObject from "../../../PogData"
 
-import { setPlayerPositionNoInterpolation, setVelocity } from "../utils/autop3utils"
-import { chat } from "../utils/utils"
-import { registerSubCommand } from "../utils/commands"
-import { packetCounterGui } from "../config"
-import { getDistance3D } from "../../BloomCore/utils/Utils"
+import { chat, setPlayerPositionNoInterpolation, setVelocity } from "../../utils/utils"
+import { registerSubCommand } from "../../utils/commands"
+import { packetCounterGui } from "../../config"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")

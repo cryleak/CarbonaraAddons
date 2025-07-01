@@ -1,5 +1,5 @@
-import nodeCreation from "../nodeCreation"
-import { makeConfig } from "../nodeCreation"
+import nodeCreation from "./nodeCreation"
+import { makeConfig } from "./nodeCreation"
 
 
 /**
