@@ -2,6 +2,7 @@ import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"
+import SecretAuraBlockClickEvent from '../events/SecretAuraBlockClick.js';
 
 import { registerSubCommand } from "../utils/commands"
 import { chat } from "../utils/utils"
@@ -113,11 +114,17 @@ export default new class SecretAura {
             adjacentBlocks.push({ blockPos: adjacentBlockPos, blockState: World.getWorld()./* getBlockState */func_180495_p(adjacentBlockPos) })
             World.getWorld()./* setBlockToAir */func_175698_g(adjacentBlockPos)
         })
+
         const blockPosVec3 = new Vec3(blockPos)
         block./* setBlockBoundsBasedOnState */func_180654_a(World.getWorld(), blockPos)
         const centerPosition = new Vec3((block./* getBlockBoundsMaxX */func_149753_y() + block./* getBlockBoundsMinX */func_149704_x()) / 2, (block./* getBlockBoundsMinY */func_149665_z() + block./* getBlockBoundsMaxY */func_149669_A()) / 2, (block./* getBlockBoundsMinZ */func_149706_B() + block./* getBlockBoundsMaxZ */func_149693_C()) / 2)./* add */func_178787_e(blockPosVec3)
         const movingObjectPosition = block./* collisionRayTrace */func_180636_a(World.getWorld(), blockPos, eyePosition, centerPosition)
         let [mopBlockPos, entityHit, hitVec, sideHit, typeOfHit] = [movingObjectPosition./* blockPos */field_178783_e, movingObjectPosition./* entityHit */field_72308_g, movingObjectPosition./* hitVec */field_72307_f./* subtract */func_178788_d(blockPosVec3), movingObjectPosition./* sideHit */field_178784_b, movingObjectPosition./* typeOfHit */field_72313_a]
+
+        if (!SecretAuraBlockClickEvent.trigger({block, blockPos, sideHit})) {
+            return
+        }
+
         Client.sendPacket(new C08PacketPlayerBlockPlacement(blockPos, sideHit./* getIndex */func_176745_a(), Player.getHeldItem()?.getItemStack() ?? null, hitVec./* xCoord */field_72450_a, hitVec./* yCoord */field_72448_b, hitVec./* zCoord */field_72449_c))
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
         if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))

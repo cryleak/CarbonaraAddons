@@ -1,5 +1,6 @@
 import Settings from "../config"
 import { setVelocity } from "./autoP3Utils"
+import LivingUpdate from "../events/LivingUpdate"
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
 
@@ -18,6 +19,14 @@ export default new class Motion {
             if (!this.running) return
             this.jumping = true
         })
+
+        LivingUpdate.register((data) => {
+            if (data.cancelled) {
+                return;
+            }
+
+            this.onMotionUpdate()
+        }, 0)
     }
 
     onMotionUpdate() {
