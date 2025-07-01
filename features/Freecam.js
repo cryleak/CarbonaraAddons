@@ -1,6 +1,6 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
-import RenderLibV2 from "../../RenderLibV2"
+import RenderLibV2 from "../../RenderLibV2J"
 import { chat, playerCoords, setPlayerPositionNoInterpolation, setVelocity } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
 

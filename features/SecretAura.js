@@ -1,4 +1,3 @@
-import RenderLibV2 from "../../RenderLibV2"
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"

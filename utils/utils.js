@@ -65,7 +65,7 @@ export function renderBox(pos, width, height, colors) {
     }
 }
 
-import RenderLibV2 from "../../RenderLibV2"
+import RenderLibV2 from "../../RenderLibV2J"
 
 /**
  * Draws a box that looks like a scandinavian flag with specified colors.
