@@ -5,6 +5,7 @@ import PogObject from "../../../PogData"
 import { chat, setPlayerPositionNoInterpolation, setVelocity } from "../../utils/utils"
 import { registerSubCommand } from "../../utils/commands"
 import { packetCounterGui } from "../../config"
+import OnUpdateWalkingPlayerPre from "../../events/onUpdateWalkingPlayerPre"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")
@@ -30,7 +31,6 @@ class Blink {
         }, "posData.json")
 
         this.movementPacketsSent = 0
-        this.awaitingMotionUpdate = false
         this.blinkRoutes = {}
         this.updateBlinkRoutes()
 
@@ -98,9 +98,8 @@ class Blink {
             else this.toggleCharge(!global.cryleak.autop3.blinkEnabled)
         })
 
-        this.packetCollector = register("packetSent", (packet, event) => { // This only triggers on C03's sent from a Motion Update.
-            if (!this.awaitingMotionUpdate) return
-            this.awaitingMotionUpdate = false
+        this.packetCollector = OnUpdateWalkingPlayerPre.register(event => {
+            const packet = event.data.packet
             if (Settings().pauseCharging && Date.now() - global.cryleak.autop3.lastBlink < 1000) return
             if (this.recordingRouteName) return
 
@@ -123,13 +122,8 @@ class Blink {
                 this.lastC03PacketState.pos.z = currentPosition.z
             }
 
-            if (cancelPacket) cancel(event)
-        }).setFilteredClass(C03PacketPlayer).unregister()
-
-        register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
-            if (event.entity !== Player.getPlayer()) return
-            this.awaitingMotionUpdate = true
-        })
+            if (cancelPacket) event.cancelled = true
+        }, 10000).unregister()
 
         registerSubCommand(["playroute", "playblinkroute"], (args) => {
             const name = args.join(" ")
@@ -151,7 +145,8 @@ class Blink {
             this.packetLogger.register()
         })
 
-        this.packetLogger = register("packetSent", (packet, event) => {
+        this.packetLogger = OnUpdateWalkingPlayerPre.register(event => {
+            const packet = event.data.packet
             let ignorePacket = true
 
             if (!packet.func_149466_j()) return
@@ -170,7 +165,7 @@ class Blink {
 
             FileLib.append("CarbonaraAddons/blinkroutes", this.recordingRouteName + ".sereniblink", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}, ${Player.getPlayer().field_70159_w}, ${Player.getPlayer().field_70181_x}, ${Player.getPlayer().field_70179_y}`)
             this.updateBlinkRoutes()
-        }).setFilteredClass(C03PacketPlayer).unregister()
+        }, 10001).unregister()
 
         fakeKeybinds.onKeyPress("stopRecordingKeybind", () => {
             if (!this.recordingRouteName) return chat("Not recording a route!")

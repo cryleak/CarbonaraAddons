@@ -1,21 +1,20 @@
 export class Event {
 	constructor() {
 		this.listeners = [];
-        this.tasks = [];
+		this.tasks = [];
 	}
 
-    scheduleTask(delay, func) {
-        this.tasks.push({ func, delay });
-    }
+	scheduleTask(delay, func) {
+		this.tasks.push({ func, delay });
+	}
 
 	/**
 	 * Registers a listener that runs before every player update event.
 	 * @param {Function} func
 	 */
 	register(func, prio = 1000) {
-		return this._register({func, prio});
+		return this._register({ func, prio });
 	}
-
 	_listenerMap(l) {
 		return {
 			unregister: () => this._unregister(l),
@@ -25,19 +24,19 @@ export class Event {
 
 	_unregister(l) {
 		const id = this.listeners.indexOf(l);
-		if (id !== -1) {
-			this.listeners = this.listeners.splice(id, 1);
-		}
+		if (id !== -1) this.listeners.splice(id, 1);
+
 
 		return this._listenerMap(l);
 	}
 
 	_register(l) {
-        this.listeners.push(l);
-        this.listeners.sort((a, b) => b.prio - a.prio);
+		this.listeners.push(l);
+		this.listeners.sort((a, b) => b.prio - a.prio);
 		return this._listenerMap(l);
 	}
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     _triggerTasks(data) {
         for (let i = this.tasks.length - 1; i >= 0; i--) {
@@ -45,11 +44,19 @@ export class Event {
             if (curr.delay-- > 0) {
                 continue;
             }
+=======
+	_triggerTasks(data) {
+		for (let i = this.tasks.length - 1; i >= 0; i--) {
+			let curr = this.tasks[i];
+			if (curr.delay-- > 0) {
+				continue;
+			}
+>>>>>>> f3ef36b (fix unregister() method and refactored blink.js a bit)
 
-            this.tasks.splice(i, 1);
-            curr.func(data);
-        }
-    }
+			this.tasks.splice(i, 1);
+			curr.func(data);
+		}
+	}
 
 =======
 >>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
@@ -60,9 +67,13 @@ export class Event {
 	 */
 	trigger(data) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         this._triggerTasks(data);
 =======
 >>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
+=======
+		this._triggerTasks(data);
+>>>>>>> f3ef36b (fix unregister() method and refactored blink.js a bit)
 		this.listeners.forEach(l => l.func(data));
 	}
 };
@@ -73,6 +84,7 @@ export class CancellableEvent extends Event {
 	 *
 	 * @param { data } data - The data in the event object to pass to all listeners.
 	 */
+<<<<<<< HEAD
     trigger(data) {
 <<<<<<< HEAD
         this._triggerTasks(data);
@@ -93,7 +105,22 @@ export class CancellableEvent extends Event {
 =======
         );
 >>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
+=======
+	trigger(data) {
+		this._triggerTasks(data);
 
-        return !event.cancelled;
-    }
+		const event = {
+			cancelled: false,
+			break: false,
+			data,
+		};
+
+		this.listeners.some(l => {
+			l.func(event);
+			return event.break;
+		});
+>>>>>>> f3ef36b (fix unregister() method and refactored blink.js a bit)
+
+		return !event.cancelled;
+	}
 };

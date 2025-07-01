@@ -11,7 +11,7 @@ let awaitingC03 = false
 register("packetSent", (packet, event) => {
     if (!awaitingC03) return
     awaitingC03 = false
-    if (!OnUpdateWalkingPlayerPre.trigger({ packet, event })) cancel(event)
+    if (!OnUpdateWalkingPlayerPre.trigger({ packet })) cancel(event)
 }).setFilteredClass(C03PacketPlayer)
 
 LivingUpdate.register(event => {
