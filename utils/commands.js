@@ -42,5 +42,4 @@ const awaitLoading = register("tick", () => { // Bro why did i do this
     })
     commandListener.setName("carbonara").setAliases("ca")
     awaitLoading.unregister()
-    ChatLib.chat("loaded")
 })
