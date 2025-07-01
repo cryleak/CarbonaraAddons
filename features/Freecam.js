@@ -1,8 +1,7 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import RenderLibV2 from "../../RenderLibV2"
-import { playerCoords, setPlayerPositionNoInterpolation, setVelocity } from "../utils/autoP3Utils"
-import { chat } from "../utils/utils"
+import { chat, playerCoords, setPlayerPositionNoInterpolation, setVelocity } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")

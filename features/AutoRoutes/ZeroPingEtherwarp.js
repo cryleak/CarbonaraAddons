@@ -1,8 +1,11 @@
 
 
 // this is literally just skidded from soshimee
-import Settings from "../config"
-import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
+import Settings from "../../config"
+import { isValidEtherwarpBlock, raytraceBlocks } from "../../../BloomCore/utils/Utils"
+import Vector3 from "../../../BloomCore/utils/Vector3"
+import { setPlayerPositionNoInterpolation, setVelocity } from "../../utils/utils"
+import { CancellableEvent } from "../../events/CustomEvents";
 
 
 
@@ -12,6 +15,9 @@ const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03P
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+
+const OnPostEtherwarp = new CancellableEvent()
+export { OnPostEtherwarp }
 
 const recentFails = []
 const playerState = {
@@ -24,19 +30,15 @@ const playerState = {
 };
 const sent = [];
 
-let allowAny = false
 let inF7Boss = false;
 let updatePosition = true;
-
-global.cryleak ??= {}
-global.cryleak.autoroutes ??= {}
-global.cryleak.autoroutes.performAnyTeleport ??= () => allowAny = true
-
+let sending = false
 
 register("packetSent", (packet, event) => {
+    if (sending) return
     if (packet.func_149568_f() !== 255) return
     const info = getTeleportInfo(Player.getHeldItem());
-    if (!info) return;
+    if (!info) return
     while (recentFails.length && Date.now() - recentFails[0] > 20 * 1000) recentFails.shift()
     if (recentFails.length >= Settings().maxFails && !Settings().singleplayer) return ChatLib.chat(`§c Zero Ping TP cancelled. ${recentFails.length} fails last 20 seconds.`)
     if (sent.length >= 5 && !Settings().singleplayer) return ChatLib.chat(`§c Zero Ping TP cancelled. ${sent.length} packets queued.`)
@@ -69,26 +71,15 @@ register("packetSent", (packet, event) => {
     sent.push({ x, y, z, yaw, pitch });
 
 
-
-    Client.scheduleTask(0, () => {
-        Client.sendPacket(new C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
-        Player.getPlayer().func_70107_b(x, y, z)
-        Player.getPlayer().func_70016_h(0, 0, 0)
-        updatePosition = true;
-
-        /*
-        if (!Settings().fixStairs) return
-        const blockState = World.getBlockAt(Math.floor(x), Math.floor(y - 1), Math.floor(z)).getState()
-        const block = blockState.func_177230_c()
-        let halfValue
-        if (block instanceof net.minecraft.block.BlockStairs) halfValue = blockState.func_177229_b(block.field_176308_b)
-        else if (block instanceof net.minecraft.block.BlockSlab) halfValue = blockState.func_177229_b(block.field_176554_a)
-        else return
-        if (halfValue.toString() !== "bottom") return
-        Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, false))
-        setTimeout(() => Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, KeyBoard.isKeyDown(keybind))), 60)
-        */
-    })
+    cancel(event)
+    sending = true
+    Client.sendPacket(packet)
+    sending = false
+    const packet = new C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround())
+    if (OnPostEtherwarp.trigger(packet)) Client.sendPacket(packet)
+    setPlayerPositionNoInterpolation(x, y, z)
+    setVelocity(0, 0, 0)
+    updatePosition = true;
 }).setFilteredClass(C08PacketPlayerBlockPlacement)
 
 const isWithinTolerence = (n1, n2) => Math.abs(n1 - n2) < 1e-4;
@@ -160,8 +151,6 @@ register("worldUnload", () => {
 function getTeleportInfo(item) {
     if (!Settings().zpewEnabled) return;
     if (inF7Boss) return;
-    let allowAllTPMethods = allowAny === true
-    allowAny = false
     if (!Settings().singleplayer) {
         const sbId = item?.getNBT()?.toObject()?.tag?.ExtraAttributes?.id;
         if (["ASPECT_OF_THE_VOID", "ASPECT_OF_THE_END"].includes(sbId)) {
@@ -212,9 +201,6 @@ function getTeleportInfo(item) {
         return
     }
 }
-
-// nigger
-import Vector3 from "../../BloomCore/utils/Vector3";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
 

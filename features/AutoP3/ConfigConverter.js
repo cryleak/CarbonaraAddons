@@ -1,5 +1,5 @@
-import { registerSubCommand } from "../utils/commands"
-import { chat } from "../utils/utils"
+import { registerSubCommand } from "../../utils/commands"
+import { chat } from "../../utils/utils"
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
 const File = Java.type("java.io.File")

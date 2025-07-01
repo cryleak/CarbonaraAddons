@@ -221,6 +221,10 @@ export function setVelocity(x, y, z) {
     if (typeof z === "number") Player.getPlayer().field_70179_y = z
 }
 
+const leftClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147116_af", null)
+leftClickMethod.setAccessible(true)
+export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), null)
+
 const rightClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147121_ag", null)
 rightClickMethod.setAccessible(true);
 export const rightClick = () => rightClickMethod.invoke(Client.getMinecraft(), null);
@@ -234,14 +238,10 @@ export const syncCurrentPlayItem = () => syncCurrentPlayItemMethod.invoke(Client
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 /**
  * Sends a C08 with no target block.
- * @param {Function} exec A specified function to run before the C08 is sent
- * @returns Success of the air click, false if it didn't click, true if it did
  */
-export const sendAirClick = (exec) => {
-    if (exec) exec()
+export const sendAirClick = () => {
     syncCurrentPlayItem() // sends c09 if you arent holding the correct item already
     Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
-    return true
 }
 
 export const getEyeHeightSneaking = () => { // Peak schizo
@@ -394,6 +394,11 @@ const swapToSlot = (slot) => {
     Player.setHeldItemIndex(slot)
     return ["SWAPPED", slot]
 }
+
+export function getHeldItemID() {
+    return Player?.getHeldItem()?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
+}
+
 
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy

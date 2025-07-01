@@ -7,15 +7,6 @@ import { debugMessage, chat, getDistance2DSq } from "../../utils/utils"
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
 
-
-
-
-
-const leftClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147116_af", null)
-leftClickMethod.setAccessible(true)
-
-export const leftClick = () => leftClickMethod.invoke(Client.getMinecraft(), null)
-
 /**
  * Retarded way to get center of block cause I couldn't think when I made this
  * @param {Array} blockCoords 
@@ -57,10 +48,6 @@ function isCoordsWithinBox(coords, corner1, corner2) {
     return (coords[0] >= Math.min(corner1[0], corner2[0]) && coords[0] <= Math.max(corner1[0], corner2[0]) &&
         coords[1] >= Math.min(corner1[1], corner2[1]) && coords[1] <= Math.max(corner1[1], corner2[1]) &&
         coords[2] >= Math.min(corner1[2], corner2[2]) && coords[2] <= Math.max(corner1[2], corner2[2]))
-}
-
-export function getHeldItemID() {
-    return Player?.getHeldItem()?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
 }
 
 export const termNames = [
