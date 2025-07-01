@@ -38,6 +38,7 @@ export class Event {
 		return this._listenerMap(l);
 	}
 
+<<<<<<< HEAD
     _triggerTasks(data) {
         for (let i = this.tasks.length - 1; i >= 0; i--) {
             let curr = this.tasks[i];
@@ -50,13 +51,18 @@ export class Event {
         }
     }
 
+=======
+>>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
 	/**
 	 * (Internal use) Trigger this to trigger the event.
 	 *
 	 * @param { data } data - The arguments to pass to each listener callback.
 	 */
 	trigger(data) {
+<<<<<<< HEAD
         this._triggerTasks(data);
+=======
+>>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
 		this.listeners.forEach(l => l.func(data));
 	}
 };
@@ -68,8 +74,11 @@ export class CancellableEvent extends Event {
 	 * @param { data } data - The data in the event object to pass to all listeners.
 	 */
     trigger(data) {
+<<<<<<< HEAD
         this._triggerTasks(data);
 
+=======
+>>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
         const event = {
             cancelled: false,
             break: false,
@@ -79,7 +88,11 @@ export class CancellableEvent extends Event {
         this.listeners.some(l => {
             l.func(event);
             return event.break;
+<<<<<<< HEAD
         });
+=======
+        );
+>>>>>>> eff84a4 (added custom events for secret aura block click & player living update)
 
         return !event.cancelled;
     }
