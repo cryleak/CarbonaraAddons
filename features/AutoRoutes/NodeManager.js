@@ -1,4 +1,7 @@
-import PogObject from "../../PogData"
+import PogObject from "../../../PogData"
+import Vector3 from "../../../BloomCore/utils/Vector3"
+import RenderLibV2 from "../../../RenderLibV2J"
+import Settings from "../../config"
 import { scheduleTask, debugMessage, chat } from "../../utils/utils"
 import Dungeons from "../../utils/Dungeons"
 
@@ -6,25 +9,37 @@ const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 
 class NodeManager {
     constructor() {
-        this.data = new PogObject("carbonaraaddons", { nodes: {} }, "RoutesConfig.json")
+        this.data = new PogObject("CarbonaraAddons", { nodes: {} }, "RoutesConfig.json")
+        this.nodeType = {};
+        this.activeNodes = [];
+        this.active = false;
 
-        this._updateActive(Dungeons.getCurrentRoom());
-        register(RoomEnterEvent, (room) => this._updateActive(room));
+        scheduleTask(1, () => {
+            this._normalizeData();
+            this._updateActive(Dungeons.getRoomName());
+            register(RoomEnterEvent, () => {
+                this._updateActive(Dungeons.getRoomName())
+            });
+        });
+
         register("command", (...args) => { // this is terrible - I agree.
             this._handleCommand(...args);
-        }).setName("createnode").setAliases("cn")
+        }).setName("createnode").setAliases("cn");
+        register("renderWorld", () => {
+            this._render();
+        });
     }
 
     getNodeClass(type) {
         return this.nodeType[type];
     }
 
-    _registerNode(clazz) {
+    registerNode(clazz) {
         this.nodeType[clazz.identifier] = clazz;
     }
 
     _newNode(type, args) {
-        let clazz = nodeType[type];
+        let clazz = this.nodeType[type];
         if (!clazz) {
             debugMessage(`&7Invalid node type: &a${type}`);
             return null;
@@ -40,20 +55,54 @@ class NodeManager {
         return obj;
     }
 
+    _normalizeData() {
+        for (const key in this.data.nodes) {
+            this.data.nodes[key] = this.data.nodes[key].reduce((acc, node) => {
+                let clazz = this.getNodeClass(node.nodeName);
+                if (!clazz) {
+                    return acc;
+                }
+
+                const newNode = Object.assign(Object.create(clazz.prototype), node);
+                acc.push(newNode);
+                newNode.lastTriggered = 0;
+                return acc;
+            }, []);
+        }
+    }
+
+    _render() {
+        const settings = Settings();
+        const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices;
+        const color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
+        this.activeNodes.forEach(n => {
+            RenderLibV2.drawCyl(n.x, n.y + 0.01, n.z, n.radius, n.radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
+        });
+    }
+
     _updateActive(room) {
-        const roomNodes = data.nodes[room]
+        if (!room) {
+            this.active = false;
+            this.activeNodes = [];
+            return;
+        }
+
+        this.active = true;
+
+        const roomNodes = this.data.nodes[room]
         if (!roomNodes || !roomNodes.length) {
-            return debugMessage("No routes found for this room!")
+            this.activeNodes = [];
+            this.data.nodes[room] = [];
+            return debugMessage(`No routes found for room: ${room}`)
         }
 
         this.activeNodes = roomNodes
-        this.activeNodesCoords = []
-        for (let i = 0; i < activeNodes.length; i++) {
+        for (let i = 0; i < this.activeNodes.length; i++) {
             let nodeToPush = {}
-            let node = activeNodes[i]
+            let node = this.activeNodes[i]
             node.type = node.type?.toLowerCase()
-            try {
-                let [x, y, z] = Dungeons.convertFromRelative(node.position)
+            // try {
+                let [x, y, z] = Dungeons.convertFromRelative(new Vector3(node.x, node.y, node.z))
                 x += 0.5
                 y += node.yOffset
                 z += 0.5
@@ -64,16 +113,22 @@ class NodeManager {
                     if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = Dungeons.convertFromRelative(node.etherBlock)
                     else nodeToPush.etherBlockCoord = Dungeons.rayTraceEtherBlock([x, y, z], Dungeons.convertToRealYaw(node.yaw), node.pitch)
                 }
-                activeNodesCoords.push(nodeToPush)
-            } catch (e) {
-                chat(`update your fucking odin`)
-                console.log(e)
-                return scheduleTask(5, () => this._updateActive()) // try again, surely this fixes it
-            }
+            // } catch (e) {
+                // chat(`update your fucking odin`)
+                // console.log(e)
+                // return scheduleTask(5, () => this._updateActive()) // try again, surely this fixes it
+            // }
         }
+
+        debugMessage(`&aActive nodes updated for room: ${room} (${this.activeNodes.length} nodes)`);
     }
 
     _handleCommand(...args) {
+        if (!this.active) {
+            chat("You're not in a room right now");
+            return;
+        }
+
         if (!args.length || !args[0]) return chat([
             `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
             `§0-§r List of node types: look, etherwarp, useitem, walk, superboom, pearlclip, command`,
@@ -96,9 +151,12 @@ class NodeManager {
 
         const type = args.shift()
         const argsObject = {
-            type: nodeTypes.indexOf(type),
+            type,
             etherCoordMode: 1,
-            etherBlock: rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
+            etherBlock: Dungeons.rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
+            x: Player.x,
+            y: Player.y,
+            z: Player.z,
             yaw: Player.getYaw().toFixed(3),
             pitch: Player.getPitch().toFixed(3),
             radius: 0.5,
@@ -178,7 +236,11 @@ class NodeManager {
         const node = this._newNode(type, argsObject)
         if (!node) return chat(`Failed to create node of type ${type}. Make sure you specified the arguments correctly.`)
 
-        this.data.nodes.push(node)
+        debugMessage(`&aNode created: ${JSON.stringify(node)}`)
+        this.activeNodes.push(node)
+        this.data.nodes[Dungeons.getRoomName()].push(node);
+        this.data.save();
+        debugMessage(`&aNode created: ${JSON.stringify(this.data.nodes[Dungeons.getRoomName()])}`)
     }
 }
 

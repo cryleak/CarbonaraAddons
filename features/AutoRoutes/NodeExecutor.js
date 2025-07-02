@@ -1,12 +1,14 @@
+import Vector3 from "../../../BloomCore/utils/Vector3"
 import LivingUpdate from "../../events/LivingUpdate"
-import { checkIntersection } from "../../utils/utils"
+import { checkIntersection, debugMessage } from "../../utils/utils"
 import manager from "./NodeManager"
+
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
 class NodeExecutor {
     constructor() {
         this._updateCoords(); // just so we have an initial value although it might be wrong...
 
-        this.active = false;
         this.consumed = 0;
 
         register("packetReceived", (packet, event) => { // Avoid checking for intersections when you get teleported by the server.
@@ -15,30 +17,38 @@ class NodeExecutor {
                 y: packet.func_148928_d(),
                 z: packet.func_148933_e()
             })
-        }).setFilteredClass(S08PacketPlayerPosLook)
+        }).setFilteredClass(S08PacketPlayerPosLook);
 
         LivingUpdate.register(() => {
             this.execute();
             this._updateCoords();
-        })
+        });
     }
 
-    execute(by = null, intersectionMethod = this._defaultIntersectionMethod) {
-        if (!this.active) return;
+    execute(by = null, intersectionMethod = null) {
+        if (!manager.active) return;
 
-        if (by) this.consumed--;
-        if (this.consumed < 0)
+        if (by) {
+            this.consumed--;
+            if (this.consumed < 0) {
+                this.consumed = 0;
+            }
+        }
+
+        if (this.consumed > 0) {
+            return;
+        }
 
         const toExec = manager.activeNodes.filter(n => {
             if (n.chained && !by) {
                 return false;
             }
 
-            if (!intersectionMethod(n.loc, n.radius, n.height)) {
+            if ((intersectionMethod && !intersectionMethod(n, n.radius, n.height)) || !this._defaultIntersectionMethod(n, n.radius, n.height)) {
                 return false;
             }
 
-            if (Date.now() - node.lastTriggered < 1000) {
+            if (n.lastTriggered && Date.now() - n.lastTriggered < 1000) {
                 return false;
             }
 
@@ -49,20 +59,22 @@ class NodeExecutor {
 
         toExec.forEach(n => {
             this.consumed++;
-            found.execute(this);
+            n.execute(this);
         });
     }
 
-    _defaultIntersectionMethod(loc, radius, height) {
-        return checkIntersection(this.previousCoords, Player, loc, radius, height);
+    lowerConsumed() {
+        this.consumed--;
     }
 
-    _updateCoords(coords = Player) {
-        this.previousCoords = {
-            x: coords.x,
-            y: coords.y,
-            z: coords.z
-        };
+    _defaultIntersectionMethod(loc, radius, height) {
+        const locVec = new Vector3(loc.x, loc.y, loc.z);
+        const playerVec = new Vector3(Player.x, Player.y, Player.z);
+        return checkIntersection(this.previousCoords, playerVec, locVec, radius, height);
+    }
+
+    _updateCoords(updated = Player) {
+        this.previousCoords = new Vector3(updated.x, updated.y, updated.z);
     }
 }
 
