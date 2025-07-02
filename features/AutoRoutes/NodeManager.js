@@ -114,6 +114,17 @@ class NodeManager {
         }
     }
 
+    deactivateFor(ticks) {
+        if (!this.active) {
+            return;
+        }
+
+        this.active = false;
+        scheduleTask(ticks, () => {
+            this._updateActive(Dungeons.getRoomName());
+        });
+    }
+
     _updateActive(room) {
         if (!room) {
             this.active = false;

@@ -251,7 +251,7 @@ const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.clie
  * Sends a C08 with no target block.
  */
 export const sendAirClick = () => {
-    syncCurrentPlayItem() // sends c09 if you arent holding the correct item already
+    // syncCurrentPlayItem() // sends c09 if you arent holding the correct item already
     Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack() ?? null))
 }
 
