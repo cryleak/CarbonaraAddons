@@ -410,6 +410,8 @@ export function getHeldItemID() {
     return Player?.getHeldItem()?.getNBT()?.get("tag")?.get("ExtraAttributes")?.getString("id")
 }
 
+export const isWithinTolerence = (n1, n2) => Math.abs(n1 - n2) < 1e-4;
+
 
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy
