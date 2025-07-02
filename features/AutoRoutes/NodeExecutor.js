@@ -29,10 +29,7 @@ class NodeExecutor {
         if (!manager.active) return;
 
         if (by) {
-            this.consumed--;
-            if (this.consumed < 0) {
-                this.consumed = 0;
-            }
+            this.lowerConsumed();
         }
 
         if (this.consumed > 0) {
@@ -44,9 +41,13 @@ class NodeExecutor {
                 return false;
             }
 
-            if ((intersectionMethod && !intersectionMethod(node, node.radius, node.height)) || !this._defaultIntersectionMethod(node, node.radius, node.height)) {
+            if ((intersectionMethod && !intersectionMethod(node)) || (!intersectionMethod && !this._defaultIntersectionMethod(node))) {
                 node.triggered = false;
                 return false;
+            }
+
+            if (intersectionMethod) {
+                debugMessage(`Custom intersection success`);
             }
 
             if (node.lastTriggered && Date.now() - node.lastTriggered < 1000 || node.triggered) {
@@ -58,6 +59,10 @@ class NodeExecutor {
             return (b.constructor.priority || 0) - (a.constructor.priority || 0);
         });
 
+        if (!toExec.length) {
+            return true;
+        }
+
         toExec.forEach(node => {
             this.consumed++;
             node.execute(this);
@@ -66,6 +71,9 @@ class NodeExecutor {
 
     lowerConsumed() {
         this.consumed--;
+        if (this.consumed < 0) {
+            this.consumed = 0;
+        }
     }
 
     _defaultIntersectionMethod(node) {

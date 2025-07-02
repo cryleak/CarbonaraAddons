@@ -49,6 +49,7 @@ class TeleportManager {
                 chat("§4Teleport failed")
                 manager.deactivateFor(100);
                 while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
+                debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch} | ${x}, ${y}, ${z} | ${yaw}, ${pitch} | ` + JSON.stringify(lastPresetPacketComparison));
             } else {
                 event.cancelled = true
                 event.break = true
@@ -65,6 +66,7 @@ class TeleportManager {
             Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
 
+                // response to the airClick
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
                 this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
                 setPlayerPositionNoInterpolation(toBlock.x, toBlock.y, toBlock.z)
@@ -82,16 +84,9 @@ class TeleportManager {
                 this.lastBlock = toBlock;
                 this.lastTPed = Date.now();
 
+                // In case something fails just update everything the next tick.
                 scheduleTask(0, () => {
-                    if (!this.lastBlock) {
-                        return;
-                    }
-
-                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
-                    this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
-                    setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
-
-                    this.lastBlock = null;
+                    this.sync(yaw, pitch);
                 });
 
                 onResult(toBlock);
@@ -99,6 +94,7 @@ class TeleportManager {
             return;
         }
 
+        debugMessage(`Using method 3`);
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
         setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
@@ -109,6 +105,18 @@ class TeleportManager {
         this.lastBlock = toBlock;
 
         onResult(toBlock);
+    }
+
+    sync(yaw, pitch) {
+        if (!this.lastBlock) {
+            return;
+        }
+
+        Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
+        this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
+        setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
+
+        this.lastBlock = null;
     }
 
     measureTeleport(fromEther = false, yaw, pitch, onResult) {
@@ -151,7 +159,7 @@ class TeleportManager {
                 event.break = true
                 const packet = event.data.packet;
 
-                const block = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e());
+                const block = new Vector3(Math.floor(packet.func_148932_c()), packet.func_148928_d(), Math.floor(packet.func_148933_e()));
                 // this.recentlyPushedC06s.push({ x: block.x, y: block.y, z: block.z, yaw, pitch });
                 onResult(block);
             }, 10001);
@@ -198,19 +206,24 @@ manager.registerNode(class EtherwarpNode extends Node {
     _trigger(execer) {
         const onResult = (pos) => {
             execer.execute(this, (node) => {
-                const is = (pos?.x === node?.z && pos?.y - node?.y <= 0.06 && pos?.y - node?.y >= 0 && pos?.z === node?.z)
-                ChatLib.chat(is)
-                return is
+                const found = (pos?.x === node?.realPosition?.x && pos?.y - node?.realPosition?.y <= 0.06 && pos?.y - node?.realPosition?.y >= 0 && pos?.z === node?.realPosition?.z)
+                if (found) {
+                    debugMessage(`Actually found the next node`);
+                }
+                return found
             });
         };
 
         if (!this.toBlock) {
-            tpManager.measureTeleport(this.previousEther, this.yaw, this.pitch, (pos) => {
+            tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, (pos) => {
                 this.toBlock = Dungeons.convertToRelative(pos);
+                manager.saveConfig();
                 onResult(pos);
             });
         } else {
-            tpManager.teleport(Dungeons.convertFromRelative(this.toBlock), this.yaw, this.pitch, onResult);
+            if (tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, onResult)) {
+                tpManager.sync(this.realYaw, this.pitch);
+            }
         }
     }
 

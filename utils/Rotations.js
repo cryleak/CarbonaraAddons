@@ -19,8 +19,9 @@ export default new class Rotations {
             if (packet.func_149466_j()) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e(), this.yaw, this.pitch, packet.func_149465_i())
             else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(this.yaw, this.pitch, packet.func_149465_i())
             Client.sendPacket(replacementPacket)
-            if (this.postPacketSend) this.postPacketSend()
+            const postPacketSend = this.postPacketSend
             this.clearRotation()
+            if (postPacketSend) postPacketSend()
         }, 0)
     }
     rotate(yaw, pitch, postPacketSend = null) {
