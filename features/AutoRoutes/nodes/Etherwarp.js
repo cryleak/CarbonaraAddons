@@ -55,8 +55,6 @@ class TeleportManager {
 
                 onResult(toBlock);
             });
-
-            // something went wrong...
             return;
         }
 
