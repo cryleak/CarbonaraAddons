@@ -199,9 +199,13 @@ export function checkIntersection(start, end, target, horizontalTolerance, verti
     return isPointInBounds(closestPoint)
 }
 
-export function setPlayerPositionNoInterpolation(x, y, z) {
+export function setPlayerPosition(x, y, z) {
+    Player.getPlayer().func_70107_b(x, y, z)
+}
+
+export function removeCameraInterpolation() {
+    const { x, y, z } = Player
     const player = Player.getPlayer()
-    player.func_70107_b(x, y, z)
     player.field_70169_q = x
     player.field_70142_S = x
     player.field_70167_r = y

@@ -12,7 +12,7 @@ import Vector3 from "../../../BloomCore/utils/Vector3"
 import Rotations from "../../utils/Rotations"
 
 import { Terminal, jump, getTermPhase } from "./autoP3Utils"
-import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPositionNoInterpolation, checkIntersection, sendAirClick } from "../../utils/utils"
+import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick } from "../../utils/utils"
 import { onChatPacket } from "../../../BloomCore/utils/Events"
 import { registerSubCommand } from "../../utils/commands"
 
@@ -231,7 +231,7 @@ const nodeTypes = {
             if (!Player.getPlayer().func_180799_ab()) return
             veloPacket.register()
             vclip.unregister()
-            setPlayerPositionNoInterpolation(Player.getX(), args.lavaClipDistance == 0 ? findAirOpening() : Player.getY() - args.lavaClipDistance, Player.getZ())
+            setPlayerPosition(Player.getX(), args.lavaClipDistance == 0 ? findAirOpening() : Player.getY() - args.lavaClipDistance, Player.getZ())
         })
         scheduleTask(100, () => vclip.unregister())
 
@@ -344,7 +344,7 @@ registerSubCommand(["simulateterminalopen", "simulatetermopen", "simtermopen"], 
 })
 
 registerSubCommand("center", () => {
-    setPlayerPositionNoInterpolation(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5)
+    setPlayerPosition(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5)
     setVelocity(0, null, 0)
     chat("Centered the player.")
 })
@@ -389,7 +389,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
         Player.getPlayer().func_175161_p()
         executeNodes(playerCoords().player)
     }
-    setPlayerPositionNoInterpolation(Player.getX(), Player.getY(), Player.getZ())
+    setPlayerPosition(Player.getX(), Player.getY(), Player.getZ())
     const end = System.nanoTime()
     chat(`Blinked ${blinkVeloTicks} physics ticks. (Took ${(end - start) / 1000000}ms to calculate physics)`)
     global.carbonara.autop3.lastBlink = Date.now()

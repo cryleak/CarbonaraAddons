@@ -5,8 +5,9 @@ import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../../utils/Rotations"
 import Dungeons from "../../../utils/Dungeons"
 
-import { setPlayerPositionNoInterpolation, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat } from "../../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation } from "../../../utils/utils"
 import { Node } from "../Node"
+import { removeUnicode } from "../../../../BloomCore/utils/Utils";
 
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -69,7 +70,7 @@ class TeleportManager {
                 // response to the airClick
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
                 this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
-                setPlayerPositionNoInterpolation(toBlock.x, toBlock.y, toBlock.z)
+                setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
 
                 this.lastTPed = Date.now();
 
@@ -97,7 +98,7 @@ class TeleportManager {
         debugMessage(`Using method 3`);
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
-        setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
+        setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
 
         sendAirClick();
 
@@ -114,7 +115,7 @@ class TeleportManager {
 
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
-        setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
+        setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
 
         this.lastBlock = null;
     }
