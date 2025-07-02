@@ -1,3 +1,3 @@
 import "./Node"
+import "./nodes/Etherwarp"
 import "./NodeExecutor"
-import "./ZeroPingEtherwarp"

@@ -1,14 +1,15 @@
+import Vector3 from "../../../../BloomCore/utils/Vector3"
+import ServerTeleport from "../../../events/ServerTeleport";
+import manager from "../NodeManager";
+import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
+import Rotations from "../../../utils/Rotations"
+import Dungeons from "../../../utils/Dungeons"
 
-// this is literally just skidded from soshimee
-import Settings from "../../config"
-import { isValidEtherwarpBlock } from "../../../BloomCore/utils/Utils"
-import Vector3 from "../../../BloomCore/utils/Vector3"
-import { setPlayerPositionNoInterpolation, setVelocity, debugMessage, scheduleTask, swapFromName } from "../../utils/utils"
-import ServerTeleport from "../../events/ServerTeleport";
-import manager from "./NodeManager"
+import { setPlayerPositionNoInterpolation, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat } from "../../../utils/utils"
+import { Node } from "../Node"
+
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
@@ -25,35 +26,48 @@ class TeleportManager {
         this.recentlyPushedC06s = [];
 
         ServerTeleport.register((event) => {
+            if (!this.recentlyPushedC06s.length) return
             const packet = event.data.packet;
-            const block = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e());
 
-            let found = false;
-            for (let i = 0; i < this.recentlyPushedC06s.length; i++) {
-                if (this.recentlyPushedC06s[i].equals(block)) {
-                    found = true;
-                    this.recentlyPushedC06s.splice(i, 1);
-                    break;
-                }
-            }
+            const { x, y, z, yaw, pitch } = this.recentlyPushedC06s.shift()
+            const newPitch = packet.func_148930_g();
+            const newYaw = packet.func_148931_f();
+            const newX = packet.func_148932_c();
+            const newY = packet.func_148928_d();
+            const newZ = packet.func_148933_e();
 
-            if (!found) {
+            const lastPresetPacketComparison = {
+                x: x == newX,
+                y: y == newY,
+                z: z == newZ,
+                yaw: isWithinTolerence(yaw, newYaw) || newYaw == 0,
+                pitch: isWithinTolerence(pitch, newPitch) || newPitch == 0
+            };
+            const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
+
+            if (!wasPredictionCorrect) {
+                chat("§4Teleport failed")
                 manager.deactivateFor(100);
+                while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
+            } else {
+                event.cancelled = true
+                event.break = true
             }
         }, 10000);
     }
 
     teleport(toBlock, yaw, pitch, onResult) {
-        if (!this._isTeleportItem()) {
+        if (!this.isTeleportItem()) {
             return;
         }
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
-            Rotations.rotate(this.yaw, this.pitch, () => {
+            Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
 
-                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, packet.func_149465_i()));
-                this.recentlyPushedC06s.push(toBlock);
+                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
+                this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
+                setPlayerPositionNoInterpolation(toBlock.x, toBlock.y, toBlock.z)
 
                 this.lastTPed = Date.now();
 
@@ -63,7 +77,7 @@ class TeleportManager {
         }
 
         if (!this.lastBlock) {
-            Rotations.rotate(this.yaw, this.pitch, () => {
+            Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
                 this.lastBlock = toBlock;
                 this.lastTPed = Date.now();
@@ -73,8 +87,9 @@ class TeleportManager {
                         return;
                     }
 
-                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, packet.func_149465_i()));
-                    this.recentlyPushedC06s.push(this.lastBlock);
+                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
+                    this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
+                    setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
 
                     this.lastBlock = null;
                 });
@@ -84,8 +99,9 @@ class TeleportManager {
             return;
         }
 
-        Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, packet.func_149465_i()));
-        this.recentlyPushedC06s.push(this.lastBlock);
+        Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
+        this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
+        setPlayerPositionNoInterpolation(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
 
         sendAirClick();
 
@@ -96,11 +112,11 @@ class TeleportManager {
     }
 
     measureTeleport(fromEther = false, yaw, pitch, onResult) {
-        if (!this._isTeleportItem()) {
+        if (!this.isTeleportItem()) {
             return;
         }
 
-        const doneOnce = false;
+        let doneOnce = false;
         const trigger = OnUpdateWalkingPlayerPre.register(event => {
             if (doneOnce) {
                 trigger.unregister();
@@ -110,14 +126,14 @@ class TeleportManager {
             event.break = true;
 
             const pos = {
-                x = Math.floor(Player.x) + 0.5,
-                y = Math.floor(Player.y) + fromEther ? 0.05 : 0,
-                z = Math.floor(Player.z) + 0.5,
+                x: Math.floor(Player.x) + 0.5,
+                y: Player.y + (fromEther ? 0.05 : 0),
+                z: Math.floor(Player.z) + 0.5,
             };
 
             let replacementPacket = null;
-            if (Player.x != pos.x || Player.y != pos.y || Player.z != pos.z) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(pos.x, pos.y, pos.z, this.yaw, this.pitch, true);
-            else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, packet.func_149465_i())
+            if (Player.x != pos.x || Player.y != pos.y || Player.z != pos.z) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(pos.x, pos.y, pos.z, yaw, pitch, true);
+            else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, Player.asPlayerMP().isOnGround())
 
             if (!doneOnce) {
                 doneOnce = true;
@@ -127,13 +143,24 @@ class TeleportManager {
             Client.sendPacket(replacementPacket);
             sendAirClick();
 
-            ServerTeleport.scheduleTask(0, (data) => {
-                const packet = data.packet;
+            let awaiting = true
+            const listener = ServerTeleport.register((event) => {
+                awaiting = false
+                listener.unregister()
+
+                event.break = true
+                const packet = event.data.packet;
 
                 const block = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e());
-                recentlyPushedC06s.push(block);
+                // this.recentlyPushedC06s.push({ x: block.x, y: block.y, z: block.z, yaw, pitch });
                 onResult(block);
-            });
+            }, 10001);
+            scheduleTask(100, () => {
+                if (!awaiting) return
+                onResult(null)
+                listener.unregister()
+                awaiting = false
+            })
         }, 1000000);
 
         this.lastTPed = Date.now();
@@ -158,7 +185,7 @@ class TeleportManager {
 const tpManager = new TeleportManager();
 
 manager.registerNode(class EtherwarpNode extends Node {
-    static identifier = "nop";
+    static identifier = "etherwarp";
     static priority = 0;
 
     constructor(args) {
@@ -171,17 +198,23 @@ manager.registerNode(class EtherwarpNode extends Node {
     _trigger(execer) {
         const onResult = (pos) => {
             execer.execute(this, (node) => {
-                return pos.x === node.z && pos.y - node.y <= 0.06 && pos.z === node.z;
+                const is = (pos?.x === node?.z && pos?.y - node?.y <= 0.06 && pos?.y - node?.y >= 0 && pos?.z === node?.z)
+                ChatLib.chat(is)
+                return is
             });
         };
 
         if (!this.toBlock) {
             tpManager.measureTeleport(this.previousEther, this.yaw, this.pitch, (pos) => {
-                this.toBlock(pos);
+                this.toBlock = Dungeons.convertToRelative(pos);
                 onResult(pos);
             });
         } else {
-            tpManager.teleport(this.toBlock, this.previousEther, this.yaw, this.pitch, onResult);
+            tpManager.teleport(Dungeons.convertFromRelative(this.toBlock), this.yaw, this.pitch, onResult);
         }
+    }
+
+    _handleRotate() {
+        return
     }
 });

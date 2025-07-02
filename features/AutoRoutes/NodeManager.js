@@ -11,9 +11,9 @@ const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 class NodeManager {
     constructor() {
         try {
-            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => value.x && value.y && value.z ? new Vector3(value.x, value.y, value.z) : value)
+            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => value?.x && value?.y && value?.z ? new Vector3(value.x, value.y, value.z) : value)
         } catch (e) {
-            console.log(e)
+            console.log(`Error loading: ${e}`)
             this.data = {}
         }
         this.nodeType = {};
@@ -135,8 +135,8 @@ class NodeManager {
 
         const roomNodes = this.data[room]
         if (!roomNodes || !roomNodes.length) {
-            this.activeNodes = [];
             this.data[room] = [];
+            this.activeNodes = this.data[room]
             this.active = true
             return debugMessage(`No routes found for room: ${room}`)
         }
@@ -196,7 +196,7 @@ class NodeManager {
             chained: false,
             itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void",
             block: false,
-            prevEther: true
+            prevEther: false
         }
 
         if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
@@ -253,6 +253,7 @@ class NodeManager {
         if (!node) return chat(`Failed to create node of type ${type}. Make sure you specified the arguments correctly.`)
 
         debugMessage(`&aNode created: ${JSON.stringify(node)}`)
+        if (!this.data[Dungeons.getRoomName()]) this.data[Dungeons.getRoomName()] = []
         this.data[Dungeons.getRoomName()].push(node);
         this.saveConfig()
     }
