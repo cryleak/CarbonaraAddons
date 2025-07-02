@@ -5,7 +5,7 @@ import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../../utils/Rotations"
 import Dungeons from "../../../utils/Dungeons"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation } from "../../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking } from "../../../utils/utils"
 import { Node } from "../Node"
 import { removeUnicode } from "../../../../BloomCore/utils/Utils";
 
@@ -58,12 +58,16 @@ class TeleportManager {
         }, 10000);
     }
 
-    teleport(toBlock, yaw, pitch, onResult) {
+    teleport(toBlock, yaw, pitch, sneaking, itemName, onResult) {
         if (!this.isTeleportItem()) {
             return;
         }
+        let result = "ALREADY_HOLDING"
+        if (Player.getHeldItem().getName() !== itemName) result = swapFromName(itemName)[0]
+        if (result === "CANT_FIND") return result
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
+            setSneaking(sneaking)
             Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
 
@@ -79,7 +83,8 @@ class TeleportManager {
             return;
         }
 
-        if (!this.lastBlock) {
+        if (!this.lastBlock || sneaking !== Player.isSneaking() || result !== "ALREADY_HOLDING") {
+            setSneaking(sneaking)
             Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
                 this.lastBlock = toBlock;
@@ -222,7 +227,7 @@ manager.registerNode(class EtherwarpNode extends Node {
                 onResult(pos);
             });
         } else {
-            if (tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, onResult)) {
+            if (tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, true, "Aspect of the Void", onResult)) {
                 tpManager.sync(this.realYaw, this.pitch);
             }
         }
