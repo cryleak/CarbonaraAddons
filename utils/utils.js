@@ -374,13 +374,21 @@ export function rotate(origYaw, origPitch) {
 /**
  * Swaps to an item in your hotbar with the specified name.
  * @param {String} targetItemName - Target item name
- * @returns An array containing 2 items: the success of the swap and the slot index.
+ * @returns {String} Success of item swap
  */
 export const swapFromName = (targetItemName) => {
-    const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(targetItemName.removeFormatting().toLowerCase()))
-    if (itemSlot === -1 || itemSlot > 7) {
+    const items = Player.getInventory().getItems()
+    let itemSlot
+    for (let i = 0; i < 8; i++) {
+        let item = items[i]
+        if (item?.getName()?.removeFormatting()?.toLowerCase()?.includes(targetItemName.removeFormatting().toLowerCase())) {
+            itemSlot = i
+            break
+        }
+    }
+    if (!itemSlot) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
-        return ["CANT_FIND", itemSlot]
+        return "CANT_FIND"
     } else {
         return swapToSlot(itemSlot)
     }
@@ -389,13 +397,13 @@ export const swapFromName = (targetItemName) => {
 /**
  * Swaps to an item in your hotbar with the specified Item ID.
  * @param {String} targetItemID - Target Item ID
- * @returns An array containing 2 items: the success of the swap and the slot index.
+ * @returns {String} Success of item swap
  */
 export const swapFromItemID = (targetItemID) => {
     const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getID() == targetItemID)
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find Item ID ${targetItemID} in your hotbar`)
-        return ["CANT_FIND", itemSlot]
+        return "CANT_FIND"
     } else {
         return swapToSlot(itemSlot)
     }
@@ -403,11 +411,11 @@ export const swapFromItemID = (targetItemID) => {
 
 let lastSwap = Date.now()
 const swapToSlot = (slot) => {
-    if (Player.getHeldItemIndex() === slot) return ["ALREADY_HOLDING", slot]
+    if (Player.getHeldItemIndex() === slot) return "ALREADY_HOLDING"
     debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
     lastSwap = Date.now()
     Player.setHeldItemIndex(slot)
-    return ["SWAPPED", slot]
+    return "SWAPPED"
 }
 
 export function getHeldItemID() {
