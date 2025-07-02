@@ -59,10 +59,11 @@ class NodeExecutor {
             return (b.constructor.priority || 0) - (a.constructor.priority || 0);
         });
 
-        if (!toExec.length) {
+        if (toExec.length === 0) {
             return true;
         }
 
+        debugMessage(`Executing ${toExec.length} nodes`);
         toExec.forEach(node => {
             this.consumed++;
             node.execute(this);

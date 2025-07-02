@@ -211,13 +211,18 @@ manager.registerNode(class EtherwarpNode extends Node {
 
     _trigger(execer) {
         const onResult = (pos) => {
-            execer.execute(this, (node) => {
+            const result = execer.execute(this, (node) => {
                 const found = (pos?.x === node?.realPosition?.x && pos?.y - node?.realPosition?.y <= 0.06 && pos?.y - node?.realPosition?.y >= 0 && pos?.z === node?.realPosition?.z)
                 if (found) {
                     debugMessage(`Actually found the next node`);
                 }
                 return found
             });
+
+            if (result) {
+                debugMessage(`syncing`);
+                tpManager.sync(this.realYaw, this.pitch);
+            }
         };
 
         if (!this.toBlock) {
@@ -227,9 +232,7 @@ manager.registerNode(class EtherwarpNode extends Node {
                 onResult(pos);
             });
         } else {
-            if (tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, true, "Aspect of the Void", onResult)) {
-                tpManager.sync(this.realYaw, this.pitch);
-            }
+            tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, onResult);
         }
     }
 
