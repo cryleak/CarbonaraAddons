@@ -4,11 +4,10 @@ import Settings from "../../config"
 import { isValidEtherwarpBlock } from "../../../BloomCore/utils/Utils"
 import Vector3 from "../../../BloomCore/utils/Vector3"
 import { setPlayerPositionNoInterpolation, setVelocity, debugMessage, scheduleTask, swapFromName } from "../../utils/utils"
-import { CancellableEvent } from "../../events/CustomEvents";
+import ServerTeleport from "../../events/ServerTeleport";
 import manager from "./NodeManager"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
@@ -22,6 +21,26 @@ class TeleportManager {
         this.yaw = Player.getYaw();
         this.pitch = Player.getPitch();
         this.lastBlock = null;
+
+        this.recentlyPushedC06s = [];
+
+        ServerTeleport.register((event) => {
+            const packet = event.data.packet;
+            const block = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e());
+
+            let found = false;
+            for (let i = 0; i < this.recentlyPushedC06s.length; i++) {
+                if (this.recentlyPushedC06s[i].equals(block)) {
+                    found = true;
+                    this.recentlyPushedC06s.splice(i, 1);
+                    break;
+                }
+            }
+
+            if (!found) {
+                manager.deactivateFor(100);
+            }
+        }, 10000);
     }
 
     teleport(toBlock, yaw, pitch, onResult) {
@@ -31,8 +50,11 @@ class TeleportManager {
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             Rotations.rotate(this.yaw, this.pitch, () => {
-                Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack()));
+                sendAirClick();
+
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, packet.func_149465_i()));
+                this.recentlyPushedC06s.push(toBlock);
+
                 this.lastTPed = Date.now();
 
                 onResult(toBlock);
@@ -42,15 +64,19 @@ class TeleportManager {
 
         if (!this.lastBlock) {
             Rotations.rotate(this.yaw, this.pitch, () => {
-                Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack()));
+                sendAirClick();
                 this.lastBlock = toBlock;
                 this.lastTPed = Date.now();
 
                 scheduleTask(0, () => {
-                    if (this.lastBlock) {
-                        Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, packet.func_149465_i()));
-                        this.lastBlock = null;
+                    if (!this.lastBlock) {
+                        return;
                     }
+
+                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, packet.func_149465_i()));
+                    this.recentlyPushedC06s.push(this.lastBlock);
+
+                    this.lastBlock = null;
                 });
 
                 onResult(toBlock);
@@ -59,7 +85,9 @@ class TeleportManager {
         }
 
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, packet.func_149465_i()));
-        Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack()));
+        this.recentlyPushedC06s.push(this.lastBlock);
+
+        sendAirClick();
 
         this.lastTPed = Date.now();
         this.lastBlock = toBlock;
@@ -72,26 +100,41 @@ class TeleportManager {
             return;
         }
 
-        Rotations.rotate(yaw, pitch, () => {
-            const trigger = OnUpdateWalkingPlayerPre.register(event => {
+        const doneOnce = false;
+        const trigger = OnUpdateWalkingPlayerPre.register(event => {
+            if (doneOnce) {
                 trigger.unregister();
-                event.cancelled = true;
-                event.break = true;
+            }
 
-                let replacementPacket = null;
-                if (fromEther) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, Player.y + 0.05, Player.z, this.yaw, this.pitch, true);
-                else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, packet.func_149465_i())
+            event.cancelled = true;
+            event.break = true;
 
-                Client.sendPacket(replacementPacket);
-                Client.sendPacket(new C08PacketPlayerBlockPlacement(Player.getHeldItem()?.getItemStack()));
+            const pos = {
+                x = Math.floor(Player.x) + 0.5,
+                y = Math.floor(Player.y) + fromEther ? 0.05 : 0,
+                z = Math.floor(Player.z) + 0.5,
+            };
 
-                const resultTrigger = register("packetReceived", packet => {
-                    resultTrigger.unregister();
+            let replacementPacket = null;
+            if (Player.x != pos.x || Player.y != pos.y || Player.z != pos.z) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(pos.x, pos.y, pos.z, this.yaw, this.pitch, true);
+            else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, packet.func_149465_i())
 
-                    onResult(new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()))
-                }).setFilteredClass(S08PacketPlayerPosLook);
-            }, 1000000);
-        });
+            if (!doneOnce) {
+                doneOnce = true;
+                return;
+            }
+
+            Client.sendPacket(replacementPacket);
+            sendAirClick();
+
+            ServerTeleport.scheduleTask(0, (data) => {
+                const packet = data.packet;
+
+                const block = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e());
+                recentlyPushedC06s.push(block);
+                onResult(block);
+            });
+        }, 1000000);
 
         this.lastTPed = Date.now();
     }
@@ -133,7 +176,10 @@ manager.registerNode(class EtherwarpNode extends Node {
         };
 
         if (!this.toBlock) {
-            tpManager.measureTeleport(this.previousEther, this.yaw, this.pitch, onResult);
+            tpManager.measureTeleport(this.previousEther, this.yaw, this.pitch, (pos) => {
+                this.toBlock(pos);
+                onResult(pos);
+            });
         } else {
             tpManager.teleport(this.toBlock, this.previousEther, this.yaw, this.pitch, onResult);
         }
