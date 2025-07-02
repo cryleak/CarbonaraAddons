@@ -62,12 +62,18 @@ class TeleportManager {
         if (!this.isTeleportItem()) {
             return;
         }
-        let result = "ALREADY_HOLDING"
+
+        let shouldWait = false;
         if (Player.getHeldItem().getName() !== itemName) result = swapFromName(itemName)[0]
         if (result === "CANT_FIND") return result
+        if (result !== "ALREADY_HOLDING") shouldWait = true;
+
+        if (sneaking !== Player.isSneaking()) {
+            setSneaking(sneaking)
+            shouldWait = true;
+        }
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
-            setSneaking(sneaking)
             Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
 
@@ -83,15 +89,14 @@ class TeleportManager {
             return;
         }
 
-        if (!this.lastBlock || sneaking !== Player.isSneaking() || result !== "ALREADY_HOLDING") {
-            setSneaking(sneaking)
+        if (!this.lastBlock || shouldWait) {
             Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
                 this.lastBlock = toBlock;
                 this.lastTPed = Date.now();
 
                 // In case something fails just update everything the next tick.
-                scheduleTask(0, () => {
+                scheduleTask(5, () => {
                     this.sync(yaw, pitch);
                 });
 
