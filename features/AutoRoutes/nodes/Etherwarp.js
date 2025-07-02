@@ -136,6 +136,7 @@ class TeleportManager {
             return;
         }
 
+        let packetsReceived = 0
         const doTp = () => {
             let result = "ALREADY_HOLDING"
             if (Player.getHeldItem().getName() !== itemName) {
@@ -147,49 +148,22 @@ class TeleportManager {
                 }
             }
             setSneaking(sneaking)
-            Rotations.rotate(yaw, pitch, () => {
+            const playerUpdateListener = OnUpdateWalkingPlayerPre.register((event) => {
+                event.cancelled = true
+                event.break = true
+                Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, false))
+                playerUpdateListener.unregister()
                 sendAirClick();
 
                 let awaiting = true
                 const listener = ServerTeleport.register((event) => {
+                    if (packetsReceived-- !== 0) return
                     awaiting = false
+                    const packet = event.data.packet;
+                    event.break = true
                     listener.unregister()
 
-                    const packet = event.data.packet;
-
-                    const newPitch = packet.func_148930_g();
-                    const newYaw = packet.func_148931_f();
-                    const newX = packet.func_148932_c();
-                    const newY = packet.func_148928_d();
-                    const newZ = packet.func_148933_e();
-
-                    let found = null;
-                    for (let i = 0; i < this.recentlyPushedC06s.length; i++) {
-                        let p = this.recentlyPushedC06s[i];
-                        let lastPresetPacketComparison = {
-                            x: p.x == newX,
-                            y: p.y == newY,
-                            z: p.z == newZ,
-                            yaw: isWithinTolerence(p.yaw, newYaw) || newYaw == 0,
-                            pitch: isWithinTolerence(p.pitch, newPitch) || newPitch == 0
-                        };
-
-                        if (Object.values(lastPresetPacketComparison).every(a => a)) {
-                            found = i;
-                            break;
-                        }
-                    }
-
-                    if (found) {
-                        this.recentlyPushedC06s.splice(found, 1);
-                        return;
-                    }
-
-
-                    event.break = true
-
                     const block = new Vector3(Math.floor(packet.func_148932_c()), packet.func_148928_d(), Math.floor(packet.func_148933_e()));
-                    // this.recentlyPushedC06s.push({ x: block.x, y: block.y, z: block.z, yaw, pitch });
                     onResult(block);
                 }, 10001);
                 scheduleTask(100, () => {
@@ -215,11 +189,13 @@ class TeleportManager {
 
             setSneaking(true)
 
-            Rotations.rotate(yaw, -90, () => {
+            Rotations.rotate(0, 90, () => {
                 sendAirClick();
-                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, yaw, pitch, Player.asPlayerMP().isOnGround()));
-                this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw, pitch });
+                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, 0, 90, Player.asPlayerMP().isOnGround()));
+                this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw: 0, pitch: 90 });
+                setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5)
 
+                packetsReceived++
                 doTp();
             });
         } else {
