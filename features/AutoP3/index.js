@@ -12,7 +12,7 @@ import Vector3 from "../../../BloomCore/utils/Vector3"
 import Rotations from "../../utils/Rotations"
 
 import { Terminal, jump, getTermPhase } from "./autoP3Utils"
-import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick } from "../../utils/utils"
+import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick, removeCameraInterpolation } from "../../utils/utils"
 import { onChatPacket } from "../../../BloomCore/utils/Events"
 import { registerSubCommand } from "../../utils/commands"
 
@@ -232,6 +232,7 @@ const nodeTypes = {
             veloPacket.register()
             vclip.unregister()
             setPlayerPosition(Player.getX(), args.lavaClipDistance == 0 ? findAirOpening() : Player.getY() - args.lavaClipDistance, Player.getZ())
+            removeCameraInterpolation()
         })
         scheduleTask(100, () => vclip.unregister())
 
@@ -345,6 +346,7 @@ registerSubCommand(["simulateterminalopen", "simulatetermopen", "simtermopen"], 
 
 registerSubCommand("center", () => {
     setPlayerPosition(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5)
+    removeCameraInterpolation()
     setVelocity(0, null, 0)
     chat("Centered the player.")
 })
@@ -390,6 +392,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
         executeNodes(playerCoords().player)
     }
     setPlayerPosition(Player.getX(), Player.getY(), Player.getZ())
+    removeCameraInterpolation()
     const end = System.nanoTime()
     chat(`Blinked ${blinkVeloTicks} physics ticks. (Took ${(end - start) / 1000000}ms to calculate physics)`)
     global.carbonara.autop3.lastBlink = Date.now()
