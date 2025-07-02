@@ -1,7 +1,7 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import RenderLibV2 from "../../RenderLibV2J"
-import { chat, playerCoords, setPlayerPositionNoInterpolation, setVelocity } from "../utils/utils"
+import { chat, playerCoords, setPlayerPosition, setVelocity } from "../utils/utils"
 import { registerSubCommand } from "../utils/commands"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
@@ -45,7 +45,7 @@ export default new class Freecam {
             const isInSurvival = currentGamemode === "ADVENTURE" || currentGamemode === "SURVIVAL"
             Player.getPlayer().field_71075_bZ.field_75101_c = isInSurvival ? false : true
             if (isInSurvival) Player.getPlayer().field_71075_bZ.field_75100_b = false
-            setPlayerPositionNoInterpolation(...this.realPlayerPosition)
+            setPlayerPosition(...this.realPlayerPosition)
             setVelocity(0, 0, 0)
             this.eventCancellers.forEach(register => register.unregister())
         } else {

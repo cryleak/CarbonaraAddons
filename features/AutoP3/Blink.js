@@ -2,7 +2,7 @@ import Settings from "../../config"
 import fakeKeybinds from "../../utils/fakeKeybinds"
 import PogObject from "../../../PogData"
 
-import { chat, setPlayerPositionNoInterpolation, setVelocity } from "../../utils/utils"
+import { chat, removeCameraInterpolation, setPlayerPosition, setVelocity } from "../../utils/utils"
 import { registerSubCommand } from "../../utils/commands"
 import { packetCounterGui } from "../../config"
 import OnUpdateWalkingPlayerPre from "../../events/onUpdateWalkingPlayerPre"
@@ -212,7 +212,8 @@ class Blink {
             // if (i < packets.length - 1) { let previousPacket = i === 0 ? [Player.x, Player.y, Player.z] : packets[i - 1]; ChatLib.chat(getDistance3D(x, y, z, previousPacket[0], previousPacket[1]), previousPacket[2])); }
         }
         const finalPacket = packets[packets.length - 1]
-        setPlayerPositionNoInterpolation(finalPacket[0], finalPacket[1], finalPacket[2])
+        setPlayerPosition(finalPacket[0], finalPacket[1], finalPacket[2])
+        removeCameraInterpolation()
         if (finalPacket.length === 7) {
             let motion = [finalPacket[4], finalPacket[5], finalPacket[6]]
             setVelocity(...motion)
