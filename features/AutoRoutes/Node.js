@@ -21,7 +21,7 @@ export class Node {
         this.awaitSecret = args.awaitSecret;
         this.stop = args.stop;
         this.center = args.center;
-        this.yaw = args.yaw;
+        this.yaw = Dungeons.convertToRelativeYaw(args.yaw);
         this.pitch = args.pitch;
         this.block = args.block;
         this.defineTransientProperties();
@@ -43,7 +43,6 @@ export class Node {
     }
 
     execute(execer) {
-        debugMessage(`Executing node: ${this.nodeName} at (${this.x}, ${this.y}, ${this.z})`);
         if (!this._preArgumentTrigger(execer)) return execer.lowerConsumed();
 
         this.lastTriggered = Date.now();
@@ -134,7 +133,7 @@ export class Node {
 
     _handleRotate() {
         if (this.yaw && this.pitch) {
-            const yaw = Dungeons.convertToRealYaw(this.yaw);
+            const yaw = this.realYaw;
             rotate(yaw, this.pitch);
         }
     }
@@ -165,6 +164,12 @@ export class Node {
         Object.defineProperties(this, {
             realPosition: {
                 value: pos,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+            realYaw: {
+                value: Dungeons.convertToRealYaw(this.yaw),
                 enumerable: false,
                 writable: true,
                 configurable: true
