@@ -1,20 +1,19 @@
 import Dungeons from "../../utils/Dungeons"
-import { BatSpawnEvent, SecretEvent } from "../../events/SecretListener"
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage } from "../../utils/utils"
 import manager from "./NodeManager"
+import Vector3 from "../../../BloomCore/utils/Vector3"
+
+import { BatSpawnEvent, SecretEvent } from "../../events/SecretListener"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPositionNoInterpolation, setVelocity } from "../../utils/utils"
 
 export class Node {
     static priority = 1000;
 
-	constructor(name, args) {
-		this.nodeName = name;
-		const {x, y, z} = Player;
+    constructor(name, args) {
+        this.nodeName = name;
 
         this.lastTriggered = 0;
 
-		this.x = args.x;
-		this.y = args.y;
-		this.z = args.z;
+        this.position = Dungeons.convertToRelative(args.position)
         this.radius = args.radius;
         this.height = args.height;
         this.delay = args.delay;
@@ -25,33 +24,35 @@ export class Node {
         this.yaw = args.yaw;
         this.pitch = args.pitch;
         this.block = args.block;
-	}
+        this.defineTransientProperties();
+    }
 
-	setLocation(loc) {
-		this.x = loc.x;
-		this.y = loc.y;
-		this.z = loc.z;
-		return this;
-	}
+    setLocation(loc) {
+        this.x = loc.x;
+        this.y = loc.y;
+        this.z = loc.z;
+        return this;
+    }
 
-	command(args) {
-		constructor();
-	}
+    command(args) {
+        constructor();
+    }
 
-	canRun() {
-		return true;
-	}
+    canRun() {
+        return true;
+    }
 
-	execute(execer) {
+    execute(execer) {
         debugMessage(`Executing node: ${this.nodeName} at (${this.x}, ${this.y}, ${this.z})`);
         if (!this._preArgumentTrigger(execer)) return execer.lowerConsumed();
 
         this.lastTriggered = Date.now();
-		this._debugChat();
-		this._argumentTrigger(execer);
-	}
+        this.triggered = true
+        this._debugChat();
+        this._argumentTrigger(execer);
+    }
 
-	_argumentTrigger(execer, metadata = {}) {
+    _argumentTrigger(execer, metadata = {}) {
         debugMessage(`Triggering node: ${this.nodeName}, metadata: ${JSON.stringify(metadata)}`);
         if (this.delay && !metadata.delay) {
             const delay = Math.ceil(parseInt(node.delay) / 50)
@@ -117,13 +118,13 @@ export class Node {
 
         if (this.stop) {
             releaseMovementKeys();
-            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0);
+            setVelocity(0, null, 0);
         }
 
         if (this.center) {
-            Player.getPlayer().func_70107_b(this.loc.x, this.loc.y, this.loc.z);
+            setPlayerPositionNoInterpolation(this.realPosition.x, this.realPosition.y, this.realPosition.z);
             releaseMovementKeys();
-            Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0);
+            setVelocity(0, null, 0);
         }
 
         this._handleRotate();
@@ -147,17 +148,41 @@ export class Node {
         execer.execute(this);
     }
 
-	_debugChat() {
+    _debugChat() {
         debugMessage(`&7You stepped on &a${this.nodeName}&7${this.toString()}`);
-	}
+    }
 
-	validate() {
-		return !isNaN(this.x) && !isNaN(this.y) && !isNaN(this.z) && this.radius > 0.0;
-	}
+    validate() {
+        return this.radius >= 0 && this.height >= 0;
+    }
 
-	toString() {
-		return "";
-	}
+    toString() {
+        return "";
+    }
+
+    defineTransientProperties() {
+        const pos = Dungeons.convertFromRelative(this.position).add([0.5, 0, 0.5])
+        Object.defineProperties(this, {
+            realPosition: {
+                value: pos,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+            lastTriggered: {
+                value: 0,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+            triggered: {
+                value: false,
+                enumerable: false,
+                writable: true,
+                configurable: true
+            }
+        })
+    }
 }
 
 manager.registerNode(class NopNode extends Node {

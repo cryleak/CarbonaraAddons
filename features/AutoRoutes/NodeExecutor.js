@@ -39,16 +39,17 @@ class NodeExecutor {
             return;
         }
 
-        const toExec = manager.activeNodes.filter(n => {
-            if (n.chained && !by) {
+        const toExec = manager.activeNodes.filter(node => {
+            if (node.chained && !by) {
                 return false;
             }
 
-            if ((intersectionMethod && !intersectionMethod(n, n.radius, n.height)) || !this._defaultIntersectionMethod(n, n.radius, n.height)) {
+            if ((intersectionMethod && !intersectionMethod(node, node.radius, node.height)) || !this._defaultIntersectionMethod(node, node.radius, node.height)) {
+                node.triggered = false;
                 return false;
             }
 
-            if (n.lastTriggered && Date.now() - n.lastTriggered < 1000) {
+            if (node.lastTriggered && Date.now() - node.lastTriggered < 1000 || node.triggered) {
                 return false;
             }
 
@@ -57,9 +58,9 @@ class NodeExecutor {
             return (b.constructor.priority || 0) - (a.constructor.priority || 0);
         });
 
-        toExec.forEach(n => {
+        toExec.forEach(node => {
             this.consumed++;
-            n.execute(this);
+            node.execute(this);
         });
     }
 
@@ -67,10 +68,9 @@ class NodeExecutor {
         this.consumed--;
     }
 
-    _defaultIntersectionMethod(loc, radius, height) {
-        const locVec = new Vector3(loc.x, loc.y, loc.z);
+    _defaultIntersectionMethod(node) {
         const playerVec = new Vector3(Player.x, Player.y, Player.z);
-        return checkIntersection(this.previousCoords, playerVec, locVec, radius, height);
+        return checkIntersection(this.previousCoords, playerVec, node.realPosition, node.radius, node.height);
     }
 
     _updateCoords(updated = Player) {

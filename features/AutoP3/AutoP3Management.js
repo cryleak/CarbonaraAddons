@@ -17,8 +17,17 @@ class AutoP3Config {
         this.defineTransientProperties()
         this.nodeCoords = null
         this.editingNodeIndex = null
+        this.subcommands = []
 
-        registerSubCommand(["editnode", "en"], args => {
+        registerSubCommand("p3", args => {
+            const action = args.shift()
+            for (let listener of this.subcommands) {
+                if (listener.args.some(arg => arg === action)) return listener.listener(args)
+            }
+            chat("Unknown subcommand!")
+        })
+
+        this.registerAutoP3Comamand(["editnode", "en"], args => {
             let nearestNodeIndex
             if (args && args.length) {
                 const index = args.shift()
@@ -54,7 +63,7 @@ class AutoP3Config {
             nodeCreation().getConfig().openGui()
         }, args => this.config.map((_0, index) => index.toString()))
 
-        registerSubCommand(["createnode", "cn", "addnode", "an"], args => {
+        this.registerAutoP3Comamand(["createnode", "cn", "addnode", "an"], args => {
             if (!args.length || !args[0]) return chat([
                 `\n§0-§r /createnode §0<§rtype§0> §0<§rargs§0>`,
                 `§0-§r List of node types: look, walk, useitem, superboom, motion, stopvelocity, fullstop, blink, jump, hclip`,
@@ -149,7 +158,7 @@ class AutoP3Config {
             return nodeTypes
         })
 
-        registerSubCommand(["deletenode", "dn", "removenode", "rn"], args => {
+        this.registerAutoP3Comamand(["deletenode", "dn", "removenode", "rn"], args => {
             if (!this.config.length) return chat("No nodes found!")
             let indexToDelete
             const index = args[0]
@@ -243,6 +252,13 @@ class AutoP3Config {
             console.log(e)
             chat("Error while editing node! Report this or something (/ct console js)")
         }
+    }
+
+    registerAutoP3Comamand(args, listener, tabCompletions) {
+        if (!Array.isArray(args)) args = [args]
+        const subCommand = { args, listener }
+        if (tabCompletions) subCommand.tabCompletions = tabCompletions
+        this.subcommands.push(subCommand)
     }
 }
 
