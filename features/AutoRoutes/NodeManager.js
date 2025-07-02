@@ -184,7 +184,8 @@ class NodeManager {
             pearlClipDistance: 0,
             chained: false,
             itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void",
-            block: false
+            block: false,
+            prevEther: true
         }
 
         if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
@@ -231,6 +232,8 @@ class NodeManager {
                     if (!args.includes("ethercoordmode")) argsObject.etherCoordMode = 2
                     argsObject.block = true
                     break
+                case "prevether":
+                    argsObject.prevEther = true
             }
         }
 
