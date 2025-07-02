@@ -1,8 +1,9 @@
 import Dungeons from "../../utils/Dungeons"
 import manager from "./NodeManager"
-import Vector3 from "../../../BloomCore/utils/Vector3"
+import SecretEvent from "../../events/SecretListener"
+import BatSpawnEvent from "../../events/BatSpawn"
+import Vector3 from "../../utils/Vector3"
 
-import { BatSpawnEvent, SecretEvent } from "../../events/SecretListener"
 import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation } from "../../utils/utils"
 
 export class Node {
@@ -43,15 +44,16 @@ export class Node {
     }
 
     execute(execer) {
-        if (!this._preArgumentTrigger(execer)) return execer.lowerConsumed();
-
         this.lastTriggered = Date.now();
         this.triggered = true
+        if (!this._preArgumentTrigger(execer)) return execer.lowerConsumed();
+
         this._debugChat();
         this._argumentTrigger(execer);
     }
 
     _argumentTrigger(execer, metadata = {}) {
+        if (!metadata.playerPosition) metadata.playerPosition = new Vector3(Player.x, Player.y, Player.z)
         debugMessage(`Triggering node: ${this.nodeName}, metadata: ${JSON.stringify(metadata)}`);
         if (this.delay && !metadata.delay) {
             const delay = Math.ceil(parseInt(node.delay) / 50)
@@ -75,7 +77,7 @@ export class Node {
                 this._argumentTrigger(execer, metadata);
             });
 
-            BatSpawnEvent.scheduleTask((bat) => {
+            BatSpawnEvent.scheduleTask(() => {
                 if (done) {
                     return;
                 }
@@ -90,17 +92,7 @@ export class Node {
 
         if (this.awaitSecret && !metadata.awaitSecret) {
             let done = false;
-            const amount = parseInt(this.awaitSecret) || 1;
-
-            scheduleTask(100, () => {
-                if (done) {
-                    return;
-                }
-
-                done = true;
-                metadata.awaitSecret = true;
-                this._argumentTrigger(execer, metadata);
-            });
+            const amount = parseInt(this.awaitSecret) - 1 || 0
 
             SecretEvent.scheduleTask(amount, () => {
                 if (done) {
@@ -125,6 +117,12 @@ export class Node {
             removeCameraInterpolation()
             releaseMovementKeys();
             setVelocity(0, null, 0);
+        }
+
+        if (!metadata.playerPosition.equals(Player)) {
+            this.triggered = false
+            execer.lowerConsumed()
+            return
         }
 
         this._handleRotate();

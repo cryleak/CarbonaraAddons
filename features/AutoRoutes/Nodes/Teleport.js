@@ -5,16 +5,11 @@ import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../../utils/Rotations"
 import Dungeons from "../../../utils/Dungeons"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking } from "../../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess } from "../../../utils/utils"
 import { Node } from "../Node"
-import { removeUnicode } from "../../../../BloomCore/utils/Utils";
 
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
-const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
-const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
-
 class TeleportManager {
     constructor() {
         this.lastTPed = 0;
@@ -66,12 +61,11 @@ class TeleportManager {
         let result = "ALREADY_HOLDING"
         if (Player.getHeldItem().getName() !== itemName) {
             result = swapFromName(itemName)
-            if (result === "CANT_FIND") return chat("Can't find item to swap to!")
+            if (result === itemSwapSuccess.FAIL) return
         }
 
 
         const shouldWait = result !== "ALREADY_HOLDING" || sneaking !== Player.isSneaking()
-        if (shouldWait) ChatLib.chat("true")
         setSneaking(sneaking)
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
@@ -84,13 +78,14 @@ class TeleportManager {
                 setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
 
                 this.lastTPed = Date.now();
-
-                onResult(toBlock);
+                if (shouldWait) onResult(null)
+                else onResult(toBlock);
             });
             return;
         }
 
         if (!this.lastBlock || shouldWait) {
+            if (shouldWait) this.sync(yaw, pitch, false)
             Rotations.rotate(yaw, pitch, () => {
                 sendAirClick();
                 this.lastBlock = toBlock;
@@ -98,10 +93,11 @@ class TeleportManager {
 
                 // In case something fails just update everything the next tick.
                 scheduleTask(5, () => {
-                    this.sync(yaw, pitch);
+                    this.sync(yaw, pitch, true);
                 });
 
-                onResult(toBlock);
+                if (shouldWait) onResult(null)
+                else onResult(toBlock);
             });
             return;
         }
@@ -119,7 +115,8 @@ class TeleportManager {
         onResult(toBlock);
     }
 
-    sync(yaw, pitch) {
+    sync(yaw, pitch, final) {
+        if (final) setSneaking(false)
         if (!this.lastBlock) {
             return;
         }
@@ -138,11 +135,11 @@ class TeleportManager {
 
         let packetsReceived = 0
         const doTp = () => {
-            let result = "ALREADY_HOLDING"
+            let result = itemSwapSuccess.ALREADY_HOLDING
             if (Player.getHeldItem().getName() !== itemName) {
                 result = swapFromName(itemName)
-                if (result === "CANT_FIND") {
-                    chat("Can't find item to swap to!")
+                ChatLib.chat(result)
+                if (result === itemSwapSuccess.FAIL) {
                     onResult(null)
                     return
                 }
@@ -180,8 +177,7 @@ class TeleportManager {
             let result = "ALREADY_HOLDING"
             if (Player.getHeldItem().getName() !== name) {
                 result = swapFromName(name)
-                if (result === "CANT_FIND") {
-                    chat("Can't find item to swap to!")
+                if (result === itemSwapSuccess.FAIL) {
                     onResult(null)
                     return
                 }
@@ -196,7 +192,7 @@ class TeleportManager {
                 setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5)
 
                 packetsReceived++
-                doTp();
+                doTp()
             });
         } else {
             doTp();
@@ -244,7 +240,7 @@ class TeleportNode extends Node {
 
             if (result) {
                 debugMessage(`syncing`);
-                tpManager.sync(this.realYaw, this.pitch);
+                tpManager.sync(this.realYaw, this.pitch, true);
             }
         };
 
@@ -293,6 +289,6 @@ manager.registerNode(class HyperionNode extends TeleportNode {
         super(this.constructor.identifier, args)
 
         this.sneaking = false
-        this.itemName = "Hyperion"
+        this.itemName = "Astraea"
     }
 })

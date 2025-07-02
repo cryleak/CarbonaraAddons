@@ -19,7 +19,7 @@ class NodeExecutor {
             })
         }).setFilteredClass(S08PacketPlayerPosLook);
 
-        LivingUpdate.register(() => {
+        register("tick", () => {
             this.execute();
             this._updateCoords();
         });
@@ -64,10 +64,10 @@ class NodeExecutor {
         }
 
         debugMessage(`Executing ${toExec.length} nodes`);
-        toExec.forEach(node => {
-            this.consumed++;
-            node.execute(this);
-        });
+        const node = toExec[0]
+        this.consumed++;
+        node.execute(this);
+
     }
 
     lowerConsumed() {

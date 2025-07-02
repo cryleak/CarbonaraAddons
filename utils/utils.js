@@ -159,7 +159,7 @@ export function getYawBetweenPoints(from, to) {
  * @returns {Number} clampedYaw
  */
 export function clampYaw(yaw) {
-    return ((yaw + 180) % 360 + 360) % 360 - 180
+    return (yaw % 360 + 360) % 360
 }
 
 /**
@@ -371,6 +371,13 @@ export function rotate(origYaw, origPitch) {
     player.field_70125_A = parseFloat(pitch)
 }
 
+
+export const itemSwapSuccess = {
+    FAIL: "CANT_FIND",
+    SUCCESS: "SWAPPED",
+    ALREADY_HOLDING: "ALREADY_HOLDING"
+}
+
 /**
  * Swaps to an item in your hotbar with the specified name.
  * @param {String} targetItemName - Target item name
@@ -378,7 +385,7 @@ export function rotate(origYaw, origPitch) {
  */
 export const swapFromName = (targetItemName) => {
     const items = Player.getInventory().getItems()
-    let itemSlot
+    let itemSlot = null
     for (let i = 0; i < 8; i++) {
         let item = items[i]
         if (item?.getName()?.removeFormatting()?.toLowerCase()?.includes(targetItemName.removeFormatting().toLowerCase())) {
@@ -386,7 +393,7 @@ export const swapFromName = (targetItemName) => {
             break
         }
     }
-    if (!itemSlot) {
+    if (itemSlot === null) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
         return "CANT_FIND"
     } else {
