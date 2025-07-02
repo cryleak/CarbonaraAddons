@@ -136,63 +136,95 @@ class TeleportManager {
             return;
         }
 
-        let result = "ALREADY_HOLDING"
-        if (Player.getHeldItem().getName() !== itemName) {
-            result = swapFromName(itemName)
-            if (result === "CANT_FIND") {
-                chat("Can't find item to swap to!")
-                onResult(null)
-                return
+        const doTp = () => {
+            let result = "ALREADY_HOLDING"
+            if (Player.getHeldItem().getName() !== itemName) {
+                result = swapFromName(itemName)
+                if (result === "CANT_FIND") {
+                    chat("Can't find item to swap to!")
+                    onResult(null)
+                    return
+                }
             }
-        }
-        setSneaking(sneaking)
+            setSneaking(sneaking)
+            Rotations.rotate(yaw, pitch, () => {
+                sendAirClick();
 
-        let doneOnce = false;
-        const trigger = OnUpdateWalkingPlayerPre.register(event => {
-            if (doneOnce) {
-                trigger.unregister();
-            }
+                let awaiting = true
+                const listener = ServerTeleport.register((event) => {
+                    awaiting = false
+                    listener.unregister()
 
-            event.cancelled = true;
-            event.break = true;
+                    const packet = event.data.packet;
 
-            const pos = {
-                x: Math.floor(Player.x) + 0.5,
-                y: Player.y + (fromEther ? 0.05 : 0),
-                z: Math.floor(Player.z) + 0.5,
-            };
+                    const newPitch = packet.func_148930_g();
+                    const newYaw = packet.func_148931_f();
+                    const newX = packet.func_148932_c();
+                    const newY = packet.func_148928_d();
+                    const newZ = packet.func_148933_e();
 
-            let replacementPacket = null;
-            if (Player.x != pos.x || Player.y != pos.y || Player.z != pos.z) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(pos.x, pos.y, pos.z, yaw, pitch, true);
-            else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, Player.asPlayerMP().isOnGround())
+                    let found = null;
+                    for (let i = 0; i < this.recentlyPushedC06s.length; i++) {
+                        let p = this.recentlyPushedC06s[i];
+                        let lastPresetPacketComparison = {
+                            x: p.x == newX,
+                            y: p.y == newY,
+                            z: p.z == newZ,
+                            yaw: isWithinTolerence(p.yaw, newYaw) || newYaw == 0,
+                            pitch: isWithinTolerence(p.pitch, newPitch) || newPitch == 0
+                        };
 
-            if (!doneOnce) {
-                doneOnce = true;
-                return;
-            }
+                        if (Object.values(lastPresetPacketComparison).every(a => a)) {
+                            found = i;
+                            break;
+                        }
+                    }
 
-            Client.sendPacket(replacementPacket);
-            sendAirClick();
+                    if (found) {
+                        this.recentlyPushedC06s.splice(found, 1);
+                        return;
+                    }
 
-            let awaiting = true
-            const listener = ServerTeleport.register((event) => {
-                awaiting = false
-                listener.unregister()
 
-                event.break = true
-                const packet = event.data.packet;
+                    event.break = true
 
-                const block = new Vector3(Math.floor(packet.func_148932_c()), packet.func_148928_d(), Math.floor(packet.func_148933_e()));
-                // this.recentlyPushedC06s.push({ x: block.x, y: block.y, z: block.z, yaw, pitch });
-                onResult(block);
-            }, 10001);
-            scheduleTask(100, () => {
-                if (!awaiting) return
-                onResult(null)
-                listener.unregister()
-                awaiting = false
+                    const block = new Vector3(Math.floor(packet.func_148932_c()), packet.func_148928_d(), Math.floor(packet.func_148933_e()));
+                    // this.recentlyPushedC06s.push({ x: block.x, y: block.y, z: block.z, yaw, pitch });
+                    onResult(block);
+                }, 10001);
+                scheduleTask(100, () => {
+                    if (!awaiting) return
+                    onResult(null)
+                    listener.unregister()
+                    awaiting = false
+                });
             })
-        }, 1000000);
+        }
+
+        if (fromEther) {
+            const name = "Aspect of the Void"
+            let result = "ALREADY_HOLDING"
+            if (Player.getHeldItem().getName() !== name) {
+                result = swapFromName(name)
+                if (result === "CANT_FIND") {
+                    chat("Can't find item to swap to!")
+                    onResult(null)
+                    return
+                }
+            }
+
+            setSneaking(true)
+
+            Rotations.rotate(yaw, -90, () => {
+                sendAirClick();
+                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, yaw, pitch, Player.asPlayerMP().isOnGround()));
+                this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw, pitch });
+
+                doTp();
+            });
+        } else {
+            doTp();
+        }
 
         this.lastTPed = Date.now();
     }
