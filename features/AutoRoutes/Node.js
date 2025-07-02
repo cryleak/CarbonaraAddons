@@ -3,7 +3,7 @@ import manager from "./NodeManager"
 import Vector3 from "../../../BloomCore/utils/Vector3"
 
 import { BatSpawnEvent, SecretEvent } from "../../events/SecretListener"
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation } from "../../utils/utils"
 
 export class Node {
     static priority = 1000;
@@ -122,6 +122,7 @@ export class Node {
 
         if (this.center) {
             setPlayerPosition(this.realPosition.x, this.realPosition.y, this.realPosition.z);
+            removeCameraInterpolation()
             releaseMovementKeys();
             setVelocity(0, null, 0);
         }
