@@ -6,6 +6,7 @@ import { removeUnicode } from "../../BloomCore/utils/Utils"
 import { clampYaw } from "./utils.js"
 
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
+const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper").INSTANCE
 
 
 export default new class Dungeons {
@@ -128,6 +129,24 @@ export default new class Dungeons {
         const roomRotation = currRoom.rotation
         return clampYaw(yaw - (rotationNumber.get(roomRotation.toString()) * 90))
     }
+
+    /**
+     * Gets the block an etherwarp from a specified position and yaw/pitch will land on. Uses Odin for RayTracing for vastly higher performance.
+     * @param {Array} pos
+     * @param {Number} yaw
+     * @param {Number} pitch
+     * @returns An array containing the etherwarp raytrace position
+     */
+    rayTraceEtherBlock(position, yaw, pitch) {
+        // Correct the Y Level because Odin is black and doesn't let you specify eye level yourself so it will be wrong if you're sneaking.
+        const prediction = EtherWarpHelper.getEtherPos(new net.minecraft.util.Vec3(position[0], parseFloat(position[1]) - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727), position[2]), yaw, pitch, 61, false)
+        if (!prediction.succeeded) return null
+        const pos = prediction.pos
+        if (!pos) return null
+        const endBlock = [pos.func_177958_n(), pos.func_177956_o(), pos.func_177952_p()]
+        return endBlock
+    }
+
 
     /**
      * (Internal use) rotates a set of real coordinates to face north.
