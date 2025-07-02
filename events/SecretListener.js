@@ -1,20 +1,20 @@
 import { getDistanceToEntity } from "../../BloomCore/utils/utils"
 import { movementKeys } from "../utils/utils"
 import { Event } from "./CustomEvents"
-import { SecretAuraBlockClickEventPost } from "./SecretAuraBlockClick"
+import SecretAuraBlockClickEventPost from "./SecretAuraBlockClick/SecretAuraBlockClickEventPost"
 
-export const SecretEvent = new Event();
-export const BatSpawnEvent = new Event();
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+export default SecretEvent = new Event();
 
 let moveKeyCooldown = Date.now()
 
 // This probably shouldn't be here?
 SecretAuraBlockClickEventPost.register(event => {
-    // send fake useitem
+    if (!SecretEvent.hasListeners()) return
     Client.sendPacket(new C08PacketPlayerBlockPlacement(event.itemStack));
 
     SecretEvent.trigger()
-}, 0);
+});
 
 
 const drops = ["item.item.monsterPlacer", "item.item.bone", "item.tile.weightedPlate_heavy", "item.item.enderPearl", "item.item.potion", "item.item.skull.char", "item.item.shears", "item.item.paper", "item.tile.tripWireSource"]
@@ -55,8 +55,9 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
 
     if (SecretEvent.hasListeners()) {
         SecretEvent.trigger()
-        // todo: implement cleartriggerednodes
-    } else ChatLib.command("cleartriggerednodes", true)
+        ChatLib.chat("secret event triggered")
+        // todo: implement cleartriggeredodes
+    }
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {

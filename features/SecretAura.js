@@ -1,10 +1,11 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"
-import { SecretAuraBlockClickEventPre, SecretAuraBlockClickEventPost } from '../events/SecretAuraBlockClick.js';
+import LivingUpdate from "../events/LivingUpdate"
+import SecretAuraBlockClickEventPost from "../events/SecretAuraBlockClick/SecretAuraBlockClickEventPost"
+import SecretAuraBlockClickEventPre from "../events/SecretAuraBlockClick/SecretAuraBlockClickEventPre"
 
 import { chat } from "../utils/utils"
-import LivingUpdate from "../events/LivingUpdate"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
@@ -121,7 +122,7 @@ export default new class SecretAura {
 
         const itemStack = Player.getHeldItem()?.getItemStack() ?? null
 
-        if (!SecretAuraBlockClickEventPre.trigger({block, blockPos, sideHit, itemStack})) {
+        if (!SecretAuraBlockClickEventPre.trigger({ block, blockPos, sideHit, itemStack })) {
             return
         }
 
@@ -129,8 +130,7 @@ export default new class SecretAura {
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
         if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))
 
-        if (!SecretAuraBlockClickEventPost.trigger({block, blockPos, sideHit, itemStack})) {
-            return
-        }
+        SecretAuraBlockClickEventPost.trigger({ block, blockPos, sideHit, itemStack })
+
     }
 }

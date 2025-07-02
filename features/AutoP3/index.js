@@ -12,7 +12,7 @@ import Vector3 from "../../../BloomCore/utils/Vector3"
 import Rotations from "../../utils/Rotations"
 
 import { Terminal, jump, getTermPhase } from "./autoP3Utils"
-import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick, removeCameraInterpolation } from "../../utils/utils"
+import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick, removeCameraInterpolation, itemSwapSuccess } from "../../utils/utils"
 import { onChatPacket } from "../../../BloomCore/utils/Events"
 import { registerSubCommand } from "../../utils/commands"
 
@@ -129,7 +129,7 @@ const nodeTypes = {
     },
     useitem: args => {
         const success = swapFromName(args.itemName)
-        if (success[0] === "CANT_FIND") return
+        if (success === itemSwapSuccess.FAIL) return
 
         Rotations.rotate(args.yaw, args.pitch, () => {
             sendAirClick()
@@ -137,7 +137,7 @@ const nodeTypes = {
     },
     superboom: args => {
         const success = swapFromItemID(46)
-        if (success[0] === "CANT_FIND") return chat("Can't find superboom in your hotbar!")
+        if (success === itemSwapSuccess.FAIL) return chat("Can't find superboom in your hotbar!")
 
         rotate(args.yaw, args.pitch)
         scheduleTask(0, () => {

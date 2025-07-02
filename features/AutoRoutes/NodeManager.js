@@ -207,7 +207,7 @@ class NodeManager {
             center: false,
             pearlClipDistance: 0,
             chained: false,
-            itemName: Player?.getHeldItem()?.getName()?.removeFormatting() ?? "Aspect of the Void",
+            itemName: Player?.getHeldItem()?.getName()?.removeFormatting(),
             block: false,
             prevEther: false
         }
@@ -258,6 +258,10 @@ class NodeManager {
                     break
                 case "prevether":
                     argsObject.prevEther = true
+                    break
+                case "distance":
+                    argsObject.pearlClipDistance = parseInt(args[i + 1])
+                    break
             }
         }
 
