@@ -63,15 +63,16 @@ class TeleportManager {
             return;
         }
 
-        let shouldWait = false;
-        if (Player.getHeldItem().getName() !== itemName) result = swapFromName(itemName)[0]
-        if (result === "CANT_FIND") return result
-        if (result !== "ALREADY_HOLDING") shouldWait = true;
-
-        if (sneaking !== Player.isSneaking()) {
-            setSneaking(sneaking)
-            shouldWait = true;
+        let result = "ALREADY_HOLDING"
+        if (Player.getHeldItem().getName() !== itemName) {
+            result = swapFromName(itemName)
+            if (result === "CANT_FIND") return chat("Can't find item to swap to!")
         }
+
+
+        const shouldWait = result !== "ALREADY_HOLDING" || sneaking !== Player.isSneaking()
+        if (shouldWait) ChatLib.chat("true")
+        setSneaking(sneaking)
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             Rotations.rotate(yaw, pitch, () => {
@@ -130,10 +131,21 @@ class TeleportManager {
         this.lastBlock = null;
     }
 
-    measureTeleport(fromEther = false, yaw, pitch, onResult) {
+    measureTeleport(fromEther = false, yaw, pitch, sneaking, itemName, onResult) {
         if (!this.isTeleportItem()) {
             return;
         }
+
+        let result = "ALREADY_HOLDING"
+        if (Player.getHeldItem().getName() !== itemName) {
+            result = swapFromName(itemName)
+            if (result === "CANT_FIND") {
+                chat("Can't find item to swap to!")
+                onResult(null)
+                return
+            }
+        }
+        setSneaking(sneaking)
 
         let doneOnce = false;
         const trigger = OnUpdateWalkingPlayerPre.register(event => {
@@ -203,12 +215,10 @@ class TeleportManager {
 
 const tpManager = new TeleportManager();
 
-manager.registerNode(class EtherwarpNode extends Node {
-    static identifier = "etherwarp";
-    static priority = 0;
+class TeleportNode extends Node {
 
-    constructor(args) {
-        super(this.constructor.identifier, args);
+    constructor(identifier, args) {
+        super(identifier, args);
 
         this.previousEther = args.prevEther;
         this.toBlock = null;
@@ -231,17 +241,50 @@ manager.registerNode(class EtherwarpNode extends Node {
         };
 
         if (!this.toBlock) {
-            tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, (pos) => {
+            tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
                 this.toBlock = Dungeons.convertToRelative(pos);
                 manager.saveConfig();
                 onResult(pos);
             });
         } else {
-            tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, onResult);
+            tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
         }
     }
 
     _handleRotate() {
         return
     }
-});
+}
+
+manager.registerNode(class EtherwarpNode extends TeleportNode {
+    static identifier = "etherwarp"
+    static priority = 0
+    constructor(args) {
+        super(this.constructor.identifier, args)
+
+        this.sneaking = true
+        this.itemName = "Aspect of the Void"
+    }
+})
+
+manager.registerNode(class AOTVNode extends TeleportNode {
+    static identifier = "aotv"
+    static priority = 0
+    constructor(args) {
+        super(this.constructor.identifier, args)
+
+        this.sneaking = false
+        this.itemName = "Aspect of the Void"
+    }
+})
+
+manager.registerNode(class HyperionNode extends TeleportNode {
+    static identifier = "hype"
+    static priority = 0
+    constructor(args) {
+        super(this.constructor.identifier, args)
+
+        this.sneaking = false
+        this.itemName = "Hyperion"
+    }
+})
