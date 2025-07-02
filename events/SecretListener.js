@@ -56,7 +56,7 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
     if (SecretEvent.hasListeners()) {
         SecretEvent.trigger()
         // todo: implement cleartriggerednodes
-    } else // ChatLib.command("cleartriggerednodes", true)
+    } else ChatLib.command("cleartriggerednodes", true)
 })
 
 register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {

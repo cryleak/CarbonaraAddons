@@ -1,21 +1,20 @@
 import Dungeons from "../../utils/Dungeons"
 import { BatSpawnEvent, SecretEvent } from "../../events/SecretListener"
-import { scheduleTask, releaseMovementKeys, rotate } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage } from "../../utils/utils"
+import manager from "./NodeManager"
 
 export class Node {
-	static counter;
     static priority = 1000;
 
 	constructor(name, args) {
 		this.nodeName = name;
 		const {x, y, z} = Player;
-		this.x = x;
-		this.y = y;
-		this.z = z;
-		this.id = this.constructor.counter();
 
         this.lastTriggered = 0;
 
+		this.x = args.x;
+		this.y = args.y;
+		this.z = args.z;
         this.radius = args.radius;
         this.height = args.height;
         this.delay = args.delay;
@@ -26,13 +25,6 @@ export class Node {
         this.yaw = args.yaw;
         this.pitch = args.pitch;
         this.block = args.block;
-	}
-
-	static restartCounter(count) {
-		let count = count || 0;
-		Node.counter = () => {
-			return count++;
-		}
 	}
 
 	setLocation(loc) {
@@ -51,15 +43,16 @@ export class Node {
 	}
 
 	execute(execer) {
-		this._debugChat();
-        if (!this._preArgumentTrigger(execer)) {
-            return;
-        }
+        debugMessage(`Executing node: ${this.nodeName} at (${this.x}, ${this.y}, ${this.z})`);
+        if (!this._preArgumentTrigger(execer)) return execer.lowerConsumed();
 
+        this.lastTriggered = Date.now();
+		this._debugChat();
 		this._argumentTrigger(execer);
 	}
 
 	_argumentTrigger(execer, metadata = {}) {
+        debugMessage(`Triggering node: ${this.nodeName}, metadata: ${JSON.stringify(metadata)}`);
         if (this.delay && !metadata.delay) {
             const delay = Math.ceil(parseInt(node.delay) / 50)
             scheduleTask(delay, () => {
@@ -145,13 +138,17 @@ export class Node {
         }
     }
 
-    _preArgumentTrigger(execer) {}
+    _preArgumentTrigger(execer) {
+        return true;
+    }
+
     _trigger(execer) {
+        debugMessage(`Executing node: ${this.nodeName}`);
         execer.execute(this);
     }
 
 	_debugChat() {
-        ChatLib.chat(`${prefix} &7You stepped on &a${this.nodeName}&7${this.toString()}`);
+        debugMessage(`&7You stepped on &a${this.nodeName}&7${this.toString()}`);
 	}
 
 	validate() {
@@ -162,3 +159,17 @@ export class Node {
 		return "";
 	}
 }
+
+manager.registerNode(class NopNode extends Node {
+    static identifier = "nop";
+    static priority = 0;
+
+    constructor(args) {
+        super(this.constructor.identifier, args);
+    }
+
+    _trigger(execer) {
+        debugMessage(`Executing NOP node: ${this.nodeName}`);
+        execer.execute(this);
+    }
+});

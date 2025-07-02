@@ -3,7 +3,7 @@ import Vector3 from "../../BloomCore/utils/Vector3.js"
 
 import { onScoreboardLine } from "../../BloomCore/utils/Events"
 import { removeUnicode } from "../../BloomCore/utils/Utils"
-import { clampYaw } from "./utils.js"
+import { clampYaw, debugMessage } from "./utils.js"
 
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
 const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper").INSTANCE
@@ -99,7 +99,7 @@ export default new class Dungeons {
         if (!currentRoom) return relativeCoords.copy()
         const roomRotation = currentRoom.rotation
 
-        const relativeRotated = rotateFromNorth(relativeCoords, roomRotation)
+        const relativeRotated = this._rotateFromNorth(relativeCoords, roomRotation)
         const clayPosition = this._convertBlockPosToVector3(currentRoom.clayPos)
 
         const realCoord = clayPosition.copy().add(relativeRotated)
@@ -115,7 +115,7 @@ export default new class Dungeons {
         const currRoom = this.getCurrentRoom()
         if (!currRoom) return yaw
         const roomRotation = currRoom.rotation
-        return clampYaw(yaw + (rotationNumber.get(roomRotation.toString()) * 90))
+        return clampYaw(yaw + (this.rotationNumber.get(roomRotation.toString()) * 90))
     }
 
     /**
@@ -127,7 +127,7 @@ export default new class Dungeons {
         const currRoom = this.getCurrentRoom()
         if (!currRoom) return yaw
         const roomRotation = currRoom.rotation
-        return clampYaw(yaw - (rotationNumber.get(roomRotation.toString()) * 90))
+        return clampYaw(yaw - (this.rotationNumber.get(roomRotation.toString()) * 90))
     }
 
     /**
