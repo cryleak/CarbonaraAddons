@@ -80,11 +80,10 @@ export default new class Dungeons {
     convertToRelative(realCoords) {
         const currentRoom = this.getCurrentRoom()
         if (!currentRoom) return realCoords.copy()
-        const roomRotation = currentRoom.rotation
         const clayPosition = this._convertBlockPosToVector3(currentRoom.clayPos)
 
         const relativeCoord = realCoords.copy().subtract(clayPosition)
-        const relativeCoordNorth = rotateToNorth(relativeCoord, roomRotation)
+        const relativeCoordNorth = this._rotateToNorth(relativeCoord)
 
         return relativeCoordNorth
     }
@@ -97,13 +96,11 @@ export default new class Dungeons {
     convertFromRelative(relativeCoords) {
         const currentRoom = this.getCurrentRoom()
         if (!currentRoom) return relativeCoords.copy()
-        const roomRotation = currentRoom.rotation
 
-        const relativeRotated = this._rotateFromNorth(relativeCoords, roomRotation)
+        const relativeRotated = this._rotateFromNorth(relativeCoords)
         const clayPosition = this._convertBlockPosToVector3(currentRoom.clayPos)
 
-        const realCoord = clayPosition.copy().add(relativeRotated)
-        return realCoord
+        return clayPosition.add([relativeRotated.x, relativeRotated.y, relativeRotated.z])
     }
 
     /**
@@ -150,20 +147,20 @@ export default new class Dungeons {
 
     /**
      * (Internal use) rotates a set of real coordinates to face north.
-     * @param {Vector3} vector 
+     * @param {Vector3} coords 
      * @returns {Vector3} northFacingCoordinates
      */
-    _rotateToNorth(vector) {
+    _rotateToNorth(coords) {
         const currentRotation = this.getCurrentRoom().rotation
         let output
         switch (currentRotation.toString()) {
-            case "NORTH": output = new Vector3(-vector.getX(), vector.getY(), -vector.getZ())
+            case "NORTH": output = new Vector3(-coords.getX(), coords.getY(), -coords.getZ())
                 break
-            case "WEST": output = new Vector3(vector.getZ(), vector.getY(), -vector.getX())
+            case "WEST": output = new Vector3(coords.getZ(), coords.getY(), -coords.getX())
                 break
-            case "SOUTH": output = vector.copy()
+            case "SOUTH": output = coords.copy()
                 break
-            case "EAST": output = new Vector3(-vector.getZ(), vector.getY(), vector.getX())
+            case "EAST": output = new Vector3(-coords.getZ(), coords.getY(), coords.getX())
                 break
         }
         return output
@@ -171,20 +168,20 @@ export default new class Dungeons {
 
     /**
      * (Internal use) Rotates a set of relative coordinates from north to the rotation of the room.
-     * @param {Vector3} vector 
+     * @param {Vector3} coords 
      * @returns {Vector3} rotatedCoordinates
      */
-    _rotateFromNorth(vector) {
+    _rotateFromNorth(coords) {
         const desiredRotation = this.getCurrentRoom().rotation
         let output
         switch (desiredRotation.toString()) {
-            case "NORTH": output = new Vector3(-vector.getX(), vector.getY(), -vector.getZ())
+            case "NORTH": output = new Vector3(-coords.getX(), coords.getY(), -coords.getZ())
                 break
-            case "WEST": output = new Vector3(-vector.getZ(), vector.getY(), vector.getX())
+            case "WEST": output = new Vector3(-coords.getZ(), coords.getY(), coords.getX())
                 break
-            case "SOUTH": output = vector.copy()
+            case "SOUTH": output = new Vector3(coords.getX(), coords.getY(), coords.getZ())
                 break
-            case "EAST": output = new Vector3(vector.getZ(), vector.getY(), -vector.getX())
+            case "EAST": output = new Vector3(coords.getZ(), coords.getY(), -coords.getX())
                 break
         }
         return output

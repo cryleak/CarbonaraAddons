@@ -1,18 +1,25 @@
-import PogObject from "../../../PogData"
 import Vector3 from "../../../BloomCore/utils/Vector3"
 import RenderLibV2 from "../../../RenderLibV2J"
 import Settings from "../../config"
-import { scheduleTask, debugMessage, chat } from "../../utils/utils"
 import Dungeons from "../../utils/Dungeons"
+
+import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils"
+import { registerSubCommand } from "../../utils/commands"
 
 const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 
 class NodeManager {
     constructor() {
-        this.data = new PogObject("CarbonaraAddons", { nodes: {} }, "RoutesConfig.json")
+        try {
+            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => value.x && value.y && value.z ? new Vector3(value.x, value.y, value.z) : value)
+        } catch (e) {
+            console.log(e)
+            this.data = {}
+        }
         this.nodeType = {};
         this.activeNodes = [];
         this.active = false;
+        this.subcommands = []
 
         scheduleTask(1, () => {
             this._normalizeData();
@@ -22,9 +29,22 @@ class NodeManager {
             });
         });
 
-        register("command", (...args) => { // this is terrible - I agree.
-            this._handleCommand(...args);
-        }).setName("createnode").setAliases("cn");
+        registerSubCommand(["autoroutes", "autoroute", "ar"], args => {
+            const action = args.shift()
+            for (let listener of this.subcommands) {
+                if (listener.args.some(arg => arg === action)) return listener.listener(args)
+            }
+            chat("Unknown subcommand!")
+        })
+
+        this.registerAutoRouteCommand(["createnode", "cn", "addnode", "an"], (args) => {
+            this._handleCreateNode(args);
+        })
+
+        this.registerAutoRouteCommand(["removenode", "rn"], (args) => {
+            this._handleRemoveNode(args)
+        })
+
         register("renderWorld", () => {
             this._render();
         });
@@ -36,6 +56,15 @@ class NodeManager {
 
     registerNode(clazz) {
         this.nodeType[clazz.identifier] = clazz;
+    }
+
+    saveConfig() {
+        try {
+            FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json", JSON.stringify(this.data, null, "\t"), true)
+        } catch (e) {
+            chat("Error saving config!")
+            console.log(e)
+        }
     }
 
     _newNode(type, args) {
@@ -56,8 +85,8 @@ class NodeManager {
     }
 
     _normalizeData() {
-        for (const key in this.data.nodes) {
-            this.data.nodes[key] = this.data.nodes[key].reduce((acc, node) => {
+        for (let key in this.data) {
+            this.data[key] = this.data[key].reduce((acc, node) => {
                 let clazz = this.getNodeClass(node.nodeName);
                 if (!clazz) {
                     return acc;
@@ -74,10 +103,15 @@ class NodeManager {
     _render() {
         const settings = Settings();
         const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices;
-        const color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-        this.activeNodes.forEach(n => {
-            RenderLibV2.drawCyl(n.x, n.y + 0.01, n.z, n.radius, n.radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
-        });
+        for (let i = 0; i < this.activeNodes.length; i++) {
+            let node = this.activeNodes[i]
+            let pos = node.realPosition
+            let color
+            if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
+            else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
+            RenderLibV2.drawCyl(pos.x, pos.y + 0.01, pos.z, node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
+            if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.nodeName}`, pos.x, pos.y + 0.01, pos.z, 16777215, true, 0.02, false)
+        }
     }
 
     _updateActive(room) {
@@ -87,43 +121,25 @@ class NodeManager {
             return;
         }
 
-        this.active = true;
 
-        const roomNodes = this.data.nodes[room]
+        const roomNodes = this.data[room]
         if (!roomNodes || !roomNodes.length) {
             this.activeNodes = [];
-            this.data.nodes[room] = [];
+            this.data[room] = [];
+            this.active = true
             return debugMessage(`No routes found for room: ${room}`)
         }
 
         this.activeNodes = roomNodes
-        for (let i = 0; i < this.activeNodes.length; i++) {
-            let nodeToPush = {}
-            let node = this.activeNodes[i]
-            node.type = node.type?.toLowerCase()
-            // try {
-                let [x, y, z] = Dungeons.convertFromRelative(new Vector3(node.x, node.y, node.z))
-                x += 0.5
-                y += node.yOffset
-                z += 0.5
-                nodeToPush.position = [x, y, z]
-                nodeToPush.triggered = false
-                nodeToPush.lastTriggered = 0
-                if (node.type === "etherwarp") {
-                    if (node.etherCoordMode === 0 || node.etherCoordMode === 2) nodeToPush.etherBlockCoord = Dungeons.convertFromRelative(node.etherBlock)
-                    else nodeToPush.etherBlockCoord = Dungeons.rayTraceEtherBlock([x, y, z], Dungeons.convertToRealYaw(node.yaw), node.pitch)
-                }
-            // } catch (e) {
-                // chat(`update your fucking odin`)
-                // console.log(e)
-                // return scheduleTask(5, () => this._updateActive()) // try again, surely this fixes it
-            // }
+        for (let node of this.activeNodes) {
+            node.defineTransientProperties()
         }
 
         debugMessage(`&aActive nodes updated for room: ${room} (${this.activeNodes.length} nodes)`);
+        this.active = true;
     }
 
-    _handleCommand(...args) {
+    _handleCreateNode(args) {
         if (!this.active) {
             chat("You're not in a room right now");
             return;
@@ -150,13 +166,12 @@ class NodeManager {
         ].join("\n"))
 
         const type = args.shift()
+        const ringCoords = playerCoords().camera
         const argsObject = {
             type,
-            etherCoordMode: 1,
-            etherBlock: Dungeons.rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
-            x: Player.x,
-            y: Player.y,
-            z: Player.z,
+            // etherCoordMode: 1,
+            // etherBlock: Dungeons.rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
+            position: new Vector3(Math.floor(ringCoords[0]), ringCoords[1], Math.floor(ringCoords[2])),
             yaw: Player.getYaw().toFixed(3),
             pitch: Player.getPitch().toFixed(3),
             radius: 0.5,
@@ -173,7 +188,6 @@ class NodeManager {
         }
 
         if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
-        else if (type === "command") return chat("you cant make this node using commands cause i cant be bothered to figure out how to fit the command args inside of this shit and i dont care use /cngui")
 
         for (let i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
@@ -217,30 +231,51 @@ class NodeManager {
                     if (!args.includes("ethercoordmode")) argsObject.etherCoordMode = 2
                     argsObject.block = true
                     break
-                case "ethercoordmode":
-                    switch (args[i + 1]) {
-                        case "raytrace":
-                            argsObject.etherCoordMode = 0
-                            break
-                        case "yawpitch":
-                            argsObject.etherCoordMode = 1
-                            break
-                        case "calcyawpitch":
-                            argsObject.etherCoordMode = 2
-                            break
-                    }
-                    break
             }
         }
 
+        ChatLib.chat(type)
         const node = this._newNode(type, argsObject)
         if (!node) return chat(`Failed to create node of type ${type}. Make sure you specified the arguments correctly.`)
 
         debugMessage(`&aNode created: ${JSON.stringify(node)}`)
-        this.activeNodes.push(node)
-        this.data.nodes[Dungeons.getRoomName()].push(node);
-        this.data.save();
-        debugMessage(`&aNode created: ${JSON.stringify(this.data.nodes[Dungeons.getRoomName()])}`)
+        this.data[Dungeons.getRoomName()].push(node);
+        this.saveConfig()
+    }
+
+    _handleRemoveNode(args) {
+        if (!this.activeNodes.length) return chat("No nodes found in this room!")
+        let deleteIndex = null
+        if (!isNaN(args?.[0])) {
+            deleteIndex = parseInt(args[0])
+            if (!this.activeNodes[deleteIndex]) return chat("Index not found!")
+        } else {
+            const playerVec = Dungeons.convertToRelative(new Vector3(Player.x, Player.y, Player.z))
+            let closestNodeDistance = Number.MAX_SAFE_INTEGER
+            let closestNodeIndex = 0
+            for (let i = 0; i < this.activeNodes.length; i++) {
+                let node = this.activeNodes[i]
+                let distance = getDistance3DSq(node.position.x, node.position.y, node.position.z, playerVec.x, playerVec.y, playerVec.z)
+                if (distance < closestNodeDistance) {
+                    closestNodeDistance = distance
+                    closestNodeIndex = i
+                }
+
+            }
+            deleteIndex = closestNodeIndex
+        }
+        if (deleteIndex !== null) {
+            const node = this.data[Dungeons.getRoomName()].splice(deleteIndex, 1)[0]
+            this.saveConfig()
+            chat(`Deleted: ${JSON.stringify(node)}`)
+        }
+    }
+
+    registerAutoRouteCommand(args, listener, tabCompletions) {
+        if (!Array.isArray(args)) args = [args]
+        const subCommand = { args, listener }
+        if (tabCompletions) subCommand.tabCompletions = tabCompletions
+        this.subcommands.push(subCommand)
     }
 }
 

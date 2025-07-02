@@ -143,6 +143,8 @@ register("tick", () => {
 
 export const getDistance2DSq = (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2
 
+export const getDistance3DSq = (x1, y1, z1, x2, y2, z2) => (x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2
+
 export function getYawBetweenPoints(from, to) {
     const MathHelper = Java.type("net.minecraft.util.MathHelper");
     const MathJava = Java.type("java.lang.Math");
