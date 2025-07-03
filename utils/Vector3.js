@@ -12,4 +12,16 @@ export default class extends Vector3 {
     equals(vector) {
         return this.x === vector.x && this.y === vector.y && this.z === vector.z
     }
+
+    distanceY(vector) {
+        return (this.y - vector.y) ** 2
+    }
+
+    distance2D(vector) {
+        return (this.x - vector.x) ** 2 + (this.z - vector.z) ** 2
+    }
+
+    distance3D(vector) {
+        return (this.x - vector.x) ** 2 + (this.y - vector.y) ** 2 + (this.z - vector.z) ** 2
+    }
 }
