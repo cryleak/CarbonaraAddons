@@ -19,25 +19,25 @@ export class Event {
 	register(func, prio = 1000) {
 		return this._register({ func, prio });
 	}
-	_listenerMap(l) {
+
+	_listenerMap(l, registered) {
 		return {
 			unregister: () => this._unregister(l),
-			register: () => this._register(l)
+			register: () => this._register(l),
+            registered
 		};
 	}
 
 	_unregister(l) {
 		const id = this.listeners.indexOf(l);
 		if (id !== -1) this.listeners.splice(id, 1);
-
-
-		return this._listenerMap(l);
+		return this._listenerMap(l, false);
 	}
 
 	_register(l) {
 		this.listeners.push(l);
 		this.listeners.sort((a, b) => b.prio - a.prio);
-		return this._listenerMap(l);
+		return this._listenerMap(l, true);
 	}
 
 	_triggerTasks(data) {
