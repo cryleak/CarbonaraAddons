@@ -28,7 +28,7 @@ public class SecretAura {
             IBlockState blockState = mc.theWorld.getBlockState(currentBlock);
             Block block = blockState.getBlock();
 
-            if (block instanceof BlockLever || block instanceof BlockChest || block instanceof BlockCompressedPowered && redstoneKeyPickedUp || block instanceof BlockAir)
+            if (block instanceof BlockLever || block instanceof BlockChest || block instanceof BlockCompressedPowered && redstoneKeyPickedUp)
                 return currentBlock;
             else if (block instanceof BlockSkull) {
                 if (eyePosition.squareDistanceTo(new Vec3(currentBlock)) > 20.25) continue;
