@@ -54,7 +54,6 @@ export class Node {
 
     _argumentTrigger(execer, metadata = {}) {
         if (!metadata.playerPosition) metadata.playerPosition = new Vector3(Player.x, Player.y, Player.z)
-        debugMessage(`Triggering node: ${this.nodeName}, metadata: ${JSON.stringify(metadata)}`);
         if (this.delay && !metadata.delay) {
             const delay = Math.ceil(parseInt(node.delay) / 50)
             scheduleTask(delay, () => {
@@ -119,7 +118,6 @@ export class Node {
     }
 
     _trigger(execer) {
-        debugMessage(`Executing node: ${this.nodeName}`);
         execer.execute(this);
     }
 
