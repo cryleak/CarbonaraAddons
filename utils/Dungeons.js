@@ -80,7 +80,7 @@ export default new class Dungeons {
     convertToRelative(realCoords) {
         const currentRoom = this.getCurrentRoom()
         if (!currentRoom) return realCoords.copy()
-        const clayPosition = this._convertBlockPosToVector3(currentRoom.clayPos)
+        const clayPosition = Vector3.convertVec3iToVector3(currentRoom.clayPos)
 
         const relativeCoord = realCoords.copy().subtract(clayPosition)
         const relativeCoordNorth = this._rotateToNorth(relativeCoord)
@@ -94,11 +94,12 @@ export default new class Dungeons {
      * @returns {Vector3} Converted coordinates
      */
     convertFromRelative(relativeCoords) {
+        if (!relativeCoords) ChatLib.chat("why is this undefine")
         const currentRoom = this.getCurrentRoom()
         if (!currentRoom) return relativeCoords.copy()
 
         const relativeRotated = this._rotateFromNorth(relativeCoords)
-        const clayPosition = this._convertBlockPosToVector3(currentRoom.clayPos)
+        const clayPosition = Vector3.convertVec3iToVector3(currentRoom.clayPos)
 
         return clayPosition.add([relativeRotated.x, relativeRotated.y, relativeRotated.z])
     }
@@ -129,19 +130,18 @@ export default new class Dungeons {
 
     /**
      * Gets the block an etherwarp from a specified position and yaw/pitch will land on. Uses Odin for RayTracing for vastly higher performance.
-     * @param {Array} pos
+     * @param {Vector3} startPosition
      * @param {Number} yaw
      * @param {Number} pitch
-     * @returns An array containing the etherwarp raytrace position
+     * @returns {Vector3} endPos
      */
-    rayTraceEtherBlock(position, yaw, pitch) {
+    rayTraceEtherBlock(startPosition, yaw, pitch, checkSuccess = true) {
         // Correct the Y Level because Odin is black and doesn't let you specify eye level yourself so it will be wrong if you're sneaking.
-        const prediction = EtherWarpHelper.getEtherPos(new net.minecraft.util.Vec3(position[0], parseFloat(position[1]) - (Player.asPlayerMP().isSneaking() ? 0.0000000381469727 : 0.0800000381469727), position[2]), yaw, pitch, 61, false)
-        if (!prediction.succeeded) return null
+        const prediction = EtherWarpHelper.getEtherPos(new net.minecraft.util.Vec3(startPosition.x, startPosition.y - (Player.isSneaking() ? 0.0000000381469727 : 0.0800000381469727), startPosition.z), yaw, pitch, 61, false)
+        if (!prediction.succeeded && checkSuccess) return null
         const pos = prediction.pos
         if (!pos) return null
-        const endBlock = [pos.func_177958_n(), pos.func_177956_o(), pos.func_177952_p()]
-        return endBlock
+        return new Vector3(pos.func_177958_n(), pos.func_177956_o(), pos.func_177952_p())
     }
 
 
@@ -154,13 +154,13 @@ export default new class Dungeons {
         const currentRotation = this.getCurrentRoom().rotation
         let output
         switch (currentRotation.toString()) {
-            case "NORTH": output = new Vector3(-coords.getX(), coords.getY(), -coords.getZ())
+            case "NORTH": output = new Vector3(-coords.x, coords.y, -coords.z)
                 break
-            case "WEST": output = new Vector3(coords.getZ(), coords.getY(), -coords.getX())
+            case "WEST": output = new Vector3(coords.z, coords.y, -coords.x)
                 break
             case "SOUTH": output = coords.copy()
                 break
-            case "EAST": output = new Vector3(-coords.getZ(), coords.getY(), coords.getX())
+            case "EAST": output = new Vector3(-coords.z, coords.y, coords.x)
                 break
         }
         return output
@@ -175,24 +175,15 @@ export default new class Dungeons {
         const desiredRotation = this.getCurrentRoom().rotation
         let output
         switch (desiredRotation.toString()) {
-            case "NORTH": output = new Vector3(-coords.getX(), coords.getY(), -coords.getZ())
+            case "NORTH": output = new Vector3(-coords.x, coords.y, -coords.z)
                 break
-            case "WEST": output = new Vector3(-coords.getZ(), coords.getY(), coords.getX())
+            case "WEST": output = new Vector3(-coords.z, coords.y, coords.x)
                 break
-            case "SOUTH": output = new Vector3(coords.getX(), coords.getY(), coords.getZ())
+            case "SOUTH": output = new Vector3(coords.x, coords.y, coords.z)
                 break
-            case "EAST": output = new Vector3(coords.getZ(), coords.getY(), -coords.getX())
+            case "EAST": output = new Vector3(coords.z, coords.y, -coords.x)
                 break
         }
         return output
-    }
-
-    /**
-     * (Internal use) Convert the Minecraft BlockPos class to a Vector3.
-     * @param {MCBlockPos} MCBlockPos 
-     * @returns {Vector3}
-     */
-    _convertBlockPosToVector3(MCBlockPos) {
-        return new Vector3(MCBlockPos.func_177958_n(), MCBlockPos.func_177956_o(), MCBlockPos.func_177952_p())
     }
 }

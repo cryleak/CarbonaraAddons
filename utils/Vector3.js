@@ -1,6 +1,27 @@
 import Vector3 from "../../BloomCore/utils/Vector3"
 
+const Vec3 = Java.type("net.minecraft.util.Vec3")
+const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 export default class extends Vector3 {
+
+    /**
+     * Convert the Minecraft Vec3i (BlockPos extends this) class to a Vector3.
+     * @param {MCBlockPos} MCBlockPos 
+     * @returns {Vector3}
+     */
+    static convertVec3iToVector3(MCBlockPos) {
+        return new this(MCBlockPos.func_177958_n(), MCBlockPos.func_177956_o(), MCBlockPos.func_177952_p())
+    }
+
+    /**
+     * Convert the Minecraft Vec3 class to a Vector3.
+     * @param {Vec3} Vec3 
+     * @returns {Vector3}
+     */
+    static convertVec3ToVector3(Vec3) {
+        return new this(Vec3.field_72450_a, Vec3.field_72448_b, Vec3.field_72449_c)
+    }
+
     constructor(...args) {
         if (args.length === 1) {
             const obj = args[0]
@@ -28,5 +49,17 @@ export default class extends Vector3 {
 
     distance3D(vector) {
         return (this.x - vector.x) ** 2 + (this.y - vector.y) ** 2 + (this.z - vector.z) ** 2
+    }
+
+    /**
+     * Convert Vector3 to Vec3
+     * @returns {Vec3}
+     */
+    convertToVec3() {
+        return new Vec3(this.x, this.y, this.z)
+    }
+
+    convertToBlockPos() {
+        return new MCBlockPos(this.x, this.y, this.z)
     }
 }

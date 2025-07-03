@@ -431,12 +431,5 @@ export function getHeldItemID() {
 
 export const isWithinTolerence = (n1, n2) => Math.abs(n1 - n2) < 1e-4;
 
-export function setTimer(multiplier) {
-	const field = Client.getMinecraft().class.getDeclaredField("field_71428_T");
-	field.setAccessible(true);
-	const timer = field.get(Client.getMinecraft());
-	timer.field_74278_d = multiplier;
-}
-
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy

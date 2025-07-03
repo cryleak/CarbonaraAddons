@@ -28,7 +28,10 @@ class NodeManager {
         scheduleTask(1, () => {
             this._normalizeData();
             this._updateActive(Dungeons.getRoomName());
-            register(RoomEnterEvent, () => {
+            let currentRoomName
+            register("tick", () => {
+                if (Dungeons.getRoomName() === currentRoomName) return
+                currentRoomName = Dungeons.getRoomName()
                 this._updateActive(Dungeons.getRoomName())
             });
         });
@@ -161,7 +164,7 @@ class NodeManager {
     }
 
     _handleCreateNode(args) {
-        if (!this.active) {
+        if (!this.active || Dungeons.getRoomName() === "Unknown") {
             chat("You're not in a room right now");
             return;
         }
@@ -205,11 +208,9 @@ class NodeManager {
             pearlClipDistance: 0,
             chained: false,
             itemName: Player?.getHeldItem()?.getName()?.removeFormatting(),
-            block: false,
+            lineOfSight: false,
             prevEther: false
         }
-
-        if (type === "pearlclip") argsObject.pearlClipDistance = args.shift()
 
         for (let i = 0; i < args.length; i++) {
             switch (args[i].toLowerCase()) {
@@ -257,7 +258,7 @@ class NodeManager {
                     argsObject.prevEther = true
                     break
                 case "distance":
-                    argsObject.pearlClipDistance = parseInt(args[i + 1])
+                    argsObject.pearlClipDistance = parseFloat(args[i + 1])
                     break
             }
         }
@@ -266,14 +267,18 @@ class NodeManager {
     }
 
     createNodeFromArgs(args) {
-        const node = this._newNode(args.type, args);
-        if (!node) return chat(`Failed to create node of type ${args.type}. Make sure you specified the arguments correctly.`);
+        try {
+            const node = this._newNode(args.type, args);
+            if (!node) return chat(`Failed to create node of type ${args.type}. Make sure you specified the arguments correctly.`);
 
-        debugMessage(`&aNode created: ${JSON.stringify(node)}`);
-        if (!this.data[Dungeons.getRoomName()]) this.data[Dungeons.getRoomName()] = [];
-        this.data[Dungeons.getRoomName()].push(node);
-        this.saveConfig();
-        return node;
+            debugMessage(`&aNode created: ${JSON.stringify(node)}`);
+            if (!this.data[Dungeons.getRoomName()]) this.data[Dungeons.getRoomName()] = [];
+            this.data[Dungeons.getRoomName()].push(node);
+            this.saveConfig();
+            return node;
+        } catch (e) {
+            chat(`Failed to create node. Reason: ${e}`)
+        }
     }
 
     _handleRemoveNode(args) {
