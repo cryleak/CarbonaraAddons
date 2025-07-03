@@ -1,18 +1,14 @@
-import SecretAuraBlockClickEventPost from "./SecretAuraBlockClick/SecretAuraBlockClickEventPost"
+import SecretAuraClick from "./SecretAuraClick"
 import BatSpawnEvent from "./BatSpawn"
 
-import { getDistanceToEntity } from "../../BloomCore/utils/utils"
-import { movementKeys } from "../utils/utils"
+import { getDistanceToEntity } from "../utils/utils"
 import { Event } from "./CustomEvents"
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 export default SecretEvent = new Event();
 
-let moveKeyCooldown = Date.now()
-
-// This probably shouldn't be here?
-SecretAuraBlockClickEventPost.register(event => {
-    //if (!SecretEvent.hasListeners()) return
+SecretAuraClick.Post.register(event => {
+    if (!SecretEvent.hasListeners()) return
     Client.sendPacket(new C08PacketPlayerBlockPlacement(event.itemStack));
 
     SecretEvent.trigger()
@@ -27,9 +23,9 @@ register("tick", () => { // Schizo solution for item pickup listener
     const itemEntities = World.getAllEntitiesOfType(net.minecraft.entity.item.EntityItem)
 
     for (let entity of entitiesLastTick) {
-        if (itemEntities.some(oldEntity => oldEntity.getUUID().toString() === entity.getUUID().toString())) continue
-
         if (!drops.includes(entity.getName())) continue
+
+        if (itemEntities.some(oldEntity => oldEntity.getUUID().toString() === entity.getUUID().toString())) continue
 
         if (getDistanceToEntity(entity) > 10) continue
 
@@ -52,16 +48,4 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger awa
         BatSpawnEvent.trigger()
         cancel(event)
     }
-})
-
-register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, (event) => {
-    if (Date.now() - moveKeyCooldown < 150) return
-    if (Client.isInGui() || !World.isLoaded()) return
-    if (!Keyboard.getEventKeyState()) return
-    const keyCode = Keyboard.getEventKey()
-    if (!keyCode) return
-
-    if (!movementKeys.includes(keyCode)) return
-
-    if (!SecretEvent.hasListeners()) cancel(event)
 })

@@ -1,7 +1,8 @@
 
 
-import { CancellableEvent } from "./CustomEvents";
-import LivingUpdate from "./LivingUpdate";
+import LivingUpdate from "./LivingUpdate"
+
+import { CancellableEvent } from "./CustomEvents"
 
 const OnUpdateWalkingPlayerPre = new CancellableEvent()
 export default OnUpdateWalkingPlayerPre

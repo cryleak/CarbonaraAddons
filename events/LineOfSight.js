@@ -2,7 +2,7 @@
 
 
 import { scheduleTask } from "../utils/utils"
-import { getEtherYawPitch, getEyeHeightSneaking, getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, movementKeys } from "../utils/RouteUtils"
+import { getEtherYawPitch, getEtherYawPitchFromArgs, rayTraceEtherBlock, playerCoords, movementKeys } from "../utils/RouteUtils"
 
 const listeners = []
 

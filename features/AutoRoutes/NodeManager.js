@@ -107,7 +107,6 @@ class NodeManager {
     _render() {
         const settings = Settings();
         const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices;
-        let counter = 0;
         for (let i = 0; i < this.activeNodes.length; i++) {
             let node = this.activeNodes[i]
             let pos = node.realPosition

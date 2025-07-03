@@ -1,7 +1,8 @@
 import Vector3 from "../../utils/Vector3"
-import LivingUpdate from "../../events/LivingUpdate"
-import { checkIntersection, debugMessage } from "../../utils/utils"
 import manager from "./NodeManager"
+import SecretEvent from "../../events/SecretListener"
+
+import { checkIntersection, debugMessage, releaseMovementKeys, movementKeys } from "../../utils/utils"
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
@@ -23,6 +24,19 @@ class NodeExecutor {
             this.execute();
             this._updateCoords();
         });
+
+        register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
+            if (this.consumed > 0) return
+            if (Client.isInGui() || !World.isLoaded()) return
+            if (!Keyboard.getEventKeyState()) return
+            const keyCode = Keyboard.getEventKey()
+            if (!keyCode) return
+
+            if (!movementKeys.includes(keyCode)) return
+
+            if (!SecretEvent.hasListeners()) releaseMovementKeys()
+        })
+
     }
 
     execute(by = null, intersectionMethod = null) {

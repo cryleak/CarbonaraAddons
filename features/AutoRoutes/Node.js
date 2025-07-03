@@ -4,7 +4,7 @@ import SecretEvent from "../../events/SecretListener"
 import BatSpawnEvent from "../../events/BatSpawn"
 import Vector3 from "../../utils/Vector3"
 
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, getDistance3DSq } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation } from "../../utils/utils"
 
 export class Node {
     static priority = 1000;
