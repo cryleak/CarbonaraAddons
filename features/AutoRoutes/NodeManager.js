@@ -112,19 +112,17 @@ class NodeManager {
             let node = this.activeNodes[i]
             let pos = node.realPosition
             let color
+            let radius = node.radius
             if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
             else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-            RenderLibV2.drawCyl(pos.x, pos.y + 0.01, pos.z, node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
-            if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.nodeName}`, pos.x, pos.y + 0.01, pos.z, 16777215, true, 0.02, false)
 
-            if (node.constructor.identifier === "etherwarp") {
-                if (node.toBlock) {
-                    let place = Dungeons.convertFromRelative(node.toBlock).add([0.5, 0, 0.5]);
-                    drawLine3d(place.x, place.y + 0.1 * counter, place.z, node.realPosition.x, node.realPosition.y + 0.1, node.realPosition.z, 0, 0, 255, 1, 5, true);
-                    RenderLibV2.drawCyl(place.x, place.y + 0.01, place.z, node.radius, node.radius, 0, 50, 1, 90, 45, 0, 0, 0, 1, 1, true, true);
-                    counter++;
-                }
+            if (node.radius === 0) {
+                radius = settings.smallNodeRadius;
+                color = [settings.smallNodeColor[0] / 255, settings.smallNodeColor[1] / 255, settings.smallNodeColor[2] / 255, settings.smallNodeColor[3] / 255];
             }
+
+            RenderLibV2.drawCyl(pos.x, pos.y + 0.01, pos.z, node.radius, radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
+            if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.nodeName}`, pos.x, pos.y + 0.01, pos.z, 16777215, true, 0.02, false)
         }
     }
 
