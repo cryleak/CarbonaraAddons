@@ -2,8 +2,7 @@ import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"
 import LivingUpdate from "../events/LivingUpdate"
-import SecretAuraBlockClickEventPost from "../events/SecretAuraBlockClick/SecretAuraBlockClickEventPost"
-import SecretAuraBlockClickEventPre from "../events/SecretAuraBlockClick/SecretAuraBlockClickEventPre"
+import SecretAuraClick from "../events/SecretAuraClick"
 
 import { chat } from "../utils/utils"
 
@@ -122,7 +121,7 @@ export default new class SecretAura {
 
         const itemStack = Player.getHeldItem()?.getItemStack() ?? null
 
-        if (!SecretAuraBlockClickEventPre.trigger({ block, blockPos, sideHit, itemStack })) {
+        if (!SecretAuraClick.Pre.trigger({ block, blockPos, sideHit, itemStack })) {
             return
         }
 
@@ -130,7 +129,7 @@ export default new class SecretAura {
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer()./* swingItem */func_71038_i()
         if (adjacentBlocks.length) adjacentBlocks.forEach(({ blockPos, blockState }) => World.getWorld()./* setBlockState */func_175656_a(blockPos, blockState))
 
-        SecretAuraBlockClickEventPost.trigger({ block, blockPos, sideHit, itemStack })
+        SecretAuraClick.Post.trigger({ block, blockPos, sideHit, itemStack })
 
     }
 }

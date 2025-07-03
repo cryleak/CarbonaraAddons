@@ -44,7 +44,7 @@ class TeleportManager {
             const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
 
             if (!wasPredictionCorrect) {
-                manager.deactivateFor(100);
+                manager.deactivateFor(40);
                 while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
                 debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch} | ${x}, ${y}, ${z} | ${yaw}, ${pitch} | ` + JSON.stringify(lastPresetPacketComparison));
             } else {

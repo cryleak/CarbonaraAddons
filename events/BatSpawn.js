@@ -1,6 +1,5 @@
-import { Event } from "./CustomEvents";
-
-import { getDistanceToEntity } from "../../BloomCore/utils/utils"
+import { Event } from "./CustomEvents"
+import { getDistanceToEntity } from "../utils/utils"
 
 export default BatSpawnEvent = new Event();
 

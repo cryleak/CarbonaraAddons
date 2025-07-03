@@ -5,6 +5,42 @@ export const packetCounterGui = new Gui()
 const config = new DefaultConfig("CarbonaraAddons", "settings.json")
 
 config
+    .addSwitch({
+        configName: "displayIndex",
+        title: "Display index of nodes on screen",
+        description: "Helpful for deleting and editing nodes.",
+        category: "Node Rendering",
+        value: false
+    })
+    .addColorPicker({
+        configName: "nodeColor",
+        title: "Node Colors",
+        description: "",
+        category: "Node Rendering",
+        value: [0, 255, 255, 255],
+    })
+    .addColorPicker({
+        configName: "smallNodeColor",
+        title: "Small Node Colors",
+        description: "Colors for the 0 radius ones",
+        category: "Node Rendering",
+        value: [0, 0, 255, 255],
+    })
+    .addSlider({
+        configName: "smallNodeRadius",
+        title: "Small Node Radius",
+        description: "Visual radius for nodes with zero radius (aka you need to stand exactly on it)",
+        category: "Node Rendering",
+        options: [0.001, 1],
+        value: "0.2",
+    })
+    .addTextInput({
+        configName: "nodeSlices",
+        title: "Node Slices",
+        description: "The amount of triangles that makes up one ring. It becomes more circular with a higher value but will have worse performance.",
+        category: "Node Rendering",
+        value: "3",
+    })
     .addKeybind({
         configName: "hClipKeybind",
         title: "HClip Keybind",
@@ -52,42 +88,6 @@ config
         description: "",
         category: "AutoP3",
         value: false
-    })
-    .addSwitch({
-        configName: "displayIndex",
-        title: "Display index of nodes on screen",
-        description: "Helpful for deleting and editing nodes.",
-        category: "AutoP3",
-        value: false
-    })
-    .addColorPicker({
-        configName: "nodeColor",
-        title: "Node Colors",
-        description: "",
-        category: "AutoP3",
-        value: [0, 255, 255, 255],
-    })
-    .addColorPicker({
-        configName: "smallNodeColor",
-        title: "Small Node Colors",
-        description: "Colors for the 0 radius ones",
-        category: "AutoP3",
-        value: [0, 0, 255, 255],
-    })
-    .addSlider({
-        configName: "smallNodeRadius",
-        title: "Small Node Radius",
-        description: "Colors for the 0 radius ones",
-        category: "AutoP3",
-        options: [0.001, 1],
-        value: "0.2",
-    })
-    .addTextInput({
-        configName: "nodeSlices",
-        title: "Node Slices",
-        description: "The amount of triangles that makes up one ring. It becomes more circular with a higher value but will have worse performance.",
-        category: "AutoP3",
-        value: "3",
     })
     .addTextInput({
         configName: "configName",

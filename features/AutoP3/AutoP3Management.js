@@ -3,7 +3,7 @@ import nodeCreation, { availableArgs, nodeTypes } from "./nodeCreation"
 
 import { registerSubCommand } from "../../utils/commands"
 import { chat, playerCoords } from "../../utils/utils"
-import { getDistance3D } from "../../../BloomCore/utils/Utils"
+import { getDistance3DSq } from "../../utils/utils"
 class AutoP3Config {
     constructor() {
         try {
@@ -201,7 +201,7 @@ class AutoP3Config {
     }
 
     getNearestNodeIndex() {
-        return this.config.map((node, i) => ({ distance: getDistance3D(...node.position, ...playerCoords().camera), i })).sort((a, b) => a.distance - b.distance)[0].i
+        return this.config.map((node, i) => ({ distance: getDistance3DSq(...node.position, ...playerCoords().camera), i })).sort((a, b) => a.distance - b.distance)[0].i
     }
 
     saveConfig() {
