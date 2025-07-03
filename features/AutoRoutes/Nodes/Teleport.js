@@ -4,6 +4,7 @@ import manager from "../NodeManager";
 import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../../utils/Rotations"
 import Dungeons from "../../../utils/Dungeons"
+import execer from "../NodeExecutor"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
@@ -18,6 +19,7 @@ class TeleportManager {
         this.yaw = Player.getYaw();
         this.pitch = Player.getPitch();
         this.lastBlock = null;
+        this.counter = 0;
 
         this.recentlyPushedC06s = [];
 
@@ -63,10 +65,10 @@ class TeleportManager {
             if (result === itemSwapSuccess.FAIL) return
         }
 
-
         const shouldWait = result !== "ALREADY_HOLDING" || sneaking !== Player.isSneaking()
         setSneaking(sneaking)
 
+        this.counter++;
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             const exec = () => {
                 Rotations.rotate(yaw, pitch, () => {
@@ -108,7 +110,7 @@ class TeleportManager {
                 if (shouldWait) onResult(null)
                 else onResult(toBlock);
             });
-            manager._updateCoords(this.lastBlock);
+            execer._updateCoords(toBlock);
             return;
         }
 
@@ -125,7 +127,13 @@ class TeleportManager {
     }
 
     sync(yaw, pitch, final) {
-        if (final) setSneaking(false)
+        if (final) {
+            if (this.counter) {
+                debugMessage(`Executed a chilly route with: ${this.counter} teleports`)
+                this.counter = 0;
+            }
+            setSneaking(false)
+        }
         if (!this.lastBlock) {
             return;
         }
