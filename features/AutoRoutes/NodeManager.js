@@ -262,14 +262,18 @@ class NodeManager {
             }
         }
 
-        ChatLib.chat(type)
-        const node = this._newNode(type, argsObject)
-        if (!node) return chat(`Failed to create node of type ${type}. Make sure you specified the arguments correctly.`)
+        this.createNodeFromArgs(argsObject);
+    }
 
-        debugMessage(`&aNode created: ${JSON.stringify(node)}`)
-        if (!this.data[Dungeons.getRoomName()]) this.data[Dungeons.getRoomName()] = []
+    createNodeFromArgs(args) {
+        const node = this._newNode(args.type, args);
+        if (!node) return chat(`Failed to create node of type ${args.type}. Make sure you specified the arguments correctly.`);
+
+        debugMessage(`&aNode created: ${JSON.stringify(node)}`);
+        if (!this.data[Dungeons.getRoomName()]) this.data[Dungeons.getRoomName()] = [];
         this.data[Dungeons.getRoomName()].push(node);
-        this.saveConfig()
+        this.saveConfig();
+        return node;
     }
 
     _handleRemoveNode(args) {
