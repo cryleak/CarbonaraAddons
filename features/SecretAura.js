@@ -62,7 +62,7 @@ export default new class SecretAura {
                 Client.scheduleTask(0, () => { // This runs next tick
                     if (Settings().secretAuraSwapBack) Player.setHeldItemIndex(heldItemIndex)
                 })
-                this.clickedBlocks.add(blockPos)
+                this.clickedBlocks.add(javaBlockPos)
             }
             // console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
         })
