@@ -42,7 +42,6 @@ class TeleportManager {
             const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
 
             if (!wasPredictionCorrect) {
-                chat("§4Teleport failed")
                 manager.deactivateFor(100);
                 while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
                 debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch} | ${x}, ${y}, ${z} | ${yaw}, ${pitch} | ` + JSON.stringify(lastPresetPacketComparison));
@@ -113,7 +112,6 @@ class TeleportManager {
             return;
         }
 
-        debugMessage(`Using method 3`);
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
         setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
@@ -242,20 +240,13 @@ class TeleportNode extends Node {
     _trigger(execer) {
         const onResult = (pos) => {
             const result = execer.execute(this, (node) => {
-                const found = (pos?.x === node?.realPosition?.x && pos?.y - node?.realPosition?.y <= 0.06 && pos?.y - node?.realPosition?.y >= 0 && pos?.z === node?.realPosition?.z)
-                if (found) {
-                    debugMessage(`Actually found the next node`);
-                }
-                return found
+                return (pos?.x === node?.realPosition?.x && pos?.y - node?.realPosition?.y <= 0.06 && pos?.y - node?.realPosition?.y >= 0 && pos?.z === node?.realPosition?.z)
             });
 
             if (result) {
-                debugMessage(`syncing`);
                 tpManager.sync(this.realYaw, this.pitch, true);
             }
         };
-
-        debugMessage(`Actually teleporting`);
 
         if (!this.toBlock) {
             tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
