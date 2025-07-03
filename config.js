@@ -67,6 +67,21 @@ config
         category: "AutoP3",
         value: [0, 255, 255, 255],
     })
+    .addColorPicker({
+        configName: "smallNodeColor",
+        title: "Small Node Colors",
+        description: "Colors for the 0 radius ones",
+        category: "AutoP3",
+        value: [0, 0, 255, 255],
+    })
+    .addSlider({
+        configName: "smallNodeRadius",
+        title: "Small Node Radius",
+        description: "Colors for the 0 radius ones",
+        category: "AutoP3",
+        options: [0.001, 1],
+        value: "0.2",
+    })
     .addTextInput({
         configName: "nodeSlices",
         title: "Node Slices",
