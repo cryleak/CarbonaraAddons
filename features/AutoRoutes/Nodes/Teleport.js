@@ -1,11 +1,11 @@
-import Vector3 from "../../../../BloomCore/utils/Vector3"
+import Vector3 from "../../../utils/Vector3"
 import ServerTeleport from "../../../events/ServerTeleport";
 import manager from "../NodeManager";
 import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../../utils/Rotations"
 import Dungeons from "../../../utils/Dungeons"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess } from "../../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
 
 
@@ -69,18 +69,28 @@ class TeleportManager {
         setSneaking(sneaking)
 
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
-            Rotations.rotate(yaw, pitch, () => {
-                sendAirClick();
+            const exec = () => {
+                Rotations.rotate(yaw, pitch, () => {
+                    sendAirClick();
 
-                // response to the airClick
-                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
-                this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
-                setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
+                    // response to the airClick
+                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
+                    this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
+                    setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
 
-                this.lastTPed = Date.now();
-                if (shouldWait) onResult(null)
-                else onResult(toBlock);
-            });
+                    this.lastTPed = Date.now();
+                    if (shouldWait) onResult(null)
+                    else onResult(toBlock);
+                });
+            };
+
+            if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(clampYaw(Player.pitch), pitch)) {
+                Rotations.rotate(yaw, pitch, () => {
+                    exec();
+                });
+            } else {
+                exec();
+            }
             return;
         }
 
@@ -99,6 +109,7 @@ class TeleportManager {
                 if (shouldWait) onResult(null)
                 else onResult(toBlock);
             });
+            manager._updateCoords(this.lastBlock);
             return;
         }
 
@@ -244,6 +255,8 @@ class TeleportNode extends Node {
             }
         };
 
+        debugMessage(`Actually teleporting`);
+
         if (!this.toBlock) {
             tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
                 this.toBlock = Dungeons.convertToRelative(pos);
@@ -253,6 +266,16 @@ class TeleportNode extends Node {
         } else {
             tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
         }
+    }
+
+    _preArgumentTrigger(execer) {
+        releaseMovementKeys();
+        setVelocity(0, null, 0);
+        if (this.awaitSecret || this.awaitBat) {
+            tpManager.sync(clampYaw(this.realYaw), clampYaw(this.pitch), false);
+            super._handleRotate();
+        }
+        return true;
     }
 
     _handleRotate() {

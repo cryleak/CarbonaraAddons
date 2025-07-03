@@ -1,5 +1,7 @@
 import { Event } from "./CustomEvents";
 
+import { getDistanceToEntity } from "../../BloomCore/utils/utils"
+
 export default BatSpawnEvent = new Event();
 
 register("tick", () => {

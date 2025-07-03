@@ -1,4 +1,4 @@
-import Vector3 from "../../../BloomCore/utils/Vector3"
+import Vector3 from "../../utils/Vector3"
 import LivingUpdate from "../../events/LivingUpdate"
 import { checkIntersection, debugMessage } from "../../utils/utils"
 import manager from "./NodeManager"
@@ -46,10 +46,6 @@ class NodeExecutor {
                 return false;
             }
 
-            if (intersectionMethod) {
-                debugMessage(`Custom intersection success`);
-            }
-
             if (node.lastTriggered && Date.now() - node.lastTriggered < 1000 || node.triggered) {
                 return false;
             }
@@ -63,11 +59,9 @@ class NodeExecutor {
             return true;
         }
 
-        debugMessage(`Executing ${toExec.length} nodes`);
         const node = toExec[0]
         this.consumed++;
         node.execute(this);
-
     }
 
     lowerConsumed() {
@@ -83,7 +77,7 @@ class NodeExecutor {
     }
 
     _updateCoords(updated = Player) {
-        this.previousCoords = new Vector3(updated.x, updated.y, updated.z);
+        this.previousCoords = new Vector3(updated);
     }
 }
 

@@ -8,7 +8,7 @@ NodeManager.registerNode(class UseItemNode extends Node {
     static identifier = "useitem"
     static priority = 1
     constructor(args) {
-        super(this.constructor.identfier, args)
+        super(this.constructor.identifier, args)
         this.itemName = args.itemName
     }
 

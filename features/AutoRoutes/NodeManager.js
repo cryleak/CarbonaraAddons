@@ -1,4 +1,4 @@
-import Vector3 from "../../../BloomCore/utils/Vector3"
+import Vector3 from "../../utils/Vector3"
 import RenderLibV2 from "../../../RenderLibV2J"
 import Settings from "../../config"
 import Dungeons from "../../utils/Dungeons"
