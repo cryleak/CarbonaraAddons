@@ -1,6 +1,6 @@
 
 import Settings from "../../config"
-import Vector3 from "../../../BloomCore/utils/Vector3"
+import Vector3 from "../../utils/Vector3"
 
 import { debugMessage, chat, getDistance2DSq } from "../../utils/utils"
 

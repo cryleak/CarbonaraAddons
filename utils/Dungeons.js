@@ -1,5 +1,5 @@
 
-import Vector3 from "../../BloomCore/utils/Vector3.js"
+import Vector3 from "./Vector3.js"
 
 import { onScoreboardLine } from "../../BloomCore/utils/Events"
 import { removeUnicode } from "../../BloomCore/utils/Utils"
@@ -85,7 +85,7 @@ export default new class Dungeons {
         const relativeCoord = realCoords.copy().subtract(clayPosition)
         const relativeCoordNorth = this._rotateToNorth(relativeCoord)
 
-        return relativeCoordNorth
+        return new Vector3(relativeCoordNorth)
     }
 
     /**
@@ -100,7 +100,7 @@ export default new class Dungeons {
         const relativeRotated = this._rotateFromNorth(relativeCoords)
         const clayPosition = this._convertBlockPosToVector3(currentRoom.clayPos)
 
-        return clayPosition.add([relativeRotated.x, relativeRotated.y, relativeRotated.z])
+        return new Vector3(clayPosition.add([relativeRotated.x, relativeRotated.y, relativeRotated.z]))
     }
 
     /**

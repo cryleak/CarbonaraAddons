@@ -65,24 +65,7 @@ export class Node {
         }
 
         if (this.awaitBat && !metadata.awaitBat) {
-            let done = false;
-
-            scheduleTask(100, () => {
-                if (done) {
-                    return;
-                }
-
-                done = true;
-                metadata.awaitBat = true;
-                this._argumentTrigger(execer, metadata);
-            });
-
-            BatSpawnEvent.scheduleTask(() => {
-                if (done) {
-                    return;
-                }
-
-                done = true;
+            BatSpawnEvent.scheduleTask(0, () => {
                 metadata.awaitBat = true;
                 this._argumentTrigger(execer, metadata);
             });
@@ -91,15 +74,9 @@ export class Node {
         }
 
         if (this.awaitSecret && !metadata.awaitSecret) {
-            let done = false;
             const amount = parseInt(this.awaitSecret) - 1 || 0
 
             SecretEvent.scheduleTask(amount, () => {
-                if (done) {
-                    return;
-                }
-
-                done = true;
                 metadata.awaitSecret = true;
                 this._argumentTrigger(execer, metadata);
             });
@@ -119,7 +96,7 @@ export class Node {
             setVelocity(0, null, 0);
         }
 
-        if (!metadata.playerPosition.equals(Player)) {
+        if (!metadata.playerPosition.equals(Player) && !this.previousEther) {
             this.triggered = false
             execer.lowerConsumed()
             return
@@ -147,7 +124,7 @@ export class Node {
     }
 
     _debugChat() {
-        debugMessage(`&7You stepped on &a${this.nodeName}&7${this.toString()}`);
+        // debugMessage(`&7You stepped on &a${this.nodeName}&7${this.toString()}`);
     }
 
     validate() {

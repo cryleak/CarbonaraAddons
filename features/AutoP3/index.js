@@ -8,7 +8,7 @@ import fakeKeybinds from "../../utils/fakeKeybinds"
 import Blink from "./Blink"
 import Motion from "../../utils/Motion"
 import LivingUpdate from "../../events/LivingUpdate"
-import Vector3 from "../../../BloomCore/utils/Vector3"
+import Vector3 from "../../utils/Vector3"
 import Rotations from "../../utils/Rotations"
 
 import { Terminal, jump, getTermPhase } from "./autoP3Utils"

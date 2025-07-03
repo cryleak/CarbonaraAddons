@@ -1,5 +1,5 @@
 import Settings from "../config"
-import Vector3 from "../../BloomCore/utils/Vector3"
+import Vector3 from "./Vector3"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
