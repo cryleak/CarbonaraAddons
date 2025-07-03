@@ -113,13 +113,13 @@ class NodeManager {
             let pos = node.realPosition
             let color
             let radius = node.radius
-            if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
-            else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-
             if (node.radius === 0) {
                 radius = settings.smallNodeRadius;
-                color = [settings.smallNodeColor[0] / 255, settings.smallNodeColor[1] / 255, settings.smallNodeColor[2] / 255, settings.smallNodeColor[3] / 255];
             }
+
+            if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
+            else if (node.radius === 0) color = [settings.smallNodeColor[0] / 255, settings.smallNodeColor[1] / 255, settings.smallNodeColor[2] / 255, settings.smallNodeColor[3] / 255];
+            else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
 
             RenderLibV2.drawCyl(pos.x, pos.y + 0.01, pos.z, node.radius, radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
             if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.nodeName}`, pos.x, pos.y + 0.01, pos.z, 16777215, true, 0.02, false)

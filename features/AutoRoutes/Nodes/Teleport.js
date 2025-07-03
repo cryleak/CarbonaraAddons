@@ -144,6 +144,10 @@ class TeleportManager {
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
         setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
 
+        if (this.final) {
+            this.lastTPed = 0;
+        }
+
         this.lastBlock = null;
     }
 
