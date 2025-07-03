@@ -4,7 +4,8 @@ import SecretEvent from "../../events/SecretListener"
 import BatSpawnEvent from "../../events/BatSpawn"
 import Vector3 from "../../utils/Vector3"
 
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, clampYaw } from "../../utils/utils"
+import tpManager from "./TeleportManager"
 
 export class Node {
     static priority = 1000;
@@ -24,7 +25,7 @@ export class Node {
         this.center = args.center;
         this.yaw = Dungeons.convertToRelativeYaw(args.yaw);
         this.pitch = args.pitch;
-        this.block = args.block;
+        this.lineOfSight = args.lineOfSight;
         this.defineTransientProperties();
     }
 
@@ -115,6 +116,13 @@ export class Node {
     }
 
     _preArgumentTrigger(execer) {
+        releaseMovementKeys();
+        setVelocity(0, null, 0);
+        if (this.awaitSecret || this.awaitBat) {
+
+            tpManager.sync(clampYaw(this.realYaw), clampYaw(this.pitch), true);
+            this._handleRotate();
+        }
         return true;
     }
 

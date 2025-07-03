@@ -26,7 +26,7 @@ class NodeExecutor {
         });
 
         register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
-            if (this.consumed > 0) return
+            if (this.consumed === 0) return
             if (Client.isInGui() || !World.isLoaded()) return
             if (!Keyboard.getEventKeyState()) return
             const keyCode = Keyboard.getEventKey()
