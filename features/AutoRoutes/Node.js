@@ -4,7 +4,7 @@ import SecretEvent from "../../events/SecretListener"
 import BatSpawnEvent from "../../events/BatSpawn"
 import Vector3 from "../../utils/Vector3"
 
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, getDistance3DSq } from "../../utils/utils"
 
 export class Node {
     static priority = 1000;
@@ -95,7 +95,8 @@ export class Node {
             setVelocity(0, null, 0);
         }
 
-        if (!metadata.playerPosition.equals(Player) && !this.previousEther) {
+        const allowed2D = this.center ? 0.5 ** 2 : 0.01;
+        if (metadata.playerPosition.distance2D(Player) > allowed2D || metadata.playerPosition.distanceY(Player) > 0.01) {
             this.triggered = false
             execer.lowerConsumed()
             return
