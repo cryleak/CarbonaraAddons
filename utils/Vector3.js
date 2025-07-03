@@ -9,6 +9,11 @@ export default class extends Vector3 {
         } else super(...args)
     }
 
+    /**
+     * Checks if this vector is equal to another vector in terms of coordinates.
+     * @param {Vector3} vector The Vector3 to compare with this one
+     * @returns {Boolean} equality
+     */
     equals(vector) {
         return this.x === vector.x && this.y === vector.y && this.z === vector.z
     }

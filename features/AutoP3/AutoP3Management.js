@@ -1,13 +1,11 @@
 import Settings from "../../config"
 import nodeCreation, { availableArgs, nodeTypes } from "./nodeCreation"
-import AmaterasuUtils from "./AmaterasuUtils"
 
 import { registerSubCommand } from "../../utils/commands"
-import { chat, clampYaw, playerCoords } from "../../utils/utils"
+import { chat, playerCoords } from "../../utils/utils"
 import { getDistance3D } from "../../../BloomCore/utils/Utils"
 class AutoP3Config {
     constructor() {
-        // this.yawRequiredTypes = ["look", "useitem", "walk", "superboom"]
         try {
             this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName.toLowerCase() + ".json"))
             if (!Array.isArray(this.config)) throw new Error("boom")
@@ -18,6 +16,8 @@ class AutoP3Config {
         this.nodeCoords = null
         this.editingNodeIndex = null
         this.subcommands = []
+
+        nodeCreation().getConfig().onCloseGui(() => this.onGuiClose())
 
         registerSubCommand("p3", args => {
             const action = args.shift()
@@ -40,27 +40,24 @@ class AutoP3Config {
             this.editingNodeIndex = nearestNodeIndex
             this.nodeCoords = node.position
 
-            AmaterasuUtils.setConfigValue("blinkRoute", node.blinkRoute ?? "")
-            AmaterasuUtils.setConfigValue("ticks", node.ticks?.toString() ?? "15")
-            AmaterasuUtils.setConfigValue("center", node.center)
-            AmaterasuUtils.setConfigValue("stop", node.stop)
-            AmaterasuUtils.setConfigValue("radius", node.radius.toString())
-            AmaterasuUtils.setConfigValue("height", node.height.toString())
-            AmaterasuUtils.setConfigValue("type", nodeTypes.indexOf(node.type))
-            AmaterasuUtils.setConfigValue("itemName", node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting())
-            AmaterasuUtils.setConfigValue("yaw", node.yaw?.toString() ?? Player.getYaw().toFixed(3))
-            AmaterasuUtils.setConfigValue("pitch", node.pitch?.toString() ?? Player.getPitch().toFixed(3))
-            AmaterasuUtils.setConfigValue("delay", node.delay.toString())
-            AmaterasuUtils.setConfigValue("look", node.look ?? false)
-            AmaterasuUtils.setConfigValue("once", node.once ?? false)
-            AmaterasuUtils.setConfigValue("excludeClass", node.excludeClass)
-            AmaterasuUtils.setConfigValue("jumpOnHClip", node.jumpOnHClip ?? false)
-            AmaterasuUtils.setConfigValue("lavaClipDistance", node.lavaClipDistance?.toString() ?? "0")
-            AmaterasuUtils.setConfigValue("awaitLavaBounce", node.awaitLavaBounce ?? true)
-            AmaterasuUtils.applyConfigChanges()
-
-            nodeCreation().getConfig().onCloseGui(() => this.onGuiClose())
-            nodeCreation().getConfig().openGui()
+            nodeCreation().getConfig().setConfigValue("Route", "blinkRoute", node.blinkRoute ?? "")
+                .setConfigValue("Route", "ticks", node.ticks?.toString() ?? "15")
+                .setConfigValue("Route", "center", node.center)
+                .setConfigValue("Route", "stop", node.stop)
+                .setConfigValue("Route", "radius", node.radius.toString())
+                .setConfigValue("Route", "height", node.height.toString())
+                .setConfigValue("Route", "type", nodeTypes.indexOf(node.type))
+                .setConfigValue("Route", "itemName", node.itemName ?? Player?.getHeldItem()?.getName()?.removeFormatting())
+                .setConfigValue("Route", "yaw", node.yaw?.toString() ?? Player.getYaw().toFixed(3))
+                .setConfigValue("Route", "pitch", node.pitch?.toString() ?? Player.getPitch().toFixed(3))
+                .setConfigValue("Route", "delay", node.delay.toString())
+                .setConfigValue("Route", "look", node.look ?? false)
+                .setConfigValue("Route", "once", node.once ?? false)
+                .setConfigValue("Route", "excludeClass", node.excludeClass)
+                .setConfigValue("Route", "jumpOnHClip", node.jumpOnHClip ?? false)
+                .setConfigValue("Route", "lavaClipDistance", node.lavaClipDistance?.toString() ?? "0")
+                .setConfigValue("Route", "awaitLavaBounce", node.awaitLavaBounce ?? true)
+                .openGui()
         }, args => this.config.map((_0, index) => index.toString()))
 
         this.registerAutoP3Comamand(["createnode", "cn", "addnode", "an"], args => {
@@ -264,19 +261,18 @@ class AutoP3Config {
 
 export default new AutoP3Config()
 
-AmaterasuUtils.setConfigValue("blinkRoute", "")
-AmaterasuUtils.setConfigValue("ticks", "15")
-AmaterasuUtils.setConfigValue("center", false)
-AmaterasuUtils.setConfigValue("stop", false)
-AmaterasuUtils.setConfigValue("radius", "0.5")
-AmaterasuUtils.setConfigValue("height", "0.1")
-AmaterasuUtils.setConfigValue("type", 5)
-AmaterasuUtils.setConfigValue("itemName", "Bonzo's Staff")
-AmaterasuUtils.setConfigValue("yaw", "0")
-AmaterasuUtils.setConfigValue("pitch", "0")
-AmaterasuUtils.setConfigValue("delay", "0")
-AmaterasuUtils.setConfigValue("look", false)
-AmaterasuUtils.setConfigValue("once", true)
-AmaterasuUtils.setConfigValue("excludeClass", "Mage")
-AmaterasuUtils.setConfigValue("jumpOnHClip", true)
-AmaterasuUtils.applyConfigChanges()
+nodeCreation().getConfig().setConfigValue("Route", "blinkRoute", "")
+    .setConfigValue("Route", "ticks", "15")
+    .setConfigValue("Route", "center", false)
+    .setConfigValue("Route", "stop", false)
+    .setConfigValue("Route", "radius", "0.5")
+    .setConfigValue("Route", "height", "0.1")
+    .setConfigValue("Route", "type", 5)
+    .setConfigValue("Route", "itemName", "Bonzo's Staff")
+    .setConfigValue("Route", "yaw", "0")
+    .setConfigValue("Route", "pitch", "0")
+    .setConfigValue("Route", "delay", "0")
+    .setConfigValue("Route", "look", false)
+    .setConfigValue("Route", "once", true)
+    .setConfigValue("Route", "excludeClass", "Mage")
+    .setConfigValue("Route", "jumpOnHClip", true)
