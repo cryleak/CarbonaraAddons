@@ -30,6 +30,16 @@ export default class extends Vector3 {
         } else super(...args)
     }
 
+    add(...args) {
+        if (args.length === 1) {
+            return super.add(args[0])
+        } else if (args.length === 3) {
+            return super.add([args[0], args[1], args[2]])
+        } else {
+            throw new Error("Invalid arguments for Vector3.add. Expected either a single Vector3 or three numbers.")
+        }
+    }
+
     /**
      * Checks if this vector is equal to another vector in terms of coordinates.
      * @param {Vector3} vector The Vector3 to compare with this one
@@ -61,5 +71,9 @@ export default class extends Vector3 {
 
     convertToBlockPos() {
         return new MCBlockPos(this.x, this.y, this.z)
+    }
+
+    floor2D() {
+        return new this.constructor(Math.floor(this.x), this.y, Math.floor(this.z))
     }
 }

@@ -6,11 +6,11 @@ import Dungeons from "../../../utils/Dungeons"
 import bind from "../../../utils/bind"
 import tpManager from "../TeleportManager";
 
-
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
 class TeleportNode extends Node {
 
@@ -94,6 +94,7 @@ manager.registerNode(class HyperionNode extends TeleportNode {
 class TeleportRecorder {
     constructor() {
         this.inTP = false;
+        this.awaitingTP = false;
         this.nodes = [];
         this.lastYaw = Player.yaw;
         this.lastPitch = Player.pitch;
@@ -101,14 +102,18 @@ class TeleportRecorder {
         this.trigger = bind(
             OnUpdateWalkingPlayerPre.register((event) => {
                 replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, Player.pitch, event.data.packet.func_149465_i());
-                this.lastYaw = Player.yaw;
-                this.lastPitch = Player.pitch;
                 Client.sendPacket(replacementPacket);
-                const { x, y, z } = this.nodes[this.length - 1].position;
+                const { x, y, z } = this.nodes[this.nodes.length - 1].position;
                 setPlayerPosition(x, y, z);
                 event.cancelled = true;
             }),
-            register("hitBlock", (block, event) => cancel(event)),
+            register("packetSent", (packet, event) => {
+                if (!this.awaitingTP) {
+                    cancel(event);
+                }
+
+                this.awaitingTP = false;
+            }).setFilteredClass(C08PacketPlayerBlockPlacement),
             register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger await secret on left click
                 const button = event.button
                 const state = event.buttonstate
@@ -129,6 +134,9 @@ class TeleportRecorder {
                     type = "etherwarp";
                 }
 
+                this.awaitingTP = true;
+                this.lastYaw = Player.yaw;
+                this.lastPitch = Player.pitch;
                 sendAirClick();
                 this.tped(type);
             })
@@ -145,7 +153,7 @@ class TeleportRecorder {
 
     start() {
         this.trigger.register();
-        this.nodes = [{ position: new Vector3(Math.floor(Player.x), Player.y, Math.floor(Player.y)) }];
+        this.nodes = [{ position: new Vector3(Player.x, Player.y, Player.z) }];
         manager.active = false;
     }
 
@@ -156,6 +164,7 @@ class TeleportRecorder {
     }
 
     tped(type) {
+        this.inTP = false
         const serverTeleportTrigger = ServerTeleport.register((event) => {
             serverTeleportTrigger.unregister();
 
@@ -165,7 +174,7 @@ class TeleportRecorder {
 
             const packet = event.data.packet;
 
-            const coords = [Math.floor(packet.func_148932_c()), packet.func_148928_d(), Math.floor(packet.func_148933_e())];
+            const coords = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()];
 
             this.nodes.push({
                 type,
@@ -187,11 +196,7 @@ class TeleportRecorder {
             });
 
             this.lastTP = true;
-            Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(coords[0], coords[1], coords[2], Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
 
-            setPlayerPosition(coords[0], coords[1], coords[2]);
-
-            event.cancelled = true;
             event.break = true;
         }, 1349239234);
     }
@@ -200,10 +205,12 @@ class TeleportRecorder {
         for (let i = this.nodes.length - 1; i > 0; i--) {
             let curr = this.nodes[i];
             let old = this.nodes[i - 1];
-            let toBlock = Dungeons.convertToRelative(curr.position);
-            curr.position = old.position;
+            let afterAdd = curr.position.floor2D();
+            let toBlock = Dungeons.convertToRelative(afterAdd);
+            curr.position = old.position.floor2D();
             let node = manager.createNodeFromArgs(curr);
             node.toBlock = toBlock;
+            ChatLib.chat(`Teleporting to ${toBlock}`);
         }
         this.nodes = [];
     }
