@@ -73,12 +73,14 @@ export default new class SecretAura {
             this.renderShit.push(hitvec)
         }).setFilteredClass(net.minecraft.network.play.client.C08PacketPlayerBlockPlacement)
 
+        /*
         register("renderWorld", () => {
             this.renderShit.forEach(thing => {
                 const wrappedPos = Vector3.convertVec3ToVector3(thing)
                 RenderLib.drawEspBoxV2(wrappedPos.x, wrappedPos.y, wrappedPos.z, 0.05, 0.05, 0.05, 1, 1, 1, 1, true, 2)
             })
         })
+            */
 
         register("worldUnload", () => {
             // while (this.renderShit.length) this.renderShit.pop()
