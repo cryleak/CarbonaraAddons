@@ -80,6 +80,7 @@ class TeleportManager {
                     setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
 
                     this.lastTPed = Date.now();
+                    execer._updateCoords(toBlock);
                     if (shouldWait) onResult(null)
                     else onResult(toBlock);
                 });
@@ -107,10 +108,10 @@ class TeleportManager {
                     this.sync(yaw, pitch, true);
                 });
 
+                execer._updateCoords(toBlock);
                 if (shouldWait) onResult(null)
                 else onResult(toBlock);
             });
-            execer._updateCoords(toBlock);
             return;
         }
 
@@ -122,6 +123,7 @@ class TeleportManager {
 
         this.lastTPed = Date.now();
         this.lastBlock = toBlock;
+        execer._updateCoords(toBlock);
 
         onResult(toBlock);
     }
