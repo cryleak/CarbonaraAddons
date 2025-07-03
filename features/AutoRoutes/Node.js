@@ -95,7 +95,7 @@ export class Node {
             setVelocity(0, null, 0);
         }
 
-        const allowed2D = this.center ? 0.5 ** 2 : 0.01;
+        const allowed2D = this.center ? 1.5 ** 2 - 1 : 0.01;
         if (metadata.playerPosition.distance2D(Player) > allowed2D || metadata.playerPosition.distanceY(Player) > 0.01) {
             this.triggered = false
             execer.lowerConsumed()
