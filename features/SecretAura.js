@@ -33,7 +33,6 @@ export default new class SecretAura {
         this.renderShit = []
 
         register("tick", () => {
-            const runStart = System.nanoTime()
             if (!Settings().secretAuraEnabled || !World.isLoaded() || !Dungeons.inDungeon && Settings().secretAuraDungeonsOnly || this.ignoreRooms.includes(dungeonUtils.currentRoomName)) return
 
             const javaBlockPos = SecretAuraScanner.findClickableBlock(this.clickedBlocks, this.redstoneKeyPickedUp)
@@ -42,14 +41,19 @@ export default new class SecretAura {
                 const blockState = World.getWorld()./* getBlockState */func_180495_p(javaBlockPos)
                 const block = blockState./* getBlock */func_177230_c()
 
-                const heldItemIndex = Player.getHeldItemIndex()
-                let secretAuraItemIndex
-                if (!isNaN(Settings().secretAuraItem)) secretAuraItemIndex = parseInt(Settings().secretAuraItem)
-                else {
-                    secretAuraItemIndex = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(Settings().secretAuraItem?.toLowerCase()))
-                    if (secretAuraItemIndex === -1 || secretAuraItemIndex > 7) return
+                if (Settings().secretAuraSwapOn === 1 && block instanceof BlockSkull || Settings().secretAuraSwapOn === 2) {
+                    const heldItemIndex = Player.getHeldItemIndex()
+                    let secretAuraItemIndex
+                    if (!isNaN(Settings().secretAuraItem)) secretAuraItemIndex = parseInt(Settings().secretAuraItem)
+                    else {
+                        secretAuraItemIndex = Player.getInventory().getItems().findIndex(item => item?.getName()?.removeFormatting()?.toLowerCase()?.includes(Settings().secretAuraItem?.toLowerCase()))
+                        if (secretAuraItemIndex === -1 || secretAuraItemIndex > 7) return
+                    }
+                    if (!isNaN(secretAuraItemIndex)) Player.setHeldItemIndex(secretAuraItemIndex)
+                    Client.scheduleTask(0, () => { // This runs next tick
+                        if (Settings().secretAuraSwapBack) Player.setHeldItemIndex(heldItemIndex)
+                    })
                 }
-                if (!isNaN(secretAuraItemIndex)) Player.setHeldItemIndex(secretAuraItemIndex)
 
                 LivingUpdate.scheduleTask(0, () => { // This runs right before the next living update (same tick)
                     this.rightClickBlock(block, blockPos)
@@ -59,12 +63,8 @@ export default new class SecretAura {
                         if (skullId === "fed95410-aba1-39df-9b95-1d4f361eb66e") this.redstoneKeyPickedUp = true
                     }
                 })
-                Client.scheduleTask(0, () => { // This runs next tick
-                    if (Settings().secretAuraSwapBack) Player.setHeldItemIndex(heldItemIndex)
-                })
                 this.clickedBlocks.add(javaBlockPos)
             }
-            // console.log(`Checking blocks took ${(System.nanoTime() - runStart) / 1000000}ms`)
         })
 
         register("packetSent", (packet, event) => {

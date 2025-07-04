@@ -287,17 +287,26 @@ config
         description: "Resets clicked blocks when pressed.",
         category: "Block Aura"
     })
+    .addDropDown({
+        configName: "secretAuraSwapOn",
+        title: "Swap on",
+        description: "Select an option",
+        category: "Block Aura",
+        options: ["None", "Essence", "All"]
+    })
     .addTextInput({
         configName: "secretAuraItem",
         title: "Item to swap to",
         description: "You can either set this to a number to choose a static hotbar slot or swap to an item with a specific name.",
-        category: "Block Aura"
+        category: "Block Aura",
+        shouldShow: data => data.secretAuraSwapOn !== 0
     })
     .addSwitch({
         configName: "secretAuraSwapBack",
         title: "Swap Back",
         description: "Swap back to previously held item after clicking",
-        category: "Block Aura"
+        category: "Block Aura",
+        shouldShow: data => data.secretAuraSwapOn !== 0
     })
     .addSwitch({
         configName: "randomColors",
