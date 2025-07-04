@@ -7,6 +7,7 @@ import Editable from "../../utils/ObjectEditor";
 import tpManager from "./TeleportManager"
 
 import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, clampYaw, capitalizeFirst } from "../../utils/utils"
+import FreezeManager from "./FreezeManager"
 
 export class Node extends Editable {
     static priority = 1000;
@@ -68,7 +69,9 @@ export class Node extends Editable {
         }
 
         if (this.awaitBat && !metadata.awaitBat) {
+            FreezeManager.setFreezing(true)
             BatSpawnEvent.scheduleTask(0, () => {
+                FreezeManager.setFreezing(false)
                 metadata.awaitBat = true;
                 this._argumentTrigger(execer, metadata);
             });
@@ -79,7 +82,9 @@ export class Node extends Editable {
         if (this.awaitSecret && !metadata.awaitSecret) {
             const amount = parseInt(this.awaitSecret) - 1 || 0
 
+            FreezeManager.setFreezing(true)
             SecretEvent.scheduleTask(amount, () => {
+                FreezeManager.setFreezing(false)
                 metadata.awaitSecret = true;
                 this._argumentTrigger(execer, metadata);
             });
