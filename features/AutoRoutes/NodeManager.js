@@ -205,7 +205,7 @@ class NodeManager {
             pitch: Player.getPitch().toFixed(3),
             radius: 0.5,
             height: 0.1,
-            awaitSecret: false,
+            awaitSecret: 0,
             awaitBatSpawn: false,
             delay: 0,
             stop: false,
