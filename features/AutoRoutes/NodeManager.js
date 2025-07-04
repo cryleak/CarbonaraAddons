@@ -230,7 +230,7 @@ class NodeManager {
                     break
                 case "awaitbatspawn":
                 case "awaitbat":
-                    argsObject.awaitSecret = false
+                    argsObject.awaitSecret = 0
                     argsObject.awaitBat = true
                     break
                 case "stop":
