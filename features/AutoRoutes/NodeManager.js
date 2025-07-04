@@ -2,10 +2,11 @@ import Vector3 from "../../utils/Vector3"
 import RenderLibV2 from "../../../RenderLibV2J"
 import Settings from "../../config"
 import Dungeons from "../../utils/Dungeons"
+import Editable from "../../utils/ObjectEditor";
 
 import { drawLine3d } from "../../../BloomCore/utils/Utils";
-import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils"
-import { registerSubCommand } from "../../utils/commands"
+import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils";
+import { registerSubCommand } from "../../utils/commands";
 
 const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 
@@ -49,8 +50,12 @@ class NodeManager {
         })
 
         this.registerAutoRouteCommand(["removenode", "rn"], (args) => {
-            this._handleRemoveNode(args)
+            this._handleRemoveNode(args);
         })
+
+        this.registerAutoRouteCommand(["edit", "e"], (args) => {
+            this._handleEdit(args);
+        });
 
         register("renderWorld", () => {
             this._render();
@@ -281,6 +286,22 @@ class NodeManager {
         }
     }
 
+    _getClosest() {
+        const playerVec = Dungeons.convertToRelative(new Vector3(Player.x, Player.y, Player.z))
+        let closestNodeDistance = Number.MAX_SAFE_INTEGER;
+        let closestNodeIndex = null;
+        for (let i = 0; i < this.activeNodes.length; i++) {
+            let node = this.activeNodes[i];
+            let distance = getDistance3DSq(node.position.x, node.position.y, node.position.z, playerVec.x, playerVec.y, playerVec.z);
+            if (distance < closestNodeDistance) {
+                closestNodeDistance = distance
+                closestNodeIndex = i
+            }
+
+        }
+        return closestNodeIndex;
+    }
+
     _handleRemoveNode(args) {
         if (!this.activeNodes.length) return chat("No nodes found in this room!")
         let deleteIndex = null
@@ -288,25 +309,26 @@ class NodeManager {
             deleteIndex = parseInt(args[0])
             if (!this.activeNodes[deleteIndex]) return chat("Index not found!")
         } else {
-            const playerVec = Dungeons.convertToRelative(new Vector3(Player.x, Player.y, Player.z))
-            let closestNodeDistance = Number.MAX_SAFE_INTEGER
-            let closestNodeIndex = 0
-            for (let i = 0; i < this.activeNodes.length; i++) {
-                let node = this.activeNodes[i]
-                let distance = getDistance3DSq(node.position.x, node.position.y, node.position.z, playerVec.x, playerVec.y, playerVec.z)
-                if (distance < closestNodeDistance) {
-                    closestNodeDistance = distance
-                    closestNodeIndex = i
-                }
-
-            }
-            deleteIndex = closestNodeIndex
+            deleteIndex = this._getClosest();
         }
         if (deleteIndex !== null) {
             const node = this.data[Dungeons.getRoomName()].splice(deleteIndex, 1)[0]
             this.saveConfig()
             chat(`Deleted: ${JSON.stringify(node)}`)
         }
+    }
+
+    _handleEdit(args) {
+        let editIndex = null;
+        if (!isNaN(args?.[0])) {
+            editIndex = parseInt(args[0]);
+            if (!this.activeNodes[editIndex]) return chat("Index not found!");
+        } else {
+            editIndex = this._getClosest();
+            if (editIndex === null) return chat("No nodes found in this room!");
+        }
+
+        this.activeNodes[editIndex].openEditor();
     }
 
     registerAutoRouteCommand(args, listener, tabCompletions) {

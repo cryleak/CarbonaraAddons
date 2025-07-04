@@ -431,5 +431,10 @@ export function getHeldItemID() {
 
 export const isWithinTolerence = (n1, n2) => Math.abs(n1 - n2) < 1e-4;
 
+export function capitalizeFirst(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy
