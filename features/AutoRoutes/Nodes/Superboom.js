@@ -3,6 +3,7 @@ import Vector3 from "../../../utils/Vector3"
 import { Node } from "../Node"
 import NodeManager from "../NodeManager"
 import SecretAura from "../../SecretAura"
+import LivingUpdate from "../../../events/LivingUpdate"
 import { chat, itemSwapSuccess, swapFromItemID } from "../../../utils/utils"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
@@ -29,7 +30,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
             const blockState = World.getWorld().func_180495_p(javaBlockPos)
             const block = blockState.func_177230_c()
             if (!(block instanceof BlockAir)) {
-                SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
+                LivingUpdate.scheduleTask(0, () => rightClickBlock(block, this.realSuperBoomBlock))
             } else chat("Can't superboom on a block that doesn't exist.")
         } else chat("You are too far from the block.")
         execer.execute(this)
