@@ -65,20 +65,7 @@ class TeleportManager {
         }, 10000);
     }
 
-    teleport(toBlock, yaw, pitch, sneaking, itemName, onResult) {
-        let result = itemSwapSuccess.ALREADY_HOLDING
-        if (Player.getHeldItem().getName() !== itemName) {
-            result = swapFromName(itemName)
-            if (result === itemSwapSuccess.FAIL) {
-                debugMessage("Teleport failed: Item swap failed");
-                return
-            }
-        }
-
-        const shouldWait = result !== itemSwapSuccess.ALREADY_HOLDING || sneaking !== Player.isSneaking()
-        setSneaking(sneaking)
-        setVelocity(0, 0, 0);
-
+    _teleportAfterSwap(toBlock, yaw, pitch, sneaking, onResult, shouldWait) {
         this.counter++;
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             const exec = () => {
@@ -140,6 +127,21 @@ class TeleportManager {
         onResult(toBlock);
     }
 
+    teleport(toBlock, yaw, pitch, sneaking, itemName, onResult) {
+        swapFromName(itemName, result => {
+            if (result === itemSwapSuccess.FAIL) {
+                debugMessage("Teleport failed: Item swap failed");
+                return
+            }
+
+            const shouldWait = result !== itemSwapSuccess.ALREADY_HOLDING || sneaking !== Player.isSneaking()
+            setSneaking(sneaking)
+            setVelocity(0, 0, 0);
+
+            this._teleportAfterSwap(toBlock, yaw, pitch, sneaking, onResult, shouldWait);
+        });
+    }
+
     sync(yaw, pitch, final) {
         if (final) {
             if (this.counter) {
@@ -167,6 +169,9 @@ class TeleportManager {
 
     measureTeleport(fromEther = false, yaw, pitch, sneaking, itemName, onResult) {
         if (!this.isTeleportItem()) {
+            swapFromName(itemName, result => {
+                this.measureTeleport(fromEther, yaw, pitch, sneaking, itemName, onResult);
+            });
             return;
         }
 
