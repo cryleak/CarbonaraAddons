@@ -19,12 +19,13 @@ class TeleportNode extends Node {
 
         this.previousEther = args.prevEther;
         this.toBlock = null;
+        this.chained = args.chained;
     }
 
     _trigger(execer) {
         const onResult = (pos) => {
             const result = execer.execute(this, (node) => {
-                return (pos?.x === node?.realPosition?.x && pos?.y - node?.realPosition?.y <= 0.06 && pos?.y - node?.realPosition?.y >= 0 && pos?.z === node?.realPosition?.z)
+                return (pos?.x === node?.realPosition?.x && pos?.y - node?.realPosition?.y <= 0.06 && pos?.y - node?.realPosition?.y >= 0 && pos?.z === node?.realPosition?.z);
             });
 
             if (result) {
@@ -65,6 +66,17 @@ class TeleportNode extends Node {
             },
             updator: (config, obj) => {
                 config.settings.getConfig().setConfigValue("Object Editor", "from Ether", obj.previousEther);
+            }
+        });
+
+        values.push({
+            type: "addSwitch",
+            configName: "chained",
+            registerListener: (obj, prev, next) => {
+                obj.chained = next;
+            },
+            updator: (config, obj) => {
+                config.settings.getConfig().setConfigValue("Object Editor", "chained", obj.chained);
             }
         });
 
@@ -254,6 +266,7 @@ class TeleportRecorder {
             let old = this.nodes[i - 1];
             let afterAdd = curr.position.floor2D();
             let toBlock = Dungeons.convertToRelative(afterAdd);
+            // curr.chained = i !== 1;
             curr.position = old.position.floor2D();
             let node = manager.createNodeFromArgs(curr);
             node.toBlock = toBlock;

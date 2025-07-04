@@ -59,7 +59,7 @@ export class Node extends Editable {
     _argumentTrigger(execer, metadata = {}) {
         if (!metadata.playerPosition) metadata.playerPosition = new Vector3(Player.x, Player.y, Player.z)
         if (this.delay && !metadata.delay) {
-            const delay = Math.ceil(parseInt(node.delay) / 50)
+            const delay = Math.ceil(parseInt(this.delay) / 50)
             scheduleTask(delay, () => {
                 metadata.delay = true;
                 this._argumentTrigger(execer, metadata);
@@ -147,6 +147,10 @@ export class Node extends Editable {
 
     _onUpdatedInConfig() {
         manager.saveConfig();
+    }
+
+    customIntersection() {
+        return null;
     }
 
     createConfigValues() {
@@ -269,14 +273,15 @@ export class Node extends Editable {
                 configName: "await Secrets",
                 registerListener: (obj, prev, next) => {
                     const amount = parseInt(next);
-                    if (isNaN(amount) || amount < 0) {
+                    if (amount < 0) {
+                        obj.awaitSecret = 0;
                         return;
                     }
 
                     obj.awaitSecret = amount;
                 },
                 updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "await Secrets", obj.awaitSecret || "0");
+                    config.settings.getConfig().setConfigValue("Object Editor", "await Secrets", obj.awaitSecret?.toString() || "0");
                 }
             }
         ];
