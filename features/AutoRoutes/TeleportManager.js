@@ -56,7 +56,7 @@ class TeleportManager {
             if (found === null) {
                 manager.deactivateFor(40);
                 while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
-                 debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch}`);
+                debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch}`);
             } else {
                 this.recentlyPushedC06s.splice(found, 1);
                 event.cancelled = true
@@ -70,13 +70,13 @@ class TeleportManager {
             return;
         }
 
-        let result = "ALREADY_HOLDING"
+        let result = itemSwapSuccess.ALREADY_HOLDING
         if (Player.getHeldItem().getName() !== itemName) {
             result = swapFromName(itemName)
             if (result === itemSwapSuccess.FAIL) return
         }
 
-        const shouldWait = result !== "ALREADY_HOLDING" || sneaking !== Player.isSneaking()
+        const shouldWait = result !== itemSwapSuccess.ALREADY_HOLDING || sneaking !== Player.isSneaking()
         setSneaking(sneaking)
         setVelocity(0, 0, 0);
 
