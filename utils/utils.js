@@ -138,6 +138,7 @@ export function scheduleTask(delay, task) {
 }
 
 register("tick", () => {
+    swappedThisTick = false
     while (codeToExec.length) codeToExec.shift()()
 }).setPriority(Priority.HIGHEST)
 
@@ -374,12 +375,6 @@ export function rotate(origYaw, origPitch) {
 
 let swappedThisTick = false
 
-register("tick", () => {
-    Client.scheduleTask(0, () => {
-        swappedThisTick = false
-    })
-})
-
 export const itemSwapSuccess = {
     FAIL: "CANT_FIND",
     SUCCESS: "SWAPPED",
@@ -436,7 +431,7 @@ const swapToSlot = (slot, callback) => {
         return itemSwapSuccess.ALREADY_HOLDING
     }
 
-    if (swappedThisTick) Client.scheduleTask(0, () => {
+    if (swappedThisTick) scheduleTask(0, () => {
         Player.setHeldItemIndex(slot)
         if (callback) callback(itemSwapSuccess.SUCCESS)
         swappedThisTick = true
