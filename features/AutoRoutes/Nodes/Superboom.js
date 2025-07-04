@@ -22,18 +22,19 @@ NodeManager.registerNode(class SuperboomNode extends Node {
     }
 
     _trigger(execer) {
-        const result = swapFromItemID(46)
-        if (result === itemSwapSuccess.FAIL) return execer.execute(this)
-        const eyePosition = new Vector3(Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ())
-        if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
-            const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
-            const blockState = World.getWorld().func_180495_p(javaBlockPos)
-            const block = blockState.func_177230_c()
-            if (!(block instanceof BlockAir)) {
-                LivingUpdate.scheduleTask(0, () => rightClickBlock(block, this.realSuperBoomBlock))
-            } else chat("Can't superboom on a block that doesn't exist.")
-        } else chat("You are too far from the block.")
-        execer.execute(this)
+        swapFromItemID(46, result => {
+            if (result === itemSwapSuccess.FAIL) return execer.execute(this)
+            const eyePosition = new Vector3(Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ())
+            if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
+                const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
+                const blockState = World.getWorld().func_180495_p(javaBlockPos)
+                const block = blockState.func_177230_c()
+                if (!(block instanceof BlockAir)) {
+                    LivingUpdate.scheduleTask(0, () => rightClickBlock(block, this.realSuperBoomBlock))
+                } else chat("Can't superboom on a block that doesn't exist.")
+            } else chat("You are too far from the block.")
+            execer.execute(this)
+        })
     }
 
     _handleRotate() {
