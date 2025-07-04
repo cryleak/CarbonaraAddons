@@ -388,6 +388,9 @@ export const swapFromName = (targetItemName) => {
     let itemSlot = null
     for (let i = 0; i < 8; i++) {
         let item = items[i]
+        if (!item) {
+            continue
+        }
         if (item?.getName()?.removeFormatting()?.toLowerCase()?.includes(targetItemName.removeFormatting().toLowerCase())) {
             itemSlot = i
             break
