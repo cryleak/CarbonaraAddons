@@ -395,7 +395,7 @@ export const swapFromName = (targetItemName) => {
     }
     if (itemSlot === null) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
-        return "CANT_FIND"
+        return itemSwapSuccess.FAIL
     } else {
         return swapToSlot(itemSlot)
     }
@@ -410,7 +410,7 @@ export const swapFromItemID = (targetItemID) => {
     const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getID() == targetItemID)
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find Item ID ${targetItemID} in your hotbar`)
-        return "CANT_FIND"
+        return itemSwapSuccess.FAIL
     } else {
         return swapToSlot(itemSlot)
     }
@@ -418,11 +418,11 @@ export const swapFromItemID = (targetItemID) => {
 
 let lastSwap = Date.now()
 const swapToSlot = (slot) => {
-    if (Player.getHeldItemIndex() === slot) return "ALREADY_HOLDING"
+    if (Player.getHeldItemIndex() === slot) return itemSwapSuccess.ALREADY_HOLDING
     debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
     lastSwap = Date.now()
     Player.setHeldItemIndex(slot)
-    return "SWAPPED"
+    return itemSwapSuccess.SUCCESS
 }
 
 export function getHeldItemID() {
@@ -432,8 +432,8 @@ export function getHeldItemID() {
 export const isWithinTolerence = (n1, n2) => Math.abs(n1 - n2) < 1e-4;
 
 export function capitalizeFirst(str) {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1);
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 global.System = Java.type("java.lang.System")
