@@ -26,27 +26,39 @@ class TeleportManager {
             if (!this.recentlyPushedC06s.length) return
             const packet = event.data.packet;
 
-            const { x, y, z, yaw, pitch } = this.recentlyPushedC06s.shift()
             const newPitch = packet.func_148930_g();
             const newYaw = packet.func_148931_f();
             const newX = packet.func_148932_c();
             const newY = packet.func_148928_d();
             const newZ = packet.func_148933_e();
 
-            const lastPresetPacketComparison = {
-                x: x == newX,
-                y: y == newY,
-                z: z == newZ,
-                yaw: isWithinTolerence(yaw, newYaw) || newYaw == 0,
-                pitch: isWithinTolerence(pitch, newPitch) || newPitch == 0
+            const compare = (p) => {
+                const { x, y, z, yaw, pitch } = p;
+                const lastPresetPacketComparison = {
+                    x: x == newX,
+                    y: y == newY,
+                    z: z == newZ,
+                    yaw: isWithinTolerence(yaw, newYaw) || newYaw == 0,
+                    pitch: isWithinTolerence(pitch, newPitch) || newPitch == 0
+                };
+                const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
+                return wasPredictionCorrect
             };
-            const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
 
-            if (!wasPredictionCorrect) {
+            let found = null;
+            for (let i = this.recentlyPushedC06s.length - 1; i >= 0; i--) {
+                if (compare(this.recentlyPushedC06s[i])) {
+                    found = i;
+                    break;
+                }
+            }
+
+            if (found === null) {
                 manager.deactivateFor(40);
                 while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
-                debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch} | ${x}, ${y}, ${z} | ${yaw}, ${pitch} | ` + JSON.stringify(lastPresetPacketComparison));
+                // debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch} | ${x}, ${y}, ${z} | ${yaw}, ${pitch} | ` + JSON.stringify(lastPresetPacketComparison));
             } else {
+                this.recentlyPushedC06s.splice(found, 1);
                 event.cancelled = true
                 event.break = true
             }
