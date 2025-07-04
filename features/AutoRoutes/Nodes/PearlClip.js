@@ -15,8 +15,8 @@ NodeManager.registerNode(class PearlClipNode extends Node {
     _trigger(execer) {
         const result = swapFromName("Ender Pearl")
         if (result === itemSwapSuccess.FAIL) return execer.execute(this)
-        Rotations.rotate(this.yaw, this.pitch, () => {
-            Rotations.rotate(this.yaw, this.pitch, () => {
+        Rotations.rotate(this.realYaw, this.pitch, () => {
+            Rotations.rotate(this.realYaw, this.pitch, () => {
                 sendAirClick()
                 let listening = true
                 let yPosition = this.distance === 0 ? findAirOpening() : Player.getY() - this.distance
@@ -29,7 +29,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                         execer.execute(this)
                         return
                     }
-                    chat(`Pearlclipped ${Math.round(((Player.getY() - yPosition) * 10)) / 10} blocks down.`)
+                    chat(`Pearlclipped ${Math.round(((Player.getY() - yPosition - 1) * 10)) / 10} blocks down.`)
                     setPlayerPosition(Player.getX(), yPosition, Player.getZ())
                     execer.execute(this)
                 })
