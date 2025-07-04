@@ -56,7 +56,7 @@ class TeleportManager {
             if (found === null) {
                 manager.deactivateFor(40);
                 while (this.recentlyPushedC06s.length) this.recentlyPushedC06s.pop()
-                // debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch} | ${x}, ${y}, ${z} | ${yaw}, ${pitch} | ` + JSON.stringify(lastPresetPacketComparison));
+                 debugMessage(`§4Teleport failed: ${newX}, ${newY}, ${newZ} | ${newYaw}, ${newPitch}`);
             } else {
                 this.recentlyPushedC06s.splice(found, 1);
                 event.cancelled = true
@@ -78,11 +78,13 @@ class TeleportManager {
 
         const shouldWait = result !== "ALREADY_HOLDING" || sneaking !== Player.isSneaking()
         setSneaking(sneaking)
+        setVelocity(0, 0, 0);
 
         this.counter++;
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             const exec = () => {
                 Rotations.rotate(yaw, pitch, () => {
+                    setVelocity(0, 0, 0);
                     sendAirClick();
 
                     // response to the airClick
@@ -92,13 +94,13 @@ class TeleportManager {
 
                     this.lastTPed = Date.now();
                     execer._updateCoords(toBlock);
-                    if (shouldWait) onResult(null)
-                    else onResult(toBlock);
+                    onResult(toBlock);
                 });
             };
 
             if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(clampYaw(Player.pitch), pitch)) {
                 Rotations.rotate(yaw, pitch, () => {
+                    setVelocity(0, 0, 0);
                     exec();
                 });
             } else {
@@ -108,21 +110,19 @@ class TeleportManager {
         }
 
         if (!this.lastBlock || shouldWait) {
-            if (shouldWait) this.sync(yaw, pitch, false)
-            Rotations.rotate(yaw, pitch, () => {
-                sendAirClick();
-                this.lastBlock = toBlock;
-                this.lastTPed = Date.now();
+            const exec = () => {
+                Rotations.rotate(yaw, pitch, () => {
+                    setVelocity(0, 0, 0);
+                    sendAirClick();
+                    this.lastBlock = toBlock;
+                    this.lastTPed = Date.now();
 
-                // In case something fails just update everything the next tick.
-                scheduleTask(5, () => {
-                    this.sync(yaw, pitch, true);
-                });
-
-                execer._updateCoords(toBlock);
-                if (shouldWait) onResult(null)
-                else onResult(toBlock);
-            });
+                    execer._updateCoords(toBlock);
+                    onResult(toBlock);
+                }, true);
+            }
+            if (shouldWait) this.sync(yaw, pitch, false);
+            exec();
             return;
         }
 
