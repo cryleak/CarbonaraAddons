@@ -108,7 +108,7 @@ export default new class SecretAura {
 
     toggle(state) {
         if (state === Settings().secretAuraEnabled) return
-        new Thread(() => Settings().getConfig().setConfigValue("Block Aura", "secretAuraEnabled", state)).start()
+        Settings().getConfig().setConfigValue("Block Aura", "secretAuraEnabled", state)
         chat(`Secret aura ${state ? "enabled" : "disabled"}`)
         this.clickedBlocks.clear()
         // while (this.renderShit.length) this.renderShit.pop()
