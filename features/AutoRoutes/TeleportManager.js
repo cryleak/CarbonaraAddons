@@ -179,12 +179,12 @@ class TeleportManager {
         const doTp = () => {
             let result = itemSwapSuccess.ALREADY_HOLDING
             if (Player.getHeldItem().getName() !== itemName) {
-                result = swapFromName(itemName)
-                ChatLib.chat(result)
-                if (result === itemSwapSuccess.FAIL) {
-                    onResult(null)
-                    return
-                }
+                swapFromName(itemName, result => {
+                    if (result === itemSwapSuccess.FAIL) {
+                        onResult(null)
+                        return
+                    }
+                });
             }
             setSneaking(sneaking)
             const playerUpdateListener = OnUpdateWalkingPlayerPre.register((event) => {
@@ -218,11 +218,12 @@ class TeleportManager {
             const name = "Aspect of the Void"
             let result = "ALREADY_HOLDING"
             if (Player.getHeldItem().getName() !== name) {
-                result = swapFromName(name)
-                if (result === itemSwapSuccess.FAIL) {
-                    onResult(null)
-                    return
-                }
+                result = swapFromName(name, result => {
+                    if (result === itemSwapSuccess.FAIL) {
+                        onResult(null)
+                        return
+                    }
+                });
             }
 
             setSneaking(true)

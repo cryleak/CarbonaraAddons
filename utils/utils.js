@@ -1,5 +1,6 @@
 import Settings from "../config"
 import Vector3 from "./Vector3"
+import Tick from "../events/Tick"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
@@ -137,10 +138,10 @@ export function scheduleTask(delay, task) {
     Client.scheduleTask(delay, () => codeToExec.push(task))
 }
 
-register("tick", () => {
+Tick.register(() => {
     swappedThisTick = false
     while (codeToExec.length) codeToExec.shift()()
-}).setPriority(Priority.HIGHEST)
+}, 13482384929348)
 
 export const getDistance2DSq = (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2
 
@@ -401,7 +402,7 @@ export const swapFromName = (targetItemName, callback) => {
     }
     if (itemSlot === null) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
-        if (callback) callback()
+        if (callback) callback(itemSwapSuccess.FAIL)
         return itemSwapSuccess.FAIL
     } else {
         return swapToSlot(itemSlot, callback)
@@ -431,19 +432,18 @@ const swapToSlot = (slot, callback) => {
         return itemSwapSuccess.ALREADY_HOLDING
     }
 
-    if (swappedThisTick) scheduleTask(0, () => {
-        Player.setHeldItemIndex(slot)
-        if (callback) callback(itemSwapSuccess.SUCCESS)
-        swappedThisTick = true
-        debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
-        lastSwap = Date.now()
-    })
+    if (swappedThisTick) {
+        const done = Tick.register(() => {
+            done.unregister()
+            swapToSlot(slot, callback)
+        }, 10)
+    }
     else {
         Player.setHeldItemIndex(slot)
-        if (callback) callback(itemSwapSuccess.SUCCESS)
         swappedThisTick = true
         debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
         lastSwap = Date.now()
+        if (callback) callback(itemSwapSuccess.SUCCESS)
     }
     return itemSwapSuccess.SUCCESS
 }

@@ -1,6 +1,7 @@
 import Vector3 from "../../utils/Vector3"
 import manager from "./NodeManager"
 import SecretEvent from "../../events/SecretListener"
+import Tick from "../../events/Tick"
 
 import { checkIntersection, debugMessage, releaseMovementKeys, movementKeys } from "../../utils/utils"
 
@@ -20,10 +21,10 @@ class NodeExecutor {
             })
         }).setFilteredClass(S08PacketPlayerPosLook);
 
-        register("tick", () => {
+        Tick.register(() => {
             this.execute();
             this._updateCoords();
-        });
+        }, 0);
 
         register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
             if (this.consumed === 0) return
