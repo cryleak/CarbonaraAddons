@@ -1,5 +1,6 @@
 import Rotations from "../../../utils/Rotations"
 import NodeManager from "../NodeManager"
+import tpManager from "../TeleportManager";
 
 import { chat, findAirOpening, itemSwapSuccess, scheduleTask, sendAirClick, setPlayerPosition, swapFromName } from "../../../utils/utils"
 import { Node } from "../Node"
@@ -38,9 +39,14 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                     if (!listening) return
                     chat("Pearlclip timed out.")
                     execer.execute(this)
-                })
-            })
-        })
+                });
+            });
+        });
+    }
+
+    _preArgumentTrigger(execer) {
+        tpManager.sync(this.realYaw, this.pitch, true);
+        return true;
     }
 
     createConfigValues() {
@@ -51,7 +57,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
             configName: "pearl Clip Distance",
             registerListener: (obj, prev, next) => {
                 const newDistance = parseFloat(next);
-                if (isNaN(newDistance) || newDistance >= 0) {
+                if (isNaN(newDistance) || newDistance < 0) {
                     chat("Invalid distance! Please enter a valid number greater than or equal to 0.");
                     return;
                 }

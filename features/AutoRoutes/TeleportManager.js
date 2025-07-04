@@ -66,14 +66,13 @@ class TeleportManager {
     }
 
     teleport(toBlock, yaw, pitch, sneaking, itemName, onResult) {
-        if (!this.isTeleportItem()) {
-            return;
-        }
-
         let result = itemSwapSuccess.ALREADY_HOLDING
         if (Player.getHeldItem().getName() !== itemName) {
             result = swapFromName(itemName)
-            if (result === itemSwapSuccess.FAIL) return
+            if (result === itemSwapSuccess.FAIL) {
+                debugMessage("Teleport failed: Item swap failed");
+                return
+            }
         }
 
         const shouldWait = result !== itemSwapSuccess.ALREADY_HOLDING || sneaking !== Player.isSneaking()
@@ -163,6 +162,7 @@ class TeleportManager {
         }
 
         this.lastBlock = null;
+        return true
     }
 
     measureTeleport(fromEther = false, yaw, pitch, sneaking, itemName, onResult) {
