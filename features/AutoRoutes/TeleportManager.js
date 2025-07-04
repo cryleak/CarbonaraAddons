@@ -91,6 +91,7 @@ class TeleportManager {
                     Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
                     this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
                     setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
+                    removeCameraInterpolation()
 
                     this.lastTPed = Date.now();
                     execer._updateCoords(toBlock);
@@ -129,6 +130,7 @@ class TeleportManager {
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
         setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
+        removeCameraInterpolation()
 
         sendAirClick();
 
@@ -154,6 +156,7 @@ class TeleportManager {
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
         setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
+        removeCameraInterpolation()
 
         if (this.final) {
             this.lastTPed = 0;
@@ -224,6 +227,7 @@ class TeleportManager {
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, 0, 90, Player.asPlayerMP().isOnGround()));
                 this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw: 0, pitch: 90 });
                 setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5)
+                removeCameraInterpolation()
 
                 packetsReceived++
                 doTp()

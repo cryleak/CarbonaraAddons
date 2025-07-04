@@ -146,6 +146,7 @@ class TeleportRecorder {
                 console.log(JSON.stringify(this.nodes));
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
                 setPlayerPosition(x, y, z);
+                removeCameraInterpolation()
                 setVelocity(0, 0, 0);
                 event.cancelled = true;
             }),
@@ -256,6 +257,7 @@ class TeleportRecorder {
             this.lastPacket = new Vector3(coords);
 
             setPlayerPosition(coords[0], coords[1], coords[2]);
+            removeCameraInterpolation()
             event.break = true;
         }, 1349239234);
     }
