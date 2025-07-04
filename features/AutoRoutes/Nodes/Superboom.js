@@ -3,7 +3,7 @@ import Vector3 from "../../../utils/Vector3"
 import { Node } from "../Node"
 import NodeManager from "../NodeManager"
 import SecretAura from "../../SecretAura"
-import { chat } from "../../../utils/utils"
+import { chat, itemSwapSuccess, swapFromItemID } from "../../../utils/utils"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const BlockAir = Java.type("net.minecraft.block.BlockAir")
@@ -21,6 +21,8 @@ NodeManager.registerNode(class SuperboomNode extends Node {
     }
 
     _trigger(execer) {
+        const result = swapFromItemID(46)
+        if (result === itemSwapSuccess.FAIL) return execer.execute(this)
         const eyePosition = new Vector3(Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ())
         if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
             const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
