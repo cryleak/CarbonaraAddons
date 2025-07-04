@@ -13,12 +13,13 @@ NodeManager.registerNode(class UseItemNode extends Node {
     }
 
     _trigger(execer) {
-        const result = swapFromName(this.itemName)
-        if (result === itemSwapSuccess.FAIL) return execer.execute(this)
-        Rotations.rotate(this.realYaw, this.pitch, () => {
+        swapFromName(this.itemName, result => {
+            if (result === itemSwapSuccess.FAIL) return execer.execute(this)
             Rotations.rotate(this.realYaw, this.pitch, () => {
-                sendAirClick()
-                execer.execute(this)
+                Rotations.rotate(this.realYaw, this.pitch, () => {
+                    sendAirClick()
+                    execer.execute(this)
+                })
             })
         })
     }

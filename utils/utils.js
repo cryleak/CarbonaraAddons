@@ -372,6 +372,14 @@ export function rotate(origYaw, origPitch) {
 }
 
 
+let swappedThisTick = false
+
+register("tick", () => {
+    Client.scheduleTask(0, () => {
+        swappedThisTick = false
+    })
+})
+
 export const itemSwapSuccess = {
     FAIL: "CANT_FIND",
     SUCCESS: "SWAPPED",
@@ -383,7 +391,7 @@ export const itemSwapSuccess = {
  * @param {String} targetItemName - Target item name
  * @returns {String} Success of item swap
  */
-export const swapFromName = (targetItemName) => {
+export const swapFromName = (targetItemName, callback) => {
     const items = Player.getInventory().getItems()
     let itemSlot = null
     for (let i = 0; i < 8; i++) {
@@ -398,9 +406,10 @@ export const swapFromName = (targetItemName) => {
     }
     if (itemSlot === null) {
         chat(`Unable to find "${targetItemName}" in your hotbar`)
+        if (callback) callback()
         return itemSwapSuccess.FAIL
     } else {
-        return swapToSlot(itemSlot)
+        return swapToSlot(itemSlot, callback)
     }
 }
 
@@ -409,22 +418,38 @@ export const swapFromName = (targetItemName) => {
  * @param {String} targetItemID - Target Item ID
  * @returns {String} Success of item swap
  */
-export const swapFromItemID = (targetItemID) => {
+export const swapFromItemID = (targetItemID, callback) => {
     const itemSlot = Player.getInventory().getItems().findIndex(item => item?.getID() == targetItemID)
     if (itemSlot === -1 || itemSlot > 7) {
         chat(`Unable to find Item ID ${targetItemID} in your hotbar`)
+        if (callback) callback(itemSwapSuccess.FAIL)
         return itemSwapSuccess.FAIL
     } else {
-        return swapToSlot(itemSlot)
+        return swapToSlot(itemSlot, callback)
     }
 }
 
 let lastSwap = Date.now()
-const swapToSlot = (slot) => {
-    if (Player.getHeldItemIndex() === slot) return itemSwapSuccess.ALREADY_HOLDING
-    debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
-    lastSwap = Date.now()
-    Player.setHeldItemIndex(slot)
+const swapToSlot = (slot, callback) => {
+    if (Player.getHeldItemIndex() === slot) {
+        if (callback) callback(itemSwapSuccess.ALREADY_HOLDING)
+        return itemSwapSuccess.ALREADY_HOLDING
+    }
+
+    if (swappedThisTick) Client.scheduleTask(0, () => {
+        Player.setHeldItemIndex(slot)
+        if (callback) callback(itemSwapSuccess.SUCCESS)
+        swappedThisTick = true
+        debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
+        lastSwap = Date.now()
+    })
+    else {
+        Player.setHeldItemIndex(slot)
+        if (callback) callback(itemSwapSuccess.SUCCESS)
+        swappedThisTick = true
+        debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
+        lastSwap = Date.now()
+    }
     return itemSwapSuccess.SUCCESS
 }
 
