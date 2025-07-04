@@ -56,7 +56,9 @@ class NodeExecutor {
             }
 
             if ((intersectionMethod && !intersectionMethod(node)) || (!intersectionMethod && !this._defaultIntersectionMethod(node))) {
-                node.triggered = false;
+                if (!by) {
+                    node.triggered = false;
+                }
                 return false;
             }
 
