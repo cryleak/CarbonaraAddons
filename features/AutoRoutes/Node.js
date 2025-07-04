@@ -3,14 +3,17 @@ import manager from "./NodeManager"
 import SecretEvent from "../../events/SecretListener"
 import BatSpawnEvent from "../../events/BatSpawn"
 import Vector3 from "../../utils/Vector3"
-
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, clampYaw } from "../../utils/utils"
+import Editable from "../../utils/ObjectEditor";
 import tpManager from "./TeleportManager"
 
-export class Node {
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, clampYaw, capitalizeFirst } from "../../utils/utils"
+
+export class Node extends Editable {
     static priority = 1000;
 
     constructor(name, args) {
+        super();
+
         this.nodeName = name;
 
         this.lastTriggered = 0;
@@ -140,6 +143,143 @@ export class Node {
 
     toString() {
         return "";
+    }
+
+    _onUpdatedInConfig() {
+        manager.saveConfig();
+    }
+
+    createConfigValues() {
+        return [
+            {
+                type: "addTextParagraph",
+                configName: `Editing node: ${capitalizeFirst(this.nodeName)}`
+            },
+            {
+                type: "addTextInput",
+                configName: "position",
+                registerListener: (obj, prev, next) => {
+                    const newPos = next.split(",").map((v) => parseFloat(v.trim()));
+                    if (newPos.length !== 3) {
+                        return;
+                    }
+
+                    if (newPos.some((v) => isNaN(v))) {
+                        return;
+                    }
+
+                    obj.position = new Vector3(newPos);
+                    obj.realPosition = Dungeons.convertFromRelative(obj.position).add([0.5, 0, 0.5]);
+                },
+                updator: (config, obj) => {
+                    const value = `${obj.position.x},${obj.position.y},${obj.position.z}`;
+                    config.settings.getConfig().setConfigValue("Object Editor", "position", value);
+                }
+            },
+            {
+                type: "addTextInput",
+                configName: "yaw",
+                registerListener: (obj, prev, next) => {
+                    const yaw = parseFloat(next);
+                    if (isNaN(yaw)) {
+                        return;
+                    }
+
+                    obj.yaw = Dungeons.convertToRelativeYaw(yaw);
+                    obj.realYaw = yaw;
+                    rotate(yaw, Player.pitch);
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "yaw", obj.realYaw.toString());
+                }
+            },
+            {
+                type: "addTextInput",
+                configName: "pitch",
+                registerListener: (obj, prev, next) => {
+                    const pitch = parseFloat(next);
+                    if (isNaN(pitch)) {
+                        return;
+                    }
+
+                    obj.pitch = pitch;
+                    rotate(Player.yaw, obj.pitch);
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "pitch", obj.pitch.toString());
+                }
+            },
+            {
+                type: "addTextInput",
+                configName: "radius",
+                registerListener: (obj, prev, next) => {
+                    const radius = parseFloat(next);
+                    if (isNaN(radius) || radius < 0) {
+                        return;
+                    }
+
+                    obj.radius = radius;
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "radius", obj.radius.toString());
+                }
+            },
+            {
+                type: "addTextInput",
+                configName: "height",
+                registerListener: (obj, prev, next) => {
+                    const height = parseFloat(next);
+                    if (isNaN(height) || height < 0) {
+                        return;
+                    }
+
+                    obj.height = height;
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "height", obj.height.toString());
+                }
+            },
+            {
+                type: "addTextInput",
+                configName: "delay",
+                registerListener: (obj, prev, next) => {
+                    const amount = parseInt(next);
+                    if (isNaN(amount) || amount < 0) {
+                        return;
+                    }
+
+                    obj.delay = amount;
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "delay", obj.delay || "0");
+                }
+            },
+            {
+                type: "addSwitch",
+                configName: "await Bat",
+                registerListener: (obj, prev, next) => {
+                    obj.awaitBat = next;
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "await Bat", obj.awaitBat);
+                }
+            },
+            {
+                type: "addTextInput",
+                configName: "await Secrets",
+                registerListener: (obj, prev, next) => {
+                    const amount = parseInt(next);
+                    if (isNaN(amount) || amount < 0) {
+                        return;
+                    }
+
+                    obj.awaitSecret = amount;
+                },
+                updator: (config, obj) => {
+                    config.settings.getConfig().setConfigValue("Object Editor", "await Secrets", obj.awaitSecret || "0");
+                }
+            }
+        ];
     }
 
     defineTransientProperties() {

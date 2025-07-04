@@ -43,6 +43,34 @@ class TeleportNode extends Node {
         }
     }
 
+    createConfigValues() {
+        // Make sure that we sete toBlock to null every time we change yaw or pitch
+        const values = super.createConfigValues();
+        values.forEach(v => {
+            if (v.configName !== "yaw" && v.configName !== "pitch") return;
+
+            const rl = v.registerListener;
+            v.registerListener = (obj, prev, next) => {
+                rl(obj, prev, next);
+                obj.toBlock = null;
+            };
+        });
+
+        values.push({
+            type: "addSwitch",
+            configName: "from Ether",
+            registerListener: (obj, prev, next) => {
+                obj.previousEther = next;
+                this.toBlock = null;
+            },
+            updator: (config, obj) => {
+                config.settings.getConfig().setConfigValue("Object Editor", "from Ether", obj.previousEther);
+            }
+        });
+
+        return values;
+    }
+
     _preArgumentTrigger(execer) {
         releaseMovementKeys();
         setVelocity(0, null, 0);
