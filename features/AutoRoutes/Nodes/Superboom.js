@@ -30,7 +30,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
                 if (!(block instanceof BlockAir)) {
-                    LivingUpdate.scheduleTask(0, () => rightClickBlock(block, this.realSuperBoomBlock))
+                    LivingUpdate.scheduleTask(0, () => SecretAura.rightClickBlock(block, this.realSuperBoomBlock))
                 } else chat("Can't superboom on a block that doesn't exist.")
             } else chat("You are too far from the block.")
             execer.execute(this)
