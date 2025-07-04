@@ -126,13 +126,15 @@ class TeleportRecorder {
         this.nodes = [];
         this.lastYaw = Player.yaw;
         this.lastPitch = Player.pitch;
+        this.lastPacket = null;
 
         this.trigger = bind(
             OnUpdateWalkingPlayerPre.register((event) => {
-                replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, Player.pitch, event.data.packet.func_149465_i());
-                Client.sendPacket(replacementPacket);
+                // Client.sendPacket(replacementPacket);
+                console.log(JSON.stringify(this.nodes));
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
                 setPlayerPosition(x, y, z);
+                setVelocity(0, 0, 0);
                 event.cancelled = true;
             }),
             register("packetSent", (packet, event) => {
@@ -165,9 +167,17 @@ class TeleportRecorder {
                 this.awaitingTP = true;
                 this.lastYaw = Player.yaw;
                 this.lastPitch = Player.pitch;
+
+                Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, Player.pitch, Player.getPlayer().field_70122_E));
+                Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, Player.pitch, Player.getPlayer().field_70122_E));
                 sendAirClick();
                 this.tped(type);
-            })
+            }),
+            ServerTeleport.register((event) => {
+                debugMessage("Server Forced your rotation. This is really bad.");
+                this.end(false);
+                event.break = true;
+            }, 1349239233)
         ).unregister();
 
         manager.registerAutoRouteCommand(["starttps", "stp"], args => {
@@ -180,15 +190,22 @@ class TeleportRecorder {
     }
 
     start() {
+        this.nodes = [{ position: new Vector3(Player) }];
         this.trigger.register();
-        this.nodes = [{ position: new Vector3(Player.x, Player.y, Player.z) }];
+        this.lastPacket = new Vector3(Player);
+        this.lastYaw = Player.yaw;
+        this.lastPitch = Player.pitch;
         manager.active = false;
     }
 
-    end() {
+    end(withFlush = true) {
         this.trigger.unregister();
         manager._updateActive(Dungeons.getRoomName());
-        this.flushNodes();
+        if (withFlush) {
+            this.flushNodes();
+        } else {
+            this.nodes = [];
+        }
     }
 
     tped(type) {
@@ -224,7 +241,9 @@ class TeleportRecorder {
             });
 
             this.lastTP = true;
+            this.lastPacket = new Vector3(coords);
 
+            setPlayerPosition(coords[0], coords[1], coords[2]);
             event.break = true;
         }, 1349239234);
     }
