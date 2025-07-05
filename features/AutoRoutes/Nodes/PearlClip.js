@@ -1,9 +1,12 @@
 import Rotations from "../../../utils/Rotations"
 import NodeManager from "../NodeManager"
 import tpManager from "../TeleportManager";
+import OnUpdateWalkingPlayerPre from "../../../events/onUpdateWalkingPlayerPre"
 
 import { chat, findAirOpening, itemSwapSuccess, scheduleTask, sendAirClick, setPlayerPosition, swapFromName } from "../../../utils/utils"
 import { Node } from "../Node"
+
+const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 
 NodeManager.registerNode(class PearlClipNode extends Node {
     static identifier = "pearlclip"
@@ -31,7 +34,14 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                             return
                         }
                         chat(`Pearlclipped ${Math.round(((Player.getY() - yPosition - 1) * 10)) / 10} blocks down.`)
-                        setPlayerPosition(Player.getX(), yPosition, Player.getZ())
+                        const trigger = OnUpdateWalkingPlayerPre.register(event => {
+                            trigger.unregister();
+                            event.break = true;
+                            event.cancelled = true;
+
+                            Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
+                            setPlayerPosition(Player.x, yPosition, Player.z)
+                        }, 2934285349853);
                         execer.execute(this)
                     })
 

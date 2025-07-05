@@ -440,6 +440,7 @@ const swapToSlot = (slot, callback) => {
     }
     else {
         Player.setHeldItemIndex(slot)
+        syncCurrentPlayItem() // yeah -- I am shameless.
         swappedThisTick = true
         debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
         lastSwap = Date.now()
