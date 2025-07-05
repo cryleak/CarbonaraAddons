@@ -125,7 +125,7 @@ export class Node extends Editable {
 
     _preArgumentTrigger(execer) {
         releaseMovementKeys();
-        setVelocity(0, null, 0);
+        setVelocity(0, 0, 0);
         if (this.awaitSecret || this.awaitBat) {
 
             tpManager.sync(clampYaw(this.realYaw), clampYaw(this.pitch), true);

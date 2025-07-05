@@ -69,6 +69,7 @@ class TeleportManager {
         this.counter++;
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             const exec = () => {
+                debugMessage("Method 1");
                 Rotations.rotate(yaw, pitch, () => {
                     setVelocity(0, 0, 0);
                     sendAirClick();
@@ -82,14 +83,14 @@ class TeleportManager {
                     this.lastTPed = Date.now();
                     execer._updateCoords(toBlock);
                     onResult(toBlock);
-                });
+                }, true);
             };
 
             if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(clampYaw(Player.pitch), pitch)) {
                 Rotations.rotate(yaw, pitch, () => {
                     setVelocity(0, 0, 0);
                     exec();
-                });
+                }, true);
             } else {
                 exec();
             }
@@ -97,22 +98,21 @@ class TeleportManager {
         }
 
         if (!this.lastBlock || shouldWait) {
-            const exec = () => {
-                Rotations.rotate(yaw, pitch, () => {
-                    setVelocity(0, 0, 0);
-                    sendAirClick();
-                    this.lastBlock = toBlock;
-                    this.lastTPed = Date.now();
-
-                    execer._updateCoords(toBlock);
-                    onResult(toBlock);
-                }, true);
-            }
+            debugMessage("Method 2");
             if (shouldWait) this.sync(yaw, pitch, false);
-            exec();
+            Rotations.rotate(yaw, pitch, () => {
+                setVelocity(0, 0, 0);
+                sendAirClick();
+                this.lastBlock = toBlock;
+                this.lastTPed = Date.now();
+
+                execer._updateCoords(toBlock);
+                onResult(toBlock);
+            }, true);
             return;
         }
 
+        debugMessage("Method 3");
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
         setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
@@ -215,28 +215,24 @@ class TeleportManager {
         }
 
         if (fromEther) {
-            const name = "Aspect of the Void"
-            let result = "ALREADY_HOLDING"
-            if (Player.getHeldItem().getName() !== name) {
-                result = swapFromName(name, result => {
-                    if (result === itemSwapSuccess.FAIL) {
-                        onResult(null)
-                        return
-                    }
+            swapFromName(itemName, result => {
+                if (result === itemSwapSuccess.FAIL) {
+                    onResult(null)
+                    return
+                }
+
+                setSneaking(true)
+
+                Rotations.rotate(0, 90, () => {
+                    sendAirClick();
+                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, 0, 90, Player.asPlayerMP().isOnGround()));
+                    this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw: 0, pitch: 90 });
+                    setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5)
+                    removeCameraInterpolation()
+
+                    packetsReceived++
+                    doTp()
                 });
-            }
-
-            setSneaking(true)
-
-            Rotations.rotate(0, 90, () => {
-                sendAirClick();
-                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, 0, 90, Player.asPlayerMP().isOnGround()));
-                this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw: 0, pitch: 90 });
-                setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5)
-                removeCameraInterpolation()
-
-                packetsReceived++
-                doTp()
             });
         } else {
             doTp();

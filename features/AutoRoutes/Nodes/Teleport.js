@@ -5,6 +5,7 @@ import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Dungeons from "../../../utils/Dungeons"
 import bind from "../../../utils/bind"
 import tpManager from "../TeleportManager";
+import SecretAuraClick from "../../../events/SecretAuraClick"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
@@ -85,9 +86,9 @@ class TeleportNode extends Node {
 
     _preArgumentTrigger(execer) {
         releaseMovementKeys();
-        setVelocity(0, null, 0);
+        setVelocity(0, 0, 0);
         if (this.awaitSecret || this.awaitBat) {
-            tpManager.sync(clampYaw(this.realYaw), clampYaw(this.pitch), false);
+            tpManager.sync(clampYaw(this.realYaw), this.pitch, false);
             super._handleRotate();
         }
         return true;
@@ -190,7 +191,10 @@ class TeleportRecorder {
                 debugMessage("Server Forced your rotation. This is really bad.");
                 this.end(false);
                 event.break = true;
-            }, 1349239233)
+            }, 1349239233),
+            SecretAuraClick.Post.register((data) => {
+                this.nodes[this.nodes.length - 1].awaitSecret = true;
+            })
         ).unregister();
 
         manager.registerAutoRouteCommand(["starttps", "stp"], args => {
@@ -270,6 +274,8 @@ class TeleportRecorder {
             let toBlock = Dungeons.convertToRelative(afterAdd);
             // curr.chained = i !== 1;
             curr.position = old.position.floor2D();
+            curr.awaitSecret = old.awaitSecret;
+            old.awaitSecret = false;
             let node = manager.createNodeFromArgs(curr);
             node.toBlock = toBlock;
             ChatLib.chat(`Teleporting to ${toBlock}`);

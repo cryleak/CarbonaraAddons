@@ -13,7 +13,7 @@ SecretAuraClick.Post.register(data => {
     if (!SecretEvent.hasListeners()) return
     Client.sendPacket(new C08PacketPlayerBlockPlacement(data.itemStack));
 
-    if (Settings().secretAuraSwapOn === 1 && data.block instanceof BlockSkull || Settings().secretAuraSwapOn === 2) scheduleTask(0, SecretEvent.trigger)
+    if (Settings().secretAuraSwapOn === 1 && data.block instanceof BlockSkull || Settings().secretAuraSwapOn === 2) scheduleTask(0, () => {SecretEvent.trigger()})
     else SecretEvent.trigger()
 });
 
