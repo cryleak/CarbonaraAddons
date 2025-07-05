@@ -8,19 +8,19 @@ import LivingUpdate from "../events/LivingUpdate"
 import { getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
+import Vector3 from "../utils/Vector3"
 
-const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const ArmorStand = Java.type("net.minecraft.entity.item.EntityArmorStand")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
 
 export default new class Relic {
     constructor() {
         this.cauldrons = {
-            "Green": new MCBlockPos(49, 7, 44),
-            "Red": new MCBlockPos(51, 7, 42),
-            "Purple": new MCBlockPos(54, 7, 41),
-            "Orange": new MCBlockPos(57, 7, 42),
-            "Blue": new MCBlockPos(59, 7, 44)
+            "Green": new Vector3(49, 7, 44),
+            "Red": new Vector3(51, 7, 42),
+            "Purple": new Vector3(54, 7, 41),
+            "Orange": new Vector3(57, 7, 42),
+            "Blue": new Vector3(59, 7, 44)
         }
         this.pickedUpRelic = null
 
@@ -60,11 +60,12 @@ export default new class Relic {
             if (!this.pickedUpRelic) return
             const eyePosition = Player.getPlayer().func_174824_e(1)
             const blockPos = this.pickedUpRelic
-            if (eyePosition.func_72438_d(new Vec3(blockPos)) > 6) return
+            const javaBlockPos = blockPos.convertToVec3()
+            if (eyePosition.func_72438_d(javaBlockPos) > 6) return
             const blockState = World.getWorld().func_180495_p(blockPos)
             const block = blockState.func_177230_c()
             Player.setHeldItemIndex(8)
-            LivingUpdate.scheduleTask(0, () => SecretAura.rightClickBlock(block, blockPos, eyePosition))
+            LivingUpdate.scheduleTask(0, () => SecretAura.rightClickBlock(block, blockPos))
             this.relicPlaceAura.unregister()
         }).unregister()
 

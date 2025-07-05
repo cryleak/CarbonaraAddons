@@ -39,8 +39,8 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                     execer.execute(this)
                 }
             } else {
-                execer.execute(this)
                 chat("You are too far from the block.")
+                execer.execute(this)
             }
         })
     }
