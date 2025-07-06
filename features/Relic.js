@@ -62,7 +62,7 @@ export default new class Relic {
             const blockPos = this.pickedUpRelic
             const javaBlockPos = blockPos.convertToVec3()
             if (eyePosition.func_72438_d(javaBlockPos) > 6) return
-            const blockState = World.getWorld().func_180495_p(blockPos)
+            const blockState = World.getWorld().func_180495_p(javaBlockPos)
             const block = blockState.func_177230_c()
             Player.setHeldItemIndex(8)
             LivingUpdate.scheduleTask(0, () => SecretAura.rightClickBlock(block, blockPos))
