@@ -2,7 +2,7 @@ import Settings from "../config"
 import SecretAuraClick from "./SecretAuraClick"
 import BatSpawnEvent from "./BatSpawn"
 
-import { getDistanceToEntity, scheduleTask } from "../utils/utils"
+import { getDistanceToEntity, scheduleTask, debugMessage } from "../utils/utils"
 import { Event } from "./CustomEvents"
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
@@ -10,7 +10,7 @@ const BlockSkull = Java.type("net.minecraft.block.BlockSkull")
 export default SecretEvent = new Event();
 
 SecretAuraClick.Post.register(data => {
-    if (!SecretEvent.hasListeners()) return
+    // if (!SecretEvent.hasListeners()) return
     Client.sendPacket(new C08PacketPlayerBlockPlacement(data.itemStack));
 
     if (Settings().secretAuraSwapOn === 1 && data.block instanceof BlockSkull || Settings().secretAuraSwapOn === 2) scheduleTask(0, () => SecretEvent.trigger())

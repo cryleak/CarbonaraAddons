@@ -4,24 +4,25 @@ import NodeManager from "../NodeManager"
 import SecretAura from "../../SecretAura"
 import LivingUpdate from "../../../events/LivingUpdate"
 import Tick from "../../../events/Tick"
+import manager from "../NodeManager"
 import tpManager from "../TeleportManager"
 
 import { Node } from "../Node"
-import { chat, itemSwapSuccess, swapFromItemID, syncCurrentPlayItem } from "../../../utils/utils"
+import { chat, itemSwapSuccess, swapFromItemID, syncCurrentPlayItem, debugMessage } from "../../../utils/utils"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const BlockAir = Java.type("net.minecraft.block.BlockAir")
 
 NodeManager.registerNode(class SuperboomNode extends Node {
     static identifier = "superboom"
-    static priority = 0
+    static priority = 100
     constructor(args) {
         const raytrace = Dungeons.rayTraceEtherBlock(new Vector3(Player), Player.getYaw(), Player.getPitch(), false)
         if (!raytrace) throw new Error("Superboom raytrace failed. (Are you looking at a block?)")
 
         super(this.constructor.identifier, args)
         this.superBoomBlock = Dungeons.convertToRelative(Dungeons.rayTraceEtherBlock(new Vector3(Player), Player.getYaw(), Player.getPitch(), false))
-        this.defineTransientProperties()
+        this.defineTransientProperties(manager.currentRoom)
     }
 
     _trigger(execer) {
@@ -29,15 +30,17 @@ NodeManager.registerNode(class SuperboomNode extends Node {
             if (result === itemSwapSuccess.FAIL) return execer.execute(this)
             const eyePosition = new Vector3(Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ())
 
+            debugMessage(`${Player.x} ${Player.y} ${Player.z}`);
             if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
                 const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
                 if (!(block instanceof BlockAir)) {
-                    // tpManager.sync(this.realYaw, this.pitch, false);
-                    SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
-                    Tick.scheduleTask(0, () => {
-                        execer.execute(this)
+                    LivingUpdate.scheduleTask(0, () => {
+                        SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
+                        Tick.scheduleTask(0, () => {
+                            execer.execute(this)
+                        });
                     });
                 } else {
                     chat("Can't superboom on a block that doesn't exist.")
@@ -54,13 +57,12 @@ NodeManager.registerNode(class SuperboomNode extends Node {
         return
     }
 
-    defineTransientProperties() {
+    defineTransientProperties(room) {
         super.defineTransientProperties()
         if (!this.superBoomBlock) return
-        const realBlock = Dungeons.convertFromRelative(this.superBoomBlock)
         Object.defineProperties(this, {
             realSuperBoomBlock: {
-                value: realBlock,
+                value: room.type === "dungeons" ? Dungeons.convertFromRelative(this.superBoomBlock) : this.superBoomBlock,
                 enumerable: false,
                 writable: true,
                 configurable: true

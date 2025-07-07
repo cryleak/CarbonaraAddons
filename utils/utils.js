@@ -434,10 +434,11 @@ const swapToSlot = (slot, callback) => {
     }
 
     if (swappedThisTick) {
-        const done = Tick.register(() => {
+        const done = LivingUpdate.register(() => {
             done.unregister()
             swapToSlot(slot, callback)
-        }, 10)
+            debugMessage(`Awaiting before swap`)
+        }, -1000)
     }
     else {
         Player.setHeldItemIndex(slot)
@@ -445,9 +446,7 @@ const swapToSlot = (slot, callback) => {
         debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
         lastSwap = Date.now()
         if (callback) {
-            LivingUpdate.scheduleTask(0, () => {
-                callback(itemSwapSuccess.SUCCESS)
-            });
+            callback(itemSwapSuccess.SUCCESS)
         }
     }
     return itemSwapSuccess.SUCCESS

@@ -67,6 +67,7 @@ class TeleportManager {
 
     _teleportAfterSwap(toBlock, yaw, pitch, sneaking, onResult, shouldWait) {
         this.counter++;
+        ChatLib.chat(`Teleport to ${toBlock}. `);
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             const exec = () => {
                 debugMessage("Method 1");
@@ -99,7 +100,9 @@ class TeleportManager {
 
         if (!this.lastBlock || shouldWait) {
             debugMessage("Method 2");
+            let rotated = false;
             if (shouldWait) this.sync(yaw, pitch, false);
+
             Rotations.rotate(yaw, pitch, () => {
                 setVelocity(0, 0, 0);
                 sendAirClick();
