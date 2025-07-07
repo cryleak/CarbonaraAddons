@@ -19,7 +19,7 @@ export class Node extends Editable {
 
         this.lastTriggered = 0;
 
-        this.position = Dungeons.convertToRelative(args.position)
+        this.position = args.position;
         this.radius = args.radius;
         this.height = args.height;
         this.delay = args.delay;
@@ -27,10 +27,14 @@ export class Node extends Editable {
         this.awaitSecret = args.awaitSecret;
         this.stop = args.stop;
         this.center = args.center;
-        this.yaw = Dungeons.convertToRelativeYaw(args.yaw);
+        this.yaw = args.yaw;
         this.pitch = args.pitch;
         this.lineOfSight = args.lineOfSight;
-        this.defineTransientProperties();
+        if (manager.currentRoom.type === "dungeons") {
+            this.position = Dungeons.convertToRelative(this.position);
+            this.yaw = Dungeons.convertToRelativeYaw(this.yaw);
+        }
+        this.defineTransientProperties(manager.currentRoom);
     }
 
     setLocation(loc) {
@@ -260,7 +264,7 @@ export class Node extends Editable {
                     obj.delay = amount;
                 },
                 updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "delay", obj.delay || "0");
+                    config.settings.getConfig().setConfigValue("Object Editor", "delay", obj.delay.toString() || "0");
                 }
             },
             {
@@ -292,7 +296,12 @@ export class Node extends Editable {
         ];
     }
 
-    defineTransientProperties() {
+    defineTransientProperties(room) {
+        if (!(this.position instanceof Vector3)) {
+            console.log("Node position is not a Vector3, cannot define transient properties.");
+            console.log(JSON.stringify(this.position, null, 2));
+            return;
+        }
         const pos = Dungeons.convertFromRelative(this.position).add([0.5, 0, 0.5])
         Object.defineProperties(this, {
             realPosition: {
@@ -302,7 +311,7 @@ export class Node extends Editable {
                 configurable: true
             },
             realYaw: {
-                value: Dungeons.convertToRealYaw(this.yaw),
+                value: room.type === "dungeons" ? Dungeons.convertToRealYaw(this.yaw) : this.yaw,
                 enumerable: false,
                 writable: true,
                 configurable: true

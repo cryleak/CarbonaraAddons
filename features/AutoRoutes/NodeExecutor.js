@@ -78,6 +78,7 @@ class NodeExecutor {
 
         const node = toExec[0]
         this.consumed++;
+        debugMessage(`executing node: ${node.realPosition}`);
         node.execute(this);
     }
 
@@ -89,6 +90,9 @@ class NodeExecutor {
     }
 
     _defaultIntersectionMethod(node) {
+        if (node.customInNodeCheck) {
+            return node.customInNodeCheck();
+        }
         const playerVec = new Vector3(Player.x, Player.y, Player.z);
         return checkIntersection(this.previousCoords, playerVec, node.realPosition, node.radius, node.height);
     }

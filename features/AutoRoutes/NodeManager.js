@@ -2,6 +2,7 @@ import Vector3 from "../../utils/Vector3"
 import RenderLibV2 from "../../../RenderLibV2J"
 import Settings from "../../config"
 import Dungeons from "../../utils/Dungeons"
+import Location from "../../utils/Location"
 import Editable from "../../utils/ObjectEditor";
 
 import { drawLine3d } from "../../../BloomCore/utils/Utils";
@@ -13,7 +14,12 @@ const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 class NodeManager {
     constructor() {
         try {
-            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => value?.x && value?.y && value?.z ? new Vector3(value.x, value.y, value.z) : value)
+            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => {
+                if (value && typeof(value.x) === "number" && typeof(value.y) === "number" && typeof(value.z) === "number") {
+                    return new Vector3(value.x, value.y, value.z);
+                }
+                return value;
+            });
             if (!this.data) {
                 this.data = {};
             }
@@ -28,12 +34,13 @@ class NodeManager {
 
         scheduleTask(1, () => {
             this._normalizeData();
-            this._updateActive(Dungeons.getRoomName());
-            let currentRoomName
+            this.currentRoom = Location.getCurrentLocationName()
+            this._updateActive();
             register("tick", () => {
-                if (Dungeons.getRoomName() === currentRoomName) return
-                currentRoomName = Dungeons.getRoomName()
-                this._updateActive(Dungeons.getRoomName())
+                let newRoom = Location.getCurrentLocationName()
+                if (newRoom.name === this.currentRoom.name) return
+                this.currentRoom = newRoom
+                this._updateActive()
             });
         });
 
@@ -140,36 +147,39 @@ class NodeManager {
 
         this.active = false;
         scheduleTask(ticks, () => {
-            this._updateActive(Dungeons.getRoomName());
+            this.currentRoom = Location.getCurrentLocationName();
+            this._updateActive();
         });
     }
 
-    _updateActive(room) {
-        if (!room) {
+    _updateActive() {
+        if (!this.currentRoom || this.currentRoom.name === "Unknown") {
             this.active = false;
             this.activeNodes = [];
             return;
         }
 
-        const roomNodes = this.data[room]
+        const name = this.currentRoom.name;
+
+        const roomNodes = this.data[name]
         if (!roomNodes || !roomNodes.length) {
-            this.data[room] = [];
-            this.activeNodes = this.data[room]
+            this.data[name] = [];
+            this.activeNodes = this.data[name];
             this.active = true
-            return debugMessage(`No routes found for room: ${room}`)
+            return debugMessage(`No routes found for room: ${this.currentRoom.name}`)
         }
 
         this.activeNodes = roomNodes
         for (let node of this.activeNodes) {
-            node.defineTransientProperties()
+            node.defineTransientProperties(this.currentRoom)
         }
 
-        debugMessage(`&aActive nodes updated for room: ${room} (${this.activeNodes.length} nodes)`);
+        debugMessage(`&aActive nodes updated for room: ${this.currentRoom.name} (${this.activeNodes.length} nodes)`);
         this.active = true;
     }
 
     _handleCreateNode(args) {
-        if (!this.active || Dungeons.getRoomName() === "Unknown") {
+        if (!this.active || this.currentRoom.name === "Unknown") {
             chat("You're not in a room right now");
             return;
         }
@@ -280,8 +290,8 @@ class NodeManager {
             if (!node) return chat(`Failed to create node of type ${args.type}. Make sure you specified the arguments correctly.`);
 
             debugMessage(`&aNode created: ${JSON.stringify(node)}`);
-            if (!this.data[Dungeons.getRoomName()]) this.data[Dungeons.getRoomName()] = [];
-            this.data[Dungeons.getRoomName()].push(node);
+            if (!this.data[this.currentRoom.name]) this.data[this.currentRoom.name] = [];
+            this.data[this.currentRoom.name].push(node);
             this.saveConfig();
             return node;
         } catch (e) {
@@ -315,7 +325,7 @@ class NodeManager {
             deleteIndex = this._getClosest();
         }
         if (deleteIndex !== null) {
-            const node = this.data[Dungeons.getRoomName()].splice(deleteIndex, 1)[0]
+            const node = this.data[this.currentRoom.name].splice(deleteIndex, 1)[0]
             this.saveConfig()
             chat(`Deleted: ${JSON.stringify(node)}`)
         }

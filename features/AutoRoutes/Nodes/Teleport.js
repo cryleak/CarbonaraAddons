@@ -23,6 +23,10 @@ class TeleportNode extends Node {
         this.chained = args.chained;
     }
 
+    customInNodeCheck(node) {
+        return (Player.x === this.realPosition?.x && Player.y - this.realPosition?.y <= 0.06 && Player.y - this.realPosition?.y >= 0 && Player.z === this.realPosition?.z);
+    }
+
     _trigger(execer) {
         const onResult = (pos) => {
             const result = execer.execute(this, (node) => {
@@ -30,18 +34,20 @@ class TeleportNode extends Node {
             });
 
             if (result) {
+                // Couldn't find next
                 tpManager.sync(this.realYaw, this.pitch, true);
             }
         };
 
         if (!this.toBlock) {
             tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
-                this.toBlock = Dungeons.convertToRelative(pos);
+                this.toBlock = manager.currentRoom.type === "dungeons" ? pos : Dungeons.convertToRelative(pos);
                 manager.saveConfig();
                 onResult(pos);
             });
         } else {
-            tpManager.teleport(Dungeons.convertFromRelative(this.toBlock).add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
+            const toBlock = manager.currentRoom.type === "dungeons" ? this.toBlock : Dungeons.convertFromRelative(this.toBlock);
+            tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
         }
     }
 
@@ -54,7 +60,6 @@ class TeleportNode extends Node {
             const rl = v.registerListener;
             v.registerListener = (obj, prev, next) => {
                 rl(obj, prev, next);
-                obj.toBlock = null;
             };
         });
 
@@ -63,7 +68,6 @@ class TeleportNode extends Node {
             configName: "from Ether",
             registerListener: (obj, prev, next) => {
                 obj.previousEther = next;
-                this.toBlock = null;
             },
             updator: (config, obj) => {
                 config.settings.getConfig().setConfigValue("Object Editor", "from Ether", obj.previousEther);
@@ -78,6 +82,14 @@ class TeleportNode extends Node {
             },
             updator: (config, obj) => {
                 config.settings.getConfig().setConfigValue("Object Editor", "chained", obj.chained);
+            }
+        });
+
+        values.push({
+            type: "addButton",
+            configName: "recalculate Teleport",
+            onClick() {
+                this.toBlock = null;
             }
         });
 
@@ -144,7 +156,6 @@ class TeleportRecorder {
         this.trigger = bind(
             OnUpdateWalkingPlayerPre.register((event) => {
                 // Client.sendPacket(replacementPacket);
-                console.log(JSON.stringify(this.nodes));
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
                 setPlayerPosition(x, y, z);
                 removeCameraInterpolation()
@@ -278,7 +289,6 @@ class TeleportRecorder {
             old.awaitSecret = false;
             let node = manager.createNodeFromArgs(curr);
             node.toBlock = toBlock;
-            ChatLib.chat(`Teleporting to ${toBlock}`);
         }
         this.nodes = [];
     }

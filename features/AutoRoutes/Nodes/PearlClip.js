@@ -37,8 +37,8 @@ NodeManager.registerNode(class PearlClipNode extends Node {
 
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
                 setPlayerPosition(Player.x, yPosition, Player.z)
+                execer.execute(this)
             }, 2934285349853);
-            execer.execute(this)
         })
 
         scheduleTask(60, () => {
@@ -52,13 +52,15 @@ NodeManager.registerNode(class PearlClipNode extends Node {
         swapFromName("Ender Pearl", result => {
             if (result === itemSwapSuccess.FAIL) return execer.execute(this)
             const rotated = tpManager.sync(this.realYaw, this.pitch, false);
-            if (rotated) {
-                    this.doTeleport(execer);
-            } else {
-                Rotations.rotate(this.realYaw, this.pitch, () => {
-                    this.doTeleport(execer);
-                }, true);
-            }
+            LivingUpdate.scheduleTask(0, () => {
+                if (rotated) {
+                        this.doTeleport(execer);
+                } else {
+                    Rotations.rotate(this.realYaw, this.pitch, () => {
+                        this.doTeleport(execer);
+                    }, true);
+                }
+            });
         })
     }
 
