@@ -1,6 +1,7 @@
 import Settings from "../config"
 import Vector3 from "./Vector3"
 import Tick from "../events/Tick"
+import LivingUpdate from "../events/LivingUpdate"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
@@ -440,11 +441,14 @@ const swapToSlot = (slot, callback) => {
     }
     else {
         Player.setHeldItemIndex(slot)
-        syncCurrentPlayItem() // yeah -- I am shameless.
         swappedThisTick = true
         debugMessage(`Time since last swap is ${Date.now() - lastSwap}ms.`)
         lastSwap = Date.now()
-        if (callback) callback(itemSwapSuccess.SUCCESS)
+        if (callback) {
+            LivingUpdate.scheduleTask(0, () => {
+                callback(itemSwapSuccess.SUCCESS)
+            });
+        }
     }
     return itemSwapSuccess.SUCCESS
 }

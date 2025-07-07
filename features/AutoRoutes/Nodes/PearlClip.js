@@ -16,42 +16,49 @@ NodeManager.registerNode(class PearlClipNode extends Node {
         this.distance = args.pearlClipDistance
     }
 
+    doTeleport(execer) {
+        sendAirClick()
+        let listening = true
+        let yPosition = this.distance === 0 ? findAirOpening() : Player.getY() - this.distance
+        const soundListener = register("soundPlay", (pos, name, vol) => {
+            if (name !== "mob.endermen.portal" || vol !== 1) return
+            listening = false
+            soundListener.unregister()
+            if (!yPosition) {
+                chat("Couldn't find an air opening!")
+                execer.execute(this)
+                return
+            }
+            chat(`Pearlclipped ${Math.round(((Player.getY() - yPosition - 1) * 10)) / 10} blocks down.`)
+            const trigger = OnUpdateWalkingPlayerPre.register(event => {
+                trigger.unregister();
+                event.break = true;
+                event.cancelled = true;
+
+                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
+                setPlayerPosition(Player.x, yPosition, Player.z)
+            }, 2934285349853);
+            execer.execute(this)
+        })
+
+        scheduleTask(60, () => {
+            if (!listening) return
+            chat("Pearlclip timed out.")
+            execer.execute(this)
+        });
+    }
+
     _trigger(execer) {
         swapFromName("Ender Pearl", result => {
             if (result === itemSwapSuccess.FAIL) return execer.execute(this)
-            Rotations.rotate(this.realYaw, this.pitch, () => {
+            const rotated = tpManager.sync(this.realYaw, this.pitch, false);
+            if (rotated) {
+                    this.doTeleport(execer);
+            } else {
                 Rotations.rotate(this.realYaw, this.pitch, () => {
-                    sendAirClick()
-                    let listening = true
-                    let yPosition = this.distance === 0 ? findAirOpening() : Player.getY() - this.distance
-                    const soundListener = register("soundPlay", (pos, name, vol) => {
-                        if (name !== "mob.endermen.portal" || vol !== 1) return
-                        listening = false
-                        soundListener.unregister()
-                        if (!yPosition) {
-                            chat("Couldn't find an air opening!")
-                            execer.execute(this)
-                            return
-                        }
-                        chat(`Pearlclipped ${Math.round(((Player.getY() - yPosition - 1) * 10)) / 10} blocks down.`)
-                        const trigger = OnUpdateWalkingPlayerPre.register(event => {
-                            trigger.unregister();
-                            event.break = true;
-                            event.cancelled = true;
-
-                            Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
-                            setPlayerPosition(Player.x, yPosition, Player.z)
-                        }, 2934285349853);
-                        execer.execute(this)
-                    })
-
-                    scheduleTask(60, () => {
-                        if (!listening) return
-                        chat("Pearlclip timed out.")
-                        execer.execute(this)
-                    });
-                });
-            });
+                    this.doTeleport(execer);
+                }, true);
+            }
         })
     }
 
