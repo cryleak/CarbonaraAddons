@@ -36,7 +36,7 @@ NodeManager.registerNode(class MotionNode extends Node {
 
 NodeManager.registerNode(class StopMotionNode extends Node {
     static identifier = "stopmotion"
-    static priority = 0
+    static priority = 100
     constructor(args) {
         super(this.constructor.identifier, args)
     }
