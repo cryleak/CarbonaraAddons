@@ -16,9 +16,11 @@ NodeManager.registerNode(class UseItemNode extends Node {
     }
 
     executeClick(execer) {
-        debugMessage(`Using item ${this.itemName} at ${this.realYaw}, ${this.pitch}`)
-        sendAirClick()
-        execer.execute(this)
+        Rotations.rotate(this.realYaw, this.pitch, () => {
+            debugMessage(`Using item ${this.itemName} at ${this.realYaw}, ${this.pitch}`)
+            sendAirClick()
+            execer.execute(this)
+        });
     }
 
     _trigger(execer) {
@@ -33,9 +35,5 @@ NodeManager.registerNode(class UseItemNode extends Node {
                 }, this.freeze);
             }
         })
-    }
-
-    _handleRotate() {
-        return
     }
 })
