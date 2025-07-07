@@ -32,10 +32,12 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                 const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
-                tpManager.sync(this.realYaw, this.pitch, false);
                 if (!(block instanceof BlockAir)) {
+                    // tpManager.sync(this.realYaw, this.pitch, false);
                     SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
-                    execer.execute(this)
+                    Tick.scheduleTask(0, () => {
+                        execer.execute(this)
+                    });
                 } else {
                     chat("Can't superboom on a block that doesn't exist.")
                     execer.execute(this)
