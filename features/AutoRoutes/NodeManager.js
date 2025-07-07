@@ -214,7 +214,8 @@ class NodeManager {
             chained: false,
             itemName: Player?.getHeldItem()?.getName()?.removeFormatting(),
             lineOfSight: false,
-            prevEther: false
+            prevEther: false,
+            withoutRotate: true
         }
 
         for (let i = 0; i < args.length; i++) {
@@ -265,6 +266,8 @@ class NodeManager {
                 case "distance":
                     argsObject.pearlClipDistance = parseFloat(args[i + 1])
                     break
+                case "withRotate":
+                    argsObject.withoutRotate = true
             }
         }
 
