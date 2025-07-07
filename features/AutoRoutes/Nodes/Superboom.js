@@ -3,6 +3,7 @@ import Vector3 from "../../../utils/Vector3"
 import NodeManager from "../NodeManager"
 import SecretAura from "../../SecretAura"
 import LivingUpdate from "../../../events/LivingUpdate"
+import Tick from "../../../events/Tick"
 import tpManager from "../TeleportManager"
 
 import { Node } from "../Node"
