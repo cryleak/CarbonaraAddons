@@ -78,7 +78,6 @@ class NodeExecutor {
 
         const node = toExec[0]
         this.consumed++;
-        debugMessage(`executing node: ${node.realPosition}`);
         node.execute(this);
     }
 
