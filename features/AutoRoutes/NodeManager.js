@@ -38,7 +38,7 @@ class NodeManager {
             this._updateActive();
             register("tick", () => {
                 let newRoom = Location.getCurrentLocationName()
-                if (newRoom.name === this.currentRoom.name) return
+                if (newRoom.type === this.currentRoom.type && newRoom.name === this.currentRoom.name) return
                 this.currentRoom = newRoom
                 this._updateActive()
             });
