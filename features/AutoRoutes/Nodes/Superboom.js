@@ -28,10 +28,12 @@ NodeManager.registerNode(class SuperboomNode extends Node {
     _trigger(execer) {
         swapFromItemID(46, result => {
             if (result === itemSwapSuccess.FAIL) return execer.execute(this)
-            const eyePosition = new Vector3(Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ())
+            let player = tpManager.lastBlock ?? Player;
+            const eyePosition = new Vector3(player.x, player.y + Player.getPlayer().func_70047_e(), player.z);
 
-            debugMessage(`${Player.x} ${Player.y} ${Player.z}`);
-            // if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
+            // debugMessage(`${Player.x} ${Player.y} ${Player.z}`);
+            // tpManager.sync(this.realYaw, this.pitch, false);
+            if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
                 const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
@@ -46,10 +48,10 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                     chat("Can't superboom on a block that doesn't exist.")
                     execer.execute(this)
                 }
-            // } else {
-                // chat("You are too far from the block.")
-                // execer.execute(this)
-            // }
+            } else {
+                chat("You are too far from the block.")
+                execer.execute(this)
+            }
         })
     }
 
