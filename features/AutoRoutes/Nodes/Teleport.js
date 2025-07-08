@@ -47,7 +47,7 @@ class TeleportNode extends Node {
                 onResult(pos);
             });
         } else {
-            const toBlock = manager.currentRoom.type === "dungeons" ? this.toBlock.copy() : Dungeons.convertFromRelative(this.toBlock) ;
+            const toBlock = manager.currentRoom.type === "dungeons" ? Dungeons.convertFromRelative(this.toBlock) : this.toBlock.copy();
             tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
         }
     }
