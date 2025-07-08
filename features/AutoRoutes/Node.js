@@ -65,7 +65,9 @@ export class Node extends Editable {
         if (!metadata.playerPosition) metadata.playerPosition = new Vector3(Player.x, Player.y, Player.z)
         if (this.delay && !metadata.delay) {
             const delay = Math.ceil(parseInt(this.delay) / 50)
+            FreezeManager.setFreezing(true)
             scheduleTask(delay, () => {
+                FreezeManager.setFreezing(false)
                 metadata.delay = true;
                 this._argumentTrigger(execer, metadata);
             });
