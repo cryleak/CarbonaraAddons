@@ -31,7 +31,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
             const eyePosition = new Vector3(Player.getX(), Player.getY() + Player.getPlayer().func_70047_e(), Player.getZ())
 
             debugMessage(`${Player.x} ${Player.y} ${Player.z}`);
-            if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
+            // if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
                 const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
@@ -46,10 +46,10 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                     chat("Can't superboom on a block that doesn't exist.")
                     execer.execute(this)
                 }
-            } else {
-                chat("You are too far from the block.")
-                execer.execute(this)
-            }
+            // } else {
+                // chat("You are too far from the block.")
+                // execer.execute(this)
+            // }
         })
     }
 
