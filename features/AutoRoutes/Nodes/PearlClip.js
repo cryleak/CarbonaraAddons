@@ -2,6 +2,7 @@ import Rotations from "../../../utils/Rotations"
 import NodeManager from "../NodeManager"
 import tpManager from "../TeleportManager";
 import OnUpdateWalkingPlayerPre from "../../../events/onUpdateWalkingPlayerPre"
+import LivingUpdate from "../../../events/LivingUpdate"
 
 import { chat, findAirOpening, itemSwapSuccess, scheduleTask, sendAirClick, setPlayerPosition, swapFromName } from "../../../utils/utils"
 import { Node } from "../Node"
