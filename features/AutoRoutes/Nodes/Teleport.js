@@ -40,6 +40,7 @@ class TeleportNode extends Node {
         };
 
         if (!this.toBlock) {
+            debugMessage("Measuring");
             tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
                 this.toBlock = manager.currentRoom.type === "dungeons" ? pos : Dungeons.convertToRelative(pos);
                 manager.saveConfig();
@@ -88,8 +89,9 @@ class TeleportNode extends Node {
         values.push({
             type: "addButton",
             configName: "recalculate Teleport",
-            onClick() {
-                this.toBlock = null;
+            onClick(obj) {
+                debugMessage("Recalculating teleport position...");
+                obj.toBlock = null;
             }
         });
 

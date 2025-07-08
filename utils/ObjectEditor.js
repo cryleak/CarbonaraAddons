@@ -747,6 +747,13 @@ export default class Editable {
                 };
             }
 
+            if (value.onClick) {
+                const oldOnClick = value.onClick;
+                value.onClick = () => {
+                    oldOnClick(object);
+                }
+            }
+
             value.title = value.title || capitalizeFirst(value.configName);
             value.description = value.description || "";
             value.category = value.subcategory || "Object Editor";
