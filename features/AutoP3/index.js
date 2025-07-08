@@ -28,7 +28,7 @@ let previousCoords = new Vector3(Player.x, Player.y, Player.z)
 
 register("renderWorld", () => {
     const settings = Settings()
-    if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !inBoss || !AutoP3Config.config) return
+    if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !AutoP3Config.config) return
     const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices
     for (let i = 0; i < AutoP3Config.config.length; i++) {
         let node = AutoP3Config.config[i]
@@ -70,7 +70,7 @@ register("renderWorld", () => {
 
 register("tick", () => {
     const settings = Settings()
-    if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !inBoss || !AutoP3Config.config || settings.editMode) return
+    if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !AutoP3Config.config || settings.editMode) return
     executeNodes(playerCoords().player)
 })
 

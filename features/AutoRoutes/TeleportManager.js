@@ -13,7 +13,7 @@ const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPl
 class TeleportManager {
     constructor() {
         this.lastTPed = 0;
-        this.noRotateFor = 900;
+        this.noRotateFor = 500;
 
         this.yaw = Player.getYaw();
         this.pitch = Player.getPitch();
@@ -87,7 +87,7 @@ class TeleportManager {
                 }, true);
             };
 
-            if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(clampYaw(Player.pitch), pitch)) {
+            if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(clampYaw(Player.pitch), pitch) || shouldWait) {
                 Rotations.rotate(yaw, pitch, () => {
                     setVelocity(0, 0, 0);
                     exec();
