@@ -206,7 +206,7 @@ class TeleportRecorder {
                 event.break = true;
             }, 1349239233),
             SecretAuraClick.Post.register((data) => {
-                this.nodes[this.nodes.length - 1].awaitSecret = true;
+                this.nodes[this.nodes.length - 1].awaitSecret++;
             })
         ).unregister();
 
@@ -258,7 +258,7 @@ class TeleportRecorder {
                 pitch: this.lastPitch,
                 radius: 0.0,
                 height: 0.0,
-                awaitSecret: false,
+                awaitSecret: 0,
                 awaitBatSpawn: false,
                 delay: 0,
                 stop: false,
@@ -288,7 +288,7 @@ class TeleportRecorder {
             // curr.chained = i !== 1;
             curr.position = old.position.floor2D();
             curr.awaitSecret = old.awaitSecret;
-            old.awaitSecret = false;
+            old.awaitSecret = 0;
             let node = manager.createNodeFromArgs(curr);
             node.toBlock = toBlock;
         }
