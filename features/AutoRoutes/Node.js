@@ -31,7 +31,7 @@ export class Node extends Editable {
         this.pitch = args.pitch;
         this.lineOfSight = args.lineOfSight;
         if (manager.currentRoom.type === "dungeons") {
-            this.position = Dungeons.convertToRelative(this.position);
+            this.position = new Vector3(Dungeons.convertToRelative(this.position));
             this.yaw = Dungeons.convertToRelativeYaw(this.yaw);
         }
         this.defineTransientProperties(manager.currentRoom);
