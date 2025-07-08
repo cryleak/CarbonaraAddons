@@ -302,10 +302,12 @@ export class Node extends Editable {
             console.log(JSON.stringify(this.position, null, 2));
             return;
         }
-        const pos = Dungeons.convertFromRelative(this.position).add([0.5, 0, 0.5]);
+        console.log(`Defining for room: ${JSON.stringify(room)}`);
+
+        const pos = room.type === "dungeons" ? Dungeons.convertFromRelative(this.position) : this.position;
         Object.defineProperties(this, {
             realPosition: {
-                value: pos,
+                value: pos.add([0.5, 0, 0.5]),
                 enumerable: false,
                 writable: true,
                 configurable: true

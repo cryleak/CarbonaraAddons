@@ -42,12 +42,12 @@ class TeleportNode extends Node {
         if (!this.toBlock) {
             debugMessage("Measuring");
             tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
-                this.toBlock = manager.currentRoom.type === "dungeons" ? pos : Dungeons.convertToRelative(pos);
+                this.toBlock = manager.currentRoom.type === "dungeons" ? Dungeons.convertToRelative(pos) : pos;
                 manager.saveConfig();
                 onResult(pos);
             });
         } else {
-            const toBlock = manager.currentRoom.type === "dungeons" ? this.toBlock : Dungeons.convertFromRelative(this.toBlock);
+            const toBlock = manager.currentRoom.type === "dungeons" ? this.toBlock.copy() : Dungeons.convertFromRelative(this.toBlock) ;
             tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
         }
     }
