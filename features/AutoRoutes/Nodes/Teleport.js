@@ -24,7 +24,7 @@ class TeleportNode extends Node {
     }
 
     customInNodeCheck(node) {
-        return (Player.x === this.realPosition?.x && Player.y - this.realPosition?.y <= 0.06 && Player.y - this.realPosition?.y >= 0 && Player.z === this.realPosition?.z);
+        return (Player.x === this.realPosition?.x && Player.y === this.realPosition?.y && Player.z === this.realPosition?.z);
     }
 
     _trigger(execer) {
