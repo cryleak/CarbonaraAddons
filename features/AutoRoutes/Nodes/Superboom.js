@@ -58,7 +58,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
     }
 
     defineTransientProperties(room) {
-        super.defineTransientProperties()
+        super.defineTransientProperties(room)
         if (!this.superBoomBlock) return
         Object.defineProperties(this, {
             realSuperBoomBlock: {
