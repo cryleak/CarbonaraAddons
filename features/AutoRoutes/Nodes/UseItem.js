@@ -27,13 +27,9 @@ NodeManager.registerNode(class UseItemNode extends Node {
         let rotated = tpManager.sync(this.realYaw, this.pitch, false);
         swapFromName(this.itemName, result => {
             if (result === itemSwapSuccess.FAIL) return execer.execute(this)
-            if (this.rotated || this.withoutRotate) {
+            Rotations.rotate(this.realYaw, this.pitch, () => {
                 this.executeClick(execer);
-            } else {
-                Rotations.rotate(this.realYaw, this.pitch, () => {
-                    this.executeClick(execer);
-                }, this.freeze);
-            }
+            }, this.freeze);
         })
     }
 })
