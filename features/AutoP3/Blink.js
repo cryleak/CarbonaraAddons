@@ -2,7 +2,7 @@ import Settings from "../../config"
 import fakeKeybinds from "../../utils/fakeKeybinds"
 import PogObject from "../../../PogData"
 
-import { chat, removeCameraInterpolation, setPlayerPosition, setVelocity } from "../../utils/utils"
+import { chat, removeCameraInterpolation, setPlayerPosition, setVelocity, debugMessage } from "../../utils/utils"
 import { registerSubCommand } from "../../utils/commands"
 import { packetCounterGui } from "../../config"
 import OnUpdateWalkingPlayerPre from "../../events/onUpdateWalkingPlayerPre"
