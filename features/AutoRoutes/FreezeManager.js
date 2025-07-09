@@ -11,8 +11,8 @@ export default new class FreezeManager {
         OnUpdateWalkingPlayerPre.register(event => {
             if (!this.freezing) return
 
-            removeCameraInterpolation()
             setPlayerPosition(this.position.x, this.position.y, this.position.z);
+            removeCameraInterpolation()
             setVelocity(0, 0, 0)
             event.cancelled = true
             event.break = true
