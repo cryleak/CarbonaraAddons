@@ -60,8 +60,8 @@ export default new class Relic {
             if (!this.pickedUpRelic) return
             const eyePosition = Player.getPlayer().func_174824_e(1)
             const blockPos = this.pickedUpRelic
-            const javaBlockPos = blockPos.convertToVec3()
-            if (eyePosition.func_72438_d(javaBlockPos) > 6) return
+            const javaBlockPos = blockPos.convertToBlockPos()
+            if (eyePosition.func_72438_d(new Vec3(javaBlockPos)) > 6) return
             const blockState = World.getWorld().func_180495_p(javaBlockPos)
             const block = blockState.func_177230_c()
             Player.setHeldItemIndex(8)
