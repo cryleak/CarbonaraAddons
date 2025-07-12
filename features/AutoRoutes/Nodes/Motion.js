@@ -5,9 +5,6 @@ import NodeManager from "../NodeManager"
 import { releaseMovementKeys, setVelocity } from "../../../utils/utils"
 import { Node } from "../Node"
 import LivingUpdate from "../../../events/LivingUpdate"
-
-const BigInteger = Java.type("java.math.BigInteger")
-
 NodeManager.registerNode(class MotionNode extends Node {
     static identifier = "motion"
     static priority = 0

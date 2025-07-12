@@ -4,7 +4,7 @@ import LivingUpdate from "../events/LivingUpdate";
 import Rotations from "../utils/Rotations";
 import FreezeManager from "./AutoRoutes/FreezeManager";
 
-import { setPlayerPosition, removeCameraInterpolation, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
+import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
 
 const MCBlock = Java.type("net.minecraft.block.Block");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -36,13 +36,13 @@ function doDoorless(xOffset, zOffset, holding = null) {
         let amount = 0;
         let done = false;
 
-        const sendNextPacket = () => {;
+        const sendNextPacket = () => {
+            ;
             const pos = [x + xOffset * offsetTimes[amount], 69, z + zOffset * offsetTimes[amount]];
             Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(...pos, Player.yaw, Player.pitch, true));
             if (++amount === offsetTimes.length) {
                 SkeletonKeyCheck.register();
-                setPlayerPosition(...pos);
-                removeCameraInterpolation();
+                setPlayerPosition(...pos, true);
                 done = true;
             }
         };
@@ -75,45 +75,45 @@ function doDoorless(xOffset, zOffset, holding = null) {
 }
 
 const SkeletonKeyCheck = OnUpdateWalkingPlayerPre.register(event => {
-    const packet = event.data.packet;
-	const [x, y, z] = [packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e()];
-	
-	if (y !== 69) return;
-	if (!packet.func_149465_i()) return
-	if (Player.isSneaking()) return
-	
+    const data = event.data
+    const [x, y, z] = [data.x, data.y, data.z];
 
-	let yaw = packet.func_149462_g();
-	let xOffset = 0, zOffset = 0;
+    if (y !== 69) return;
+    if (!data.onGround) return
+    if (Player.isSneaking()) return
 
-	const direction = ((Math.round(yaw / 90) + 4) % 4);
-	
-	switch (direction) {
-		case 0: // South
-			xOffset = 0;
-			zOffset = 1;
-			yaw = 0;
-			break;
-		case 1: // West
-			xOffset = -1;
-			zOffset = 0;
-			yaw = 90;
-			break;
-		case 2: // North
-			xOffset = 0;
-			zOffset = -1;
-			yaw = 180;
-			break;
-		case 3: // East
-			xOffset = 1;
-			zOffset = 0;
-			yaw = 270;
-			break;
-	}
-	
-	if (!((World.getBlockAt(x + xOffset - 1, y, z + zOffset - 1).type.getID() === 173 && World.getBlockAt(x + xOffset - 1, y + 3, z + zOffset - 1).type.getID() === 173) || (World.getBlockAt(x + xOffset - 1, y, z + zOffset - 1).type.getID() == 159 && World.getBlockAt(x + xOffset - 1, y + 3, z + zOffset - 1).type.getID() == 159 && World.getBlockAt(x + xOffset - 1, y, z + zOffset - 1).getMetadata() == 14 && World.getBlockAt(x + xOffset - 1, y + 3, z + zOffset - 1).getMetadata() == 14))) {
+
+    let yaw = data.yaw
+    let xOffset = 0, zOffset = 0;
+
+    const direction = ((Math.round(yaw / 90) + 4) % 4);
+
+    switch (direction) {
+        case 0: // South
+            xOffset = 0;
+            zOffset = 1;
+            yaw = 0;
+            break;
+        case 1: // West
+            xOffset = -1;
+            zOffset = 0;
+            yaw = 90;
+            break;
+        case 2: // North
+            xOffset = 0;
+            zOffset = -1;
+            yaw = 180;
+            break;
+        case 3: // East
+            xOffset = 1;
+            zOffset = 0;
+            yaw = 270;
+            break;
+    }
+
+    if (!((World.getBlockAt(x + xOffset - 1, y, z + zOffset - 1).type.getID() === 173 && World.getBlockAt(x + xOffset - 1, y + 3, z + zOffset - 1).type.getID() === 173) || (World.getBlockAt(x + xOffset - 1, y, z + zOffset - 1).type.getID() == 159 && World.getBlockAt(x + xOffset - 1, y + 3, z + zOffset - 1).type.getID() == 159 && World.getBlockAt(x + xOffset - 1, y, z + zOffset - 1).getMetadata() == 14 && World.getBlockAt(x + xOffset - 1, y + 3, z + zOffset - 1).getMetadata() == 14))) {
         return;
-	}
+    }
 
     if ((Date.now() - cooldown) < 500) return;
     if (Client.getMinecraft().field_71476_x == null) return;
@@ -165,23 +165,23 @@ const SkeletonKeyCheck = OnUpdateWalkingPlayerPre.register(event => {
 });
 
 register("WorldUnload", () => {
-	SkeletonKeyCheck.unregister()
+    SkeletonKeyCheck.unregister()
 })
 
 register("Chat", () => {
     SkeletonKeyCheck.register()
-	// inDoor = false
+    // inDoor = false
 }).setCriteria("Starting in 1 second.")
 
 register("Chat", () => {
-	SkeletonKeyCheck.unregister();
+    SkeletonKeyCheck.unregister();
 }).setCriteria("[BOSS] Maxor: WELL WELL WELL LOOK WHO'S HERE!")
 
 register("Command", () => {
-	SkeletonKeyCheck.register()
+    SkeletonKeyCheck.register()
     ChatLib.chat(`&8&lSkeletonKey &l&7> &r&7Fixed`)
 }).setName("fixshit")
 
 function isWithinTolerence(n1, n2) {
-	return Math.abs(n1 - n2) < 1e-4;
+    return Math.abs(n1 - n2) < 1e-4;
 }

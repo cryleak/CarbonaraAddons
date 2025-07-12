@@ -31,7 +31,7 @@ register("tick", () => { // Schizo solution for item pickup listener
 
         if (itemEntities.some(oldEntity => oldEntity.getUUID().toString() === entity.getUUID().toString())) continue
 
-        if (getDistanceToEntity(entity) > 10) continue
+        if (getDistanceToEntity(entity) > 100) continue
 
         SecretEvent.trigger()
         break

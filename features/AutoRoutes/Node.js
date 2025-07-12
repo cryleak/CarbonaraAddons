@@ -6,7 +6,7 @@ import Vector3 from "../../utils/Vector3"
 import Editable from "../../utils/ObjectEditor";
 import tpManager from "./TeleportManager"
 
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, removeCameraInterpolation, clampYaw, capitalizeFirst } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, clampYaw, capitalizeFirst } from "../../utils/utils"
 import FreezeManager from "./FreezeManager"
 
 export class Node extends Editable {
@@ -62,7 +62,7 @@ export class Node extends Editable {
     }
 
     _argumentTrigger(execer, metadata = {}) {
-        if (!metadata.playerPosition) metadata.playerPosition = new Vector3(Player.x, Player.y, Player.z)
+        if (!metadata.playerPosition) metadata.playerPosition = new Vector3(Player)
         if (this.delay && !metadata.delay) {
             const delay = Math.ceil(parseInt(this.delay) / 50)
             FreezeManager.setFreezing(true)
@@ -104,8 +104,7 @@ export class Node extends Editable {
         }
 
         if (this.center) {
-            setPlayerPosition(this.realPosition.x, this.realPosition.y, this.realPosition.z);
-            removeCameraInterpolation()
+            setPlayerPosition(this.realPosition.x, this.realPosition.y, this.realPosition.z, true);
             releaseMovementKeys();
             setVelocity(0, null, 0);
         }

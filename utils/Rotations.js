@@ -13,12 +13,11 @@ export default new class Rotations {
             if (this.yaw === null || this.pitch === null) return
 
             const data = event.data
-            const packet = data.packet
 
             event.cancelled = true
             let replacementPacket
-            if (packet.func_149466_j() && !this.noMove) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e(), this.yaw, this.pitch, packet.func_149465_i())
-            else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(this.yaw, this.pitch, packet.func_149465_i())
+            if (data.isMoving && !this.noMove) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(data.x, data.y, data.z, this.yaw, this.pitch, data.onGround)
+            else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(this.yaw, this.pitch, data.onGround)
             Client.sendPacket(replacementPacket)
             const postPacketSend = this.postPacketSend
             this.clearRotation()
