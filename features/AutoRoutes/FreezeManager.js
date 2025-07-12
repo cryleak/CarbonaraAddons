@@ -1,6 +1,6 @@
 import OnUpdateWalkingPlayerPre from "../../events/OnUpdateWalkingPlayerPre"
 import Vector3 from "../../utils/Vector3"
-import { setVelocity, setPlayerPosition, removeCameraInterpolation } from "../../utils/utils"
+import { setVelocity, setPlayerPosition } from "../../utils/utils"
 
 export default new class FreezeManager {
     constructor() {
@@ -13,8 +13,7 @@ export default new class FreezeManager {
             if (!this.freezing) return
 
             this.amount++;
-            setPlayerPosition(this.position.x, this.position.y, this.position.z);
-            removeCameraInterpolation()
+            setPlayerPosition(this.position.x, this.position.y, this.position.z, true);
             setVelocity(0, 0, 0)
             event.cancelled = true
             event.break = true

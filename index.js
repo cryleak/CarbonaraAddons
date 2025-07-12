@@ -6,6 +6,7 @@ import "./features/SecretAura"
 import "./features/Relic"
 import "./features/AutoRoutes"
 import "./features/Doorless"
+import { findAirOpening } from "./utils/utils"
 
 
 
@@ -19,3 +20,7 @@ register("packetSent", (packet, event) => {
         // console.log(string)
     })
 }).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer).unregister()
+
+register("tick", () => {
+    ChatLib.chat(findAirOpening() ?? "no")
+})

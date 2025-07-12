@@ -300,7 +300,7 @@ class NodeManager {
     }
 
     _getClosest() {
-        const playerVec = Dungeons.convertToRelative(new Vector3(Player.x, Player.y, Player.z))
+        const playerVec = Dungeons.convertToRelative(new Vector3(Player))
         let closestNodeDistance = Number.MAX_SAFE_INTEGER;
         let closestNodeIndex = null;
         for (let i = 0; i < this.activeNodes.length; i++) {

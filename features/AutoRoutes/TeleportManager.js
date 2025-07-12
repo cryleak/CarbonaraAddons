@@ -5,7 +5,7 @@ import OnUpdateWalkingPlayerPre from "../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../utils/Rotations"
 import execer from "./NodeExecutor"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../utils/utils"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 
@@ -24,13 +24,13 @@ class TeleportManager {
 
         ServerTeleport.register((event) => {
             if (!this.recentlyPushedC06s.length) return
-            const packet = event.data.packet;
 
-            const newPitch = packet.func_148930_g();
-            const newYaw = packet.func_148931_f();
-            const newX = packet.func_148932_c();
-            const newY = packet.func_148928_d();
-            const newZ = packet.func_148933_e();
+            const data = event.data
+            const newYaw = data.yaw;
+            const newPitch = data.pitch;
+            const newX = data.x;
+            const newY = data.y;
+            const newZ = data.z;
 
             const compare = (p) => {
                 const { x, y, z, yaw, pitch } = p;
@@ -76,8 +76,7 @@ class TeleportManager {
                     // response to the airClick
                     Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(toBlock.x, toBlock.y, toBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
                     this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
-                    setPlayerPosition(toBlock.x, toBlock.y, toBlock.z)
-                    removeCameraInterpolation()
+                    setPlayerPosition(toBlock.x, toBlock.y, toBlock.z, true)
 
                     this.lastTPed = Date.now();
                     execer._updateCoords(toBlock);
@@ -114,8 +113,7 @@ class TeleportManager {
 
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
-        setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
-        removeCameraInterpolation()
+        setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, true)
 
         sendAirClick();
 
@@ -155,8 +153,7 @@ class TeleportManager {
 
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, yaw, pitch, Player.asPlayerMP().isOnGround()));
         this.recentlyPushedC06s.push({ x: this.lastBlock.x, y: this.lastBlock.y, z: this.lastBlock.z, yaw, pitch });
-        setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z)
-        removeCameraInterpolation()
+        setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, true)
 
         if (this.final) {
             this.lastTPed = 0;
@@ -197,11 +194,11 @@ class TeleportManager {
                 const listener = ServerTeleport.register((event) => {
                     if (packetsReceived-- !== 0) return
                     awaiting = false
-                    const packet = event.data.packet;
                     event.break = true
                     listener.unregister()
 
-                    const block = new Vector3(Math.floor(packet.func_148932_c()), packet.func_148928_d(), Math.floor(packet.func_148933_e()));
+                    const data = event.data
+                    const block = new Vector3(data.x, data.y, data.z).floor2D()
                     onResult(block);
                 }, 10001);
                 scheduleTask(100, () => {
@@ -226,8 +223,7 @@ class TeleportManager {
                     sendAirClick();
                     Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, 0, 90, Player.asPlayerMP().isOnGround()));
                     this.recentlyPushedC06s.push({ x: Math.floor(Player.x) + 0.5, y: Math.floor(Player.y) + 0.05, z: Math.floor(Player.z) + 0.5, yaw: 0, pitch: 90 });
-                    setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5)
-                    removeCameraInterpolation()
+                    setPlayerPosition(Math.floor(Player.x) + 0.5, Math.floor(Player.y) + 0.05, Math.floor(Player.z) + 0.5, true)
 
                     packetsReceived++
                     doTp()

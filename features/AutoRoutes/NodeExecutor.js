@@ -92,7 +92,7 @@ class NodeExecutor {
         if (node.customInNodeCheck) {
             return node.customInNodeCheck();
         }
-        const playerVec = new Vector3(Player.x, Player.y, Player.z);
+        const playerVec = new Vector3(Player);
         return checkIntersection(this.previousCoords, playerVec, node.realPosition, node.radius, node.height);
     }
 

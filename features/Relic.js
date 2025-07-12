@@ -26,7 +26,7 @@ export default new class Relic {
 
         this.relicPickupAura = register("renderWorld", () => {
             const armorStands = World.getAllEntitiesOfType(ArmorStand)
-            let entity = armorStands.find(e => new EntityLivingBase(e?.getEntity()).getItemInSlot(4)?.getNBT()?.toString()?.includes("Relic") && getDistanceToEntity(e) < 4.5)
+            let entity = armorStands.find(e => new EntityLivingBase(e?.getEntity()).getItemInSlot(4)?.getNBT()?.toString()?.includes("Relic") && getDistanceToEntity(e) < 20.25)
             if (!entity) return
             entity = entity.getEntity()
             this.relicPickupAura.unregister()

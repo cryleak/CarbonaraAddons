@@ -7,7 +7,7 @@ import bind from "../../../utils/bind"
 import tpManager from "../TeleportManager";
 import SecretAuraClick from "../../../events/SecretAuraClick"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, removeCameraInterpolation, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -159,8 +159,7 @@ class TeleportRecorder {
             OnUpdateWalkingPlayerPre.register((event) => {
                 // Client.sendPacket(replacementPacket);
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
-                setPlayerPosition(x, y, z);
-                removeCameraInterpolation()
+                setPlayerPosition(x, y, z, true);
                 setVelocity(0, 0, 0);
                 event.cancelled = true;
             }),
@@ -247,9 +246,9 @@ class TeleportRecorder {
                 return;
             }
 
-            const packet = event.data.packet;
+            const data = event.data
 
-            const coords = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()];
+            const coords = [data.x, data.y, data.z];
 
             this.nodes.push({
                 type,
@@ -273,8 +272,7 @@ class TeleportRecorder {
             this.lastTP = true;
             this.lastPacket = new Vector3(coords);
 
-            setPlayerPosition(coords[0], coords[1], coords[2]);
-            removeCameraInterpolation()
+            setPlayerPosition(coords[0], coords[1], coords[2], true);
             event.break = true;
         }, 1349239234);
     }
@@ -283,10 +281,10 @@ class TeleportRecorder {
         for (let i = this.nodes.length - 1; i > 0; i--) {
             let curr = this.nodes[i];
             let old = this.nodes[i - 1];
-            let afterAdd = curr.position.floor2D();
+            let afterAdd = curr.position.copy().floor2D();
             let toBlock = Dungeons.convertToRelative(afterAdd);
             // curr.chained = i !== 1;
-            curr.position = old.position.floor2D();
+            curr.position = old.position.copy().floor2D();
             curr.awaitSecret = old.awaitSecret;
             old.awaitSecret = 0;
             let node = manager.createNodeFromArgs(curr);

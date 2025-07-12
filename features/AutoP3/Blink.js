@@ -2,10 +2,11 @@ import Settings from "../../config"
 import fakeKeybinds from "../../utils/fakeKeybinds"
 import PogObject from "../../../PogData"
 
-import { chat, removeCameraInterpolation, setPlayerPosition, setVelocity, debugMessage } from "../../utils/utils"
+import { chat, setPlayerPosition, setVelocity, debugMessage } from "../../utils/utils"
 import { registerSubCommand } from "../../utils/commands"
 import { packetCounterGui } from "../../config"
 import OnUpdateWalkingPlayerPre from "../../events/onUpdateWalkingPlayerPre"
+import Vector3 from "../../utils/Vector3"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")
@@ -18,7 +19,7 @@ global.carbonara.autop3.blinkEnabled = false
 class Blink {
     constructor() {
         this.lastC03PacketState = {
-            pos: { x: null, y: null, z: null },
+            position: new Vector3(Player),
             onGround: null,
             rotation: { yaw: null, pitch: null }
         }
@@ -99,27 +100,23 @@ class Blink {
         })
 
         this.packetCollector = OnUpdateWalkingPlayerPre.register(event => {
-            const packet = event.data.packet
             if (Settings().pauseCharging && Date.now() - global.carbonara.autop3.lastBlink < 1000) return
             if (this.recordingRouteName) return
 
+            const data = event.data
             let cancelPacket = true
 
-            const onGround = packet.func_149465_i()
-            if (onGround !== this.lastC03PacketState.onGround) cancelPacket = false
-            this.lastC03PacketState.onGround = onGround
-            if (packet.func_149463_k() && Settings().allowRotations) { // If rotating
-                const [yaw, pitch] = [packet.func_149462_g(), packet.func_149470_h()]
-                if (this.lastC03PacketState.rotation.yaw !== yaw || this.lastC03PacketState.rotation.pitch !== pitch) cancelPacket = false
-                this.lastC03PacketState.rotation.yaw = yaw
-                this.lastC03PacketState.rotation.pitch = pitch
+            if (data.onGround !== this.lastC03PacketState.onGround) cancelPacket = false
+            this.lastC03PacketState.onGround = data.onGround
+            if (data.isRotating && Settings().allowRotations) { // If rotating
+                if (this.lastC03PacketState.rotation.yaw !== data.yaw || this.lastC03PacketState.rotation.pitch !== data.pitch) cancelPacket = false
+                this.lastC03PacketState.rotation.yaw = data.yaw
+                this.lastC03PacketState.rotation.pitch = data.pitch
             }
-            if (packet.func_149466_j()) {// If moving
-                const currentPosition = { x: packet.func_149464_c(), y: packet.func_149467_d(), z: packet.func_149472_e() }
-                if (Object.values(currentPosition).some((coord, index) => coord !== Object.values(this.lastC03PacketState.pos)[index])) cancelPacket = false
-                this.lastC03PacketState.pos.x = currentPosition.x
-                this.lastC03PacketState.pos.y = currentPosition.y
-                this.lastC03PacketState.pos.z = currentPosition.z
+            if (data.isMoving) {// If moving
+                const currentPosition = new Vector3(data.x, data.y, data.z)
+                if (!currentPosition.equals(this.lastC03PacketState.position)) cancelPacket = false
+                this.lastC03PacketState.position = currentPosition
             }
 
             if (cancelPacket) event.cancelled = true
@@ -146,24 +143,21 @@ class Blink {
         })
 
         this.packetLogger = OnUpdateWalkingPlayerPre.register(event => {
-            const packet = event.data.packet
+            const data = event.data
             let ignorePacket = true
 
-            if (!packet.func_149466_j()) return
+            if (!data.isMoving) return
 
-            const onGround = packet.func_149465_i()
-            if (onGround !== this.lastC03PacketState.onGround) ignorePacket = false
-            this.lastC03PacketState.onGround = onGround
-            const currentPosition = { x: packet.func_149464_c(), y: packet.func_149467_d(), z: packet.func_149472_e() }
-            if (Object.values(currentPosition).some((coord, index) => coord !== Object.values(this.lastC03PacketState.pos)[index])) ignorePacket = false
-            this.lastC03PacketState.pos.x = currentPosition.x
-            this.lastC03PacketState.pos.y = currentPosition.y
-            this.lastC03PacketState.pos.z = currentPosition.z
+            if (data.onGround !== this.lastC03PacketState.onGround) ignorePacket = false
+            this.lastC03PacketState.onGround = data.onGround
+            const currentPosition = new Vector3(data.x, data.y, data.z)
+            if (!currentPosition.equals(this.lastC03PacketState.position)) ignorePacket = false
+            this.lastC03PacketState.position = currentPosition
 
 
             if (ignorePacket) return
 
-            FileLib.append("CarbonaraAddons/blinkroutes", this.recordingRouteName + ".sereniblink", `\n${packet.func_149464_c()}, ${packet.func_149467_d()}, ${packet.func_149472_e()}, ${packet.func_149465_i()}, ${Player.getPlayer().field_70159_w}, ${Player.getPlayer().field_70181_x}, ${Player.getPlayer().field_70179_y}`)
+            FileLib.append("CarbonaraAddons/blinkroutes", this.recordingRouteName + ".sereniblink", `\n${data.x}, ${data.y}, ${data.z}, ${data.onGround}, ${Player.getMotionX()}, ${Player.getMotionY()}, ${Player.getMotionZ()}`)
             this.updateBlinkRoutes()
         }, 10001).unregister()
 
@@ -212,8 +206,7 @@ class Blink {
             // if (i < packets.length - 1) { let previousPacket = i === 0 ? [Player.x, Player.y, Player.z] : packets[i - 1]; ChatLib.chat(getDistance3D(x, y, z, previousPacket[0], previousPacket[1]), previousPacket[2])); }
         }
         const finalPacket = packets[packets.length - 1]
-        setPlayerPosition(finalPacket[0], finalPacket[1], finalPacket[2])
-        removeCameraInterpolation()
+        setPlayerPosition(finalPacket[0], finalPacket[1], finalPacket[2], true)
         if (finalPacket.length === 7) {
             let motion = [finalPacket[4], finalPacket[5], finalPacket[6]]
             setVelocity(...motion)

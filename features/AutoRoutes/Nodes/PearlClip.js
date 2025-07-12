@@ -37,7 +37,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                 event.cancelled = true;
 
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
-                setPlayerPosition(Player.x, yPosition, Player.z)
+                setPlayerPosition(Player.x, yPosition, Player.z, true)
                 execer.execute(this)
             }, 2934285349853);
         })
@@ -55,7 +55,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
             const rotated = tpManager.sync(this.realYaw, this.pitch, false);
             LivingUpdate.scheduleTask(0, () => {
                 if (rotated) {
-                        this.doTeleport(execer);
+                    this.doTeleport(execer);
                 } else {
                     Rotations.rotate(this.realYaw, this.pitch, () => {
                         this.doTeleport(execer);

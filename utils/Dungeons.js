@@ -80,7 +80,7 @@ export default new class Dungeons {
     convertToRelative(realCoords) {
         const currentRoom = this.getCurrentRoom()
         if (!currentRoom) return realCoords.copy()
-        const clayPosition = Vector3.convertVec3iToVector3(currentRoom.clayPos)
+        const clayPosition = new Vector3(currentRoom.clayPos)
 
         const relativeCoord = realCoords.copy().subtract(clayPosition)
         const relativeCoordNorth = this._rotateToNorth(relativeCoord)
@@ -99,7 +99,7 @@ export default new class Dungeons {
         if (!currentRoom) return relativeCoords.copy()
 
         const relativeRotated = this._rotateFromNorth(relativeCoords)
-        const clayPosition = Vector3.convertVec3iToVector3(currentRoom.clayPos)
+        const clayPosition = new Vector3(currentRoom.clayPos)
 
         return clayPosition.add([relativeRotated.x, relativeRotated.y, relativeRotated.z])
     }

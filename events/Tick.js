@@ -1,10 +1,8 @@
-import { CancellableEvent } from "./CustomEvents"
+import { Event } from "./CustomEvents"
 
-const Tick = new CancellableEvent();
+const Tick = new Event()
 export default Tick;
 
-register("tick", (event) => {
-    if (!Tick.trigger(event)) {
-        cancel(event)
-    }
+register("tick", () => {
+    Tick.trigger()
 })
