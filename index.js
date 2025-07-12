@@ -5,6 +5,7 @@ import "./features/Freecam"
 import "./features/SecretAura"
 import "./features/Relic"
 import "./features/AutoRoutes"
+import "./features/Doorless"
 
 
 

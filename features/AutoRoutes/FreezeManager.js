@@ -8,9 +8,11 @@ export default new class FreezeManager {
 
         this.position = new Vector3(Player);
         this.previousVelocity = [Player.getMotionX(), Player.getMotionY(), Player.getMotionZ()];
+        this.amount = 0;
         OnUpdateWalkingPlayerPre.register(event => {
             if (!this.freezing) return
 
+            this.amount++;
             setPlayerPosition(this.position.x, this.position.y, this.position.z);
             removeCameraInterpolation()
             setVelocity(0, 0, 0)
@@ -24,11 +26,15 @@ export default new class FreezeManager {
             this.previousVelocity = [Player.getMotionX(), Player.getMotionY(), Player.getMotionZ()];
             setVelocity(0, 0, 0)
             this.position = new Vector3(Player);
+            this.freezing = true;
         }
         else {
             setVelocity(...this.previousVelocity)
+            const amount = this.amount;
+            this.amount = 0;
+            this.freezing = false;
+            return amount;
         }
-        this.freezing = state
     }
 
 }
