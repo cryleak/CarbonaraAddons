@@ -251,7 +251,7 @@ export function findAirOpening() {
  * @param {Block} block 
  * @returns {Boolean} passable
  */
-function isBlockPassable(block) {
+export function isBlockPassable(block) {
     return block.type.mcBlock.func_176205_b(World.getWorld(), block.pos.toMCBlock())
 }
 
@@ -360,11 +360,11 @@ export function setWalking(state) {
  * @param {Number} sneaking - Whether to calculate based off the fact that you are sneaking or not, otherwise it uses eye height
  * @returns The yaw and pitch to aim at the specified coordinates.
  */
-export function calcYawPitch(x, y, z, sneaking = false) {
+export function calcYawPitch(x1, y1, z1, x2, y2, z2) {
     let d = {
-        x: x - Player.getX(),
-        y: y - (Player.getY() + (sneaking ? eyeHeightSneaking : getEyeHeight())),
-        z: z - Player.getZ()
+        x: x2 - x1,
+        y: y2 - y1,
+        z: z2 - z1
     }
     let yaw = 0
     let pitch = 0
