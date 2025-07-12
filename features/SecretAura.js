@@ -67,6 +67,7 @@ export default new class SecretAura {
             }
         })
 
+        /*
         register("packetSent", (packet, event) => {
             let hitvec = [packet.func_149573_h(), packet.func_149569_i(), packet.func_149575_j()]
             hitvec = new Vec3(...hitvec).func_178787_e(new Vec3(packet.func_179724_a()))
@@ -79,6 +80,7 @@ export default new class SecretAura {
                 RenderLib.drawEspBoxV2(wrappedPos.x, wrappedPos.y, wrappedPos.z, 0.05, 0.05, 0.05, 1, 1, 1, 1, true, 2)
             })
         })
+        */
 
         register("worldUnload", () => {
             // while (this.renderShit.length) this.renderShit.pop()

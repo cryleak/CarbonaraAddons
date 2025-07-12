@@ -21,6 +21,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
         sendAirClick()
         let listening = true
         let yPosition = this.distance === 0 ? findAirOpening() : Player.getY() - this.distance
+        const originalY = Player.y
         const soundListener = register("soundPlay", (pos, name, vol) => {
             if (name !== "mob.endermen.portal" || vol !== 1) return
             listening = false
@@ -30,7 +31,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                 execer.execute(this)
                 return
             }
-            chat(`Pearlclipped ${Math.round(((Player.getY() - yPosition - 1) * 10)) / 10} blocks down.`)
+            chat(`Pearlclipped ${(originalY - yPosition).toFixed(2)} blocks down.`)
             const trigger = OnUpdateWalkingPlayerPre.register(event => {
                 trigger.unregister();
                 event.break = true;
