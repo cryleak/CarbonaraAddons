@@ -7,7 +7,7 @@ import Dungeons from "../utils/Dungeons";
 import FreezeManager from "./AutoRoutes/FreezeManager";
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
-import { setPlayerPosition, removeCameraInterpolation, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
+import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
 
 const MCBlock = Java.type("net.minecraft.block.Block");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -194,8 +194,7 @@ class Doorless {
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(...pos, Player.yaw, Player.pitch, true));
                 if (++amount === offsetTimes.length) {
                     this.trigger.register();
-                    setPlayerPosition(...pos);
-                    removeCameraInterpolation();
+                    setPlayerPosition(...pos, true);
                     done = true;
                 }
             };
