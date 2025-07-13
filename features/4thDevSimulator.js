@@ -14,6 +14,16 @@ const Mouse = Java.type("org.lwjgl.input.Mouse")
 const S23PacketBlockChange = Java.type("net.minecraft.network.play.server.S23PacketBlockChange")
 const Blocks = Java.type("net.minecraft.init.Blocks")
 
+const OdinSolver = Java.type("me.odinclient.features.impl.floor7.p3.ArrowsDevice$7");
+function ResetOdinSolver() {
+    try {
+        const field = OdinSolver.class.getField("INSTANCE");
+        field.setAccessible(true);
+        const value = field.get(OdinSolver);
+        value.invoke();
+    } catch (e) {}
+}
+
 let ping = 100 // make this an optino idk
 
 registerSubCommand("setbowping", velo => {
@@ -41,8 +51,8 @@ class DeviceManager {
             new Vector3(64.5, 130, 50.5),
             new Vector3(66.5, 130, 50.5),
             new Vector3(68.5, 130, 50.5)
-        ]
-        this.remainingBlocks = []
+        ];
+        this.solution = []
         this.deviceActive = false
         this.startTime = Date.now()
         this.lastArrowShoot = Date.now()
@@ -51,6 +61,8 @@ class DeviceManager {
         this.nextDeathTick = null
         this.invincibilityItem = null
         this.phoenixUsed = false
+        this.landed = []
+        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5);
 
         register("packetSent", () => this.tryShootBow(this.lastArrowShoot)).setFilteredClass(C0APacketAnimation)
 
@@ -83,19 +95,12 @@ class DeviceManager {
             }
         })
 
-
-
         ArrowLandEvent.register(data => {
-            if (!this.currentTarget) return
-            const landPosition = data.hitPosition
-            if (!landPosition.equals(this.currentTarget.copy().floor3D())) return
-            this.updateTargetBlock(null)
-            if (!this.remainingBlocks.length) {
-                chat(`Fourth device completed in ${((Date.now() - this.startTime) / 1000).toFixed(2)}`)
-                World.playSound("note.pling", 1, 1)
-                this.stopDevice()
+            if (!this.deviceActive) {
+                return;
             }
-
+            const landPosition = data.hitPosition;
+            this.landed.push(landPosition);
         })
 
         this.devStarter = register("tick", () => {
@@ -120,13 +125,46 @@ class DeviceManager {
             }
         }).setDelay(3).unregister()
 
-        register("tick", (ticks) => {
-            if (ticks % 5 !== 0) return
-            if (!this.remainingBlocks.length || this.currentTarget) return
-            this.chooseNewBlock()
+        register("tick", () => {
+            if (!this.deviceActive || !this.remainingBlocks.length || this.landed.length === 0) return;
+            let unsend;
+            while (this.remainingBlocks.length && this.landed.some(landed => landed.equals(this.remainingBlocks[0].copy().floor3D()))) {
+                let curr = this.remainingBlocks.shift();
+                if (!unsend) {
+                    unsend = curr;
+                }
+            }
+
+            if (unsend) {
+                const blockState2 = Blocks.field_150406_ce.func_176203_a(11);
+                this.triggerBlockUpdate(unsend.convertToBlockPos(), blockState2);
+
+                if (this.remainingBlocks.length > 0 && !this.scheduledUpdate) {
+                    this.scheduledUpdate = true;
+                    Client.scheduleTask(Math.round(ping / 50), () => {
+                        this.scheduledUpdate = false;
+
+                        if (!this.deviceActive) {
+                            return;
+                        }
+
+                        const blockState = Blocks.field_150475_bE.func_176223_P();
+                        this.triggerBlockUpdate(this.remainingBlocks[0].convertToBlockPos(), blockState);
+                    });
+                }
+            }
+
+            this.landed = [];
+
+            if (!this.remainingBlocks.length) {
+                chat(`Fourth device completed in ${((Date.now() - this.startTime) / 1000).toFixed(2)}`)
+                World.playSound("note.pling", 1, 1)
+                this.stopDevice()
+            }
         })
 
         register("renderOverlay", () => {
+            const timer = (time) => (time / 1000).toFixed(2);
             if (this.startCooldown) {
                 if (!this.isOnDevice()) {
                     this.devStarter.register()
@@ -141,15 +179,16 @@ class DeviceManager {
                     this.nextDeathTick = Date.now() + 3000
                     this.invincibilityItem = invincibilityItems.MASK
                     this.phoenixUsed = false
-                    this.remainingBlocks = [...this.blocks]
-                    this.chooseNewBlock()
+                    this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5);
+                    const blockState = Blocks.field_150475_bE.func_176223_P()
+                    this.triggerBlockUpdate(this.remainingBlocks[0].convertToBlockPos(), blockState)
                     return
                 }
                 Renderer.scale(3)
-                Renderer.drawString(`§4${this.startCooldown - Date.now()}`, Renderer.screen.getWidth() / 6, Renderer.screen.getHeight() / 5.4, true)
+                Renderer.drawString(`§a${timer(this.startCooldown - Date.now())}`, Renderer.screen.getWidth() / 6, Renderer.screen.getHeight() / 5.4, true)
             } else if (this.nextDeathTick) {
                 Renderer.scale(3)
-                Renderer.drawString(`§4${this.nextDeathTick - Date.now()}`, Renderer.screen.getWidth() / 6, Renderer.screen.getHeight() / 5.4, true)
+                Renderer.drawString(`§c${timer(this.nextDeathTick - Date.now())}`, Renderer.screen.getWidth() / 6, Renderer.screen.getHeight() / 5.4, true)
             }
         })
     }
@@ -170,12 +209,6 @@ class DeviceManager {
         fireChannelRead(new S23PacketBlockChange(World.getWorld(), position)) // To trigger some i4 solvers, for example Soshimee's.
     }
 
-    chooseNewBlock() {
-        const index = Math.floor(Math.random() * this.remainingBlocks.length)
-        this.updateTargetBlock(this.remainingBlocks[index])
-        this.remainingBlocks.splice(index, 1)
-    }
-
     tryShootBow(lastShot) {
         if (Date.now() - lastShot < 250 || Player?.getHeldItem()?.getID() !== 261) return
         const playerVec = new Vector3(Player)
@@ -191,12 +224,16 @@ class DeviceManager {
     }
 
     stopDevice() {
-        this.updateTargetBlock(null)
+        if (this.remainingBlocks.length > 0) {
+            const blockState2 = Blocks.field_150406_ce.func_176203_a(11)
+            this.triggerBlockUpdate(this.remainingBlocks[0].convertToBlockPos(), blockState2)
+        }
         this.nextDeathTick = null
         this.deviceActive = false
-        this.remainingBlocks = []
         this.deathTickTimer.unregister()
         this.devStarter.unregister()
+        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5);
+        ResetOdinSolver()
         Client.scheduleTask(20, () => this.devStarter.register())
     }
 
