@@ -5,6 +5,7 @@ import LivingUpdate from "../events/LivingUpdate";
 import Rotations from "../utils/Rotations";
 import Dungeons from "../utils/Dungeons";
 import FreezeManager from "./AutoRoutes/FreezeManager";
+import ServerTeleport from "../events/ServerTeleport"
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
 import { setPlayerPosition, removeCameraInterpolation, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
@@ -35,14 +36,14 @@ class Doorless {
     }
 
     check(event) {
-        const packet = event.data.packet;
-        const [x, y, z] = [packet.func_149464_c(), packet.func_149467_d(), packet.func_149472_e()];
+        const data = event.data
+        const { x, y, z } = data;
 
         if (y !== 69) return;
-        if (!packet.func_149465_i()) return
+        if (!data.onGround) return
         if (Player.isSneaking()) return
 
-        let yaw = packet.func_149462_g();
+        let yaw = data.yaw;
         let xOffset = 0, zOffset = 0;
 
         const pos = new Vector3(Math.ceil(Player.x), Player.y, Math.ceil(Player.z));
@@ -173,9 +174,10 @@ class Doorless {
     }
 
     doDoorless(xOffset, zOffset, offsetTimes, holding = null) {
-        const trigger = register("packetReceived", (packet, event) => {
+        const trigger = ServerTeleport.register(event => {
+            const data = event.data;
             const frozenFor = FreezeManager.setFreezing(false);
-            const [x, y, z] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()];
+            const { x, y, z } = data;
             trigger.unregister();
             if (!allowed.includes(y)) {
                 this.trigger.register();
@@ -183,8 +185,8 @@ class Doorless {
             }
 
 
-            cancel(event);
-            Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, packet.func_148931_f(), packet.func_148930_g(), true));
+            event.cancelled = true
+            Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, data.yaw, data.pitch, true));
 
             let amount = 0;
             let done = false;
@@ -222,7 +224,7 @@ class Doorless {
             if (holding) {
                 swapToSlot(holding);
             }
-        }).setFilteredClass(S08PacketPlayerPosLook);
+        }, 1000000000000000)
 
         sendAirClick();
     }
