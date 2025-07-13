@@ -1,21 +1,26 @@
 import { Event } from "../events/CustomEvents"
+import { registerSubCommand } from "../utils/commands"
 import { chat, getEyeHeight, scheduleTask } from "../utils/utils"
 import Vector3 from "../utils/Vector3"
 
 const ArrowLandEvent = new Event()
 
 const EntityArrow = Java.type("net.minecraft.entity.projectile.EntityArrow")
-const McItemStack = Java.type("net.minecraft.item.ItemStack")
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
 const MCNBTTagCompound = Java.type("net.minecraft.nbt.NBTTagCompound")
 const C0APacketAnimation = Java.type("net.minecraft.network.play.client.C0APacketAnimation")
-const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 const JavaMath = Java.type("java.lang.Math")
 const Mouse = Java.type("org.lwjgl.input.Mouse")
 const S23PacketBlockChange = Java.type("net.minecraft.network.play.server.S23PacketBlockChange")
 const Blocks = Java.type("net.minecraft.init.Blocks")
 
 let ping = 100 // make this an optino idk
+
+registerSubCommand("setbowping", velo => {
+    if (Number.isNaN(velo)) return
+    ping = parseFloat(velo)
+    ChatLib.chat(`Set bow ping to ${ping}`)
+})
 
 const invincibilityItems = {
     MASK: "MASK",
@@ -49,10 +54,10 @@ class DeviceManager {
 
         register("packetSent", () => this.tryShootBow(this.lastArrowShoot)).setFilteredClass(C0APacketAnimation)
 
-        register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger await secret on left click
+        register(net.minecraftforge.client.event.MouseEvent, (event) => {
             const button = event.button
             const state = event.buttonstate
-            if (button !== 1 || !state || !Client.isTabbedIn() || Client.isInGui()) return
+            if (button !== 1 || !state || !Client.isTabbedIn() || Client.isInGui() || !this.isOnDevice()) return
             if (Player?.getHeldItem()?.getID() === 261) {
 
                 cancel(event)
@@ -94,7 +99,7 @@ class DeviceManager {
         })
 
         this.devStarter = register("tick", () => {
-            if (!(new Vector3(Player).floor3D().equals(this.pressurePlateVector))) this.stopDevice()
+            if (!this.isOnDevice) this.stopDevice()
             else if (!this.deviceActive) {
                 this.startCooldown = Date.now() + 3000
                 this.devStarter.unregister()
@@ -123,7 +128,7 @@ class DeviceManager {
 
         register("renderOverlay", () => {
             if (this.startCooldown) {
-                if (!(new Vector3(Player).floor3D().equals(this.pressurePlateVector))) {
+                if (!this.isOnDevice()) {
                     this.devStarter.register()
                     this.startCooldown = null
                     return
@@ -194,6 +199,10 @@ class DeviceManager {
         this.devStarter.unregister()
         Client.scheduleTask(20, () => this.devStarter.register())
     }
+
+    isOnDevice() {
+        return new Vector3(Player).floor3D().equals(this.pressurePlateVector)
+    }
 }
 const Device = new DeviceManager()
 export default Device
@@ -211,7 +220,7 @@ class FakeArrow {
         this.arrow.field_70181_x = -sin(pitchRadians)
         this.arrow.field_70179_y = cos(yawRadians) * cos(pitchRadians)
 
-        this.arrow.func_70186_c(this.arrow.field_70159_w, this.arrow.field_70181_x, this.arrow.field_70179_y, velocity, 1.0)
+        this.arrow.func_70186_c(this.arrow.field_70159_w, this.arrow.field_70181_x, this.arrow.field_70179_y, velocity, 0.5)
 
         this.arrow.field_70251_a = 2
         this.arrow.func_70071_h_()
