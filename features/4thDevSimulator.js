@@ -26,7 +26,7 @@ function ResetOdinSolver() {
 }
 
 let ping = 100 // make this an optino idk
-const updateTimer = 5 // how often to check whether we should send a new emerald block or not
+const updateTimer = 8 // how often to check whether we should send a new emerald block or not
 
 registerSubCommand("setbowping", velo => {
     if (Number.isNaN(velo)) return
@@ -129,7 +129,7 @@ class DeviceManager {
         }).setDelay(3).unregister()
 
         register("tick", () => {
-            if (!this.deviceActive || !this.remainingBlocks.length || this.landed.length === 0) return;
+            if (!this.deviceActive || !this.remainingBlocks.length) return;
             let unsend;
             while (this.remainingBlocks.length && this.landed.some(landed => landed.equals(this.remainingBlocks[0].copy().floor3D()))) {
                 let curr = this.remainingBlocks.shift();
@@ -240,7 +240,8 @@ class DeviceManager {
         this.deviceActive = false
         this.deathTickTimer.unregister()
         this.devStarter.unregister()
-        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5);
+        this.landed = []
+        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5)
         ResetOdinSolver()
         Client.scheduleTask(20, () => this.devStarter.register())
     }
