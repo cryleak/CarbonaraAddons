@@ -1,3 +1,4 @@
+import Tick from "../events/Tick"
 import { Event } from "../events/CustomEvents"
 import { registerSubCommand } from "../utils/commands"
 import { chat, getEyeHeight, scheduleTask } from "../utils/utils"
@@ -25,6 +26,7 @@ function ResetOdinSolver() {
 }
 
 let ping = 100 // make this an optino idk
+const updateTimer = 5 // how often to check whether we should send a new emerald block or not
 
 registerSubCommand("setbowping", velo => {
     if (Number.isNaN(velo)) return
@@ -62,7 +64,8 @@ class DeviceManager {
         this.invincibilityItem = null
         this.phoenixUsed = false
         this.landed = []
-        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5);
+        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5)
+        this.tickCounter = 0
 
         register("packetSent", () => this.tryShootBow(this.lastArrowShoot)).setFilteredClass(C0APacketAnimation)
 
@@ -136,22 +139,27 @@ class DeviceManager {
             }
 
             if (unsend) {
-                const blockState2 = Blocks.field_150406_ce.func_176203_a(11);
-                this.triggerBlockUpdate(unsend.convertToBlockPos(), blockState2);
+                Client.scheduleTask(Math.round(ping / 50), () => {
+                    const blockState = Blocks.field_150406_ce.func_176203_a(11);
+                    this.triggerBlockUpdate(unsend.convertToBlockPos(), blockState);
+                    this.noBlock = true;
+                    if (!this.deviceActive) {
+                        ResetOdinSolver()
+                    }
+                });
+            }
 
-                if (this.remainingBlocks.length > 0 && !this.scheduledUpdate) {
-                    this.scheduledUpdate = true;
-                    Client.scheduleTask(Math.round(ping / 50), () => {
-                        this.scheduledUpdate = false;
+            if (this.tickCounter++ % updateTimer && this.noBlock) {
+                this.noBlock = false;
+                const block = this.remainingBlocks[0];
+                Tick.scheduleTask(Math.round(ping / 50), () => {
+                    if (!this.deviceActive) {
+                        return;
+                    }
 
-                        if (!this.deviceActive) {
-                            return;
-                        }
-
-                        const blockState = Blocks.field_150475_bE.func_176223_P();
-                        this.triggerBlockUpdate(this.remainingBlocks[0].convertToBlockPos(), blockState);
-                    });
-                }
+                    const blockState = Blocks.field_150475_bE.func_176223_P();
+                    this.triggerBlockUpdate(block.convertToBlockPos(), blockState);
+                });
             }
 
             this.landed = [];
