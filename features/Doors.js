@@ -1,5 +1,6 @@
 import RenderLibV2 from "../../RenderLibV2";
 import Vector3 from "../utils/Vector3";
+import Dungeons from "../utils/Dungeons";
 import Tick from "../events/Tick";
 
 const validBlocks = [173, 159];
@@ -46,6 +47,43 @@ register("renderWorld", () => {
     }
 });
 */
+
+register("renderWorld", () => {
+    const room = Dungeons.getCurrentRoom();
+    if (!room || !room.roomComponents) return;
+
+    room.roomComponents.forEach((component, i) => {
+        const x = component.x + 0.5;
+        const z = component.z + 0.5;
+        Tessellator.drawString(`index: ${i} rotation: ${room.rotation.name()} type: ${Dungeons.roomType(room)}`, x, 75, z, 16777215, true, 0.02, false);
+    });
+    const components = Dungeons.sortComponents(room);
+
+    const doors = Dungeons.getDoorLocations(room, components);
+    doors.forEach((door, i) => {
+        const x = door.x + 0.5;
+        const z = door.z + 0.5;
+        RenderLibV2.drawEspBoxV2(x, 69, z, 3, 4, 3, 1, 0, 0, 1, 1);
+        Tessellator.drawString(i.toString(), x, 72, z, 16777215, true, 0.02, false);
+    });
+
+    /*
+    const active = doors.reduce((acc, door, i) => {
+        if (existsNorthDoor(door.x, door.z) || existsWestDoor(door.x, door.z)) {
+            acc.push({ ...door, i });
+        }
+
+        return acc;
+    }, []);
+
+    active.forEach((door, i) => {
+        const x = door.x + 0.5;
+        const z = door.z + 0.5;
+        RenderLibV2.drawEspBoxV2(x, 69, z, 3, 4, 3, 1, 0, 0, 1, 1);
+        Tessellator.drawString(door.i.toString(), x, 72, z, 16777215, true, 0.02, false);
+    });
+    */
+});
 
 export function existsNorthDoor(x, z) {
     return north.some(door => door.x === x && door.z === z);
