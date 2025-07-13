@@ -24,6 +24,7 @@ register("packetSent", (packet, event) => {
 }).setFilteredClass(C03PacketPlayer)
 
 LivingUpdate.register(event => {
-    if (event.cancelled) return
-    awaitingC03 = true
-}, -1)
+    if (!event.cancelled) {
+        awaitingC03 = true;
+    }
+}, -1);

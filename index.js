@@ -7,6 +7,7 @@ import "./features/Relic"
 import "./features/AutoRoutes"
 import "./features/Doorless"
 import "./features/BonzoSimulator"
+import "./features/Doors"
 
 
 register("packetSent", (packet, event) => {

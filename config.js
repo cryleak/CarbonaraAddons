@@ -405,7 +405,21 @@ config
         category: "Zero Ping TP",
         shouldShow: data => data.zpewEnabled
     })
-
+    .addSwitch({
+        configName: "doorlessEnabled",
+        title: "Toggle",
+        description: "Allows you to go through doors without opening them.",
+        category: "Doorless",
+        value: false
+    })
+    .addTextInput({
+        configName: "doorlessPacketAmount",
+        title: "Amount of packets",
+        description: "How many positions to use to go through the door.",
+        category: "Doorless",
+        value: "0.925,0.925",
+        shouldShow: data => data.doorlessEnabled
+    })
 
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")
