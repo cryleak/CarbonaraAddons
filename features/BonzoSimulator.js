@@ -19,14 +19,12 @@ const BonzoSimulator = new class {
             const state = event.buttonstate
             if (!state || button !== 1) return
 
-            scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, getEyeHeight(), 0]), this.yaw, this.pitch))
+            Client.scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, getEyeHeight(), 0]), this.yaw, this.pitch))
         })
 
         register("command", (ping) => {
-            if (!ping) return
-            const delay = parseInt(ping)
-            if (!delay) return
-            this.ping = delay
+            if (isNaN(ping)) return
+            this.ping = parseInt(ping)
         }).setName("setping")
 
         register("tick", () => {
@@ -101,8 +99,6 @@ class BonzoProjectile {
         })
 
         this.movementSimulator = register("tick", () => {
-            this.currentPosition.add(this.velocityVector)
-
             if (BonzoSimulator.inBB(this.currentPosition)) {
                 this.movementSimulator.unregister()
                 this.exploded = true
@@ -118,8 +114,9 @@ class BonzoProjectile {
                 const motionX = motionVector.x * 1.5
                 const motionZ = motionVector.z * 1.5
                 setVelocity(motionX, 0.5, motionZ)
+                return
             }
-        }).unregister()
-        scheduleTask(0, () => this.movementSimulator.register())
+            this.currentPosition.add(this.velocityVector)
+        })
     }
 }
