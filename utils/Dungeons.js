@@ -144,6 +144,20 @@ export default new class Dungeons {
         return new Vector3(pos.func_177958_n(), pos.func_177956_o(), pos.func_177952_p())
     }
 
+    /**
+     * Returns true if in F7/M7 boss, otherwise returns false.
+     */
+    isIn7Boss() {
+        ChatLib.chat(`${dungeonUtils.floor.floorNumber} ${dungeonUtils.inBoss}`);
+        return dungeonUtils.floor.floorNumber === 7 && dungoenUtils.inBoss;
+    }
+
+    /**
+     * Returns true if in dungeons and false if not
+     */
+    isInDungeons() {
+        return dungeonUtils.inDungeons;
+    }
 
     /**
      * (Internal use) rotates a set of real coordinates to face north.
