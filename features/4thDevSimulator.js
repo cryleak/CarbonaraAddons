@@ -240,6 +240,14 @@ class FakeArrow {
             const yTile = tagCompound.func_74762_e("yTile")
             const zTile = tagCompound.func_74762_e("zTile")
             const hitPosition = new Vector3(xTile, yTile, zTile)
+            /*
+            const ticksInAirField = this.arrow.class.getDeclaredField("field_70257_an")
+            ticksInAirField.setAccessible(true)
+            const ticksInAir = ticksInAirField.get(this.arrow)
+            for (let block of Device.blocks) {
+                if (hitPosition.equals(block.copy().floor3D())) ChatLib.chat(`Arrow hit ${hitPosition.toString()} in ${ticksInAir} ticks`)
+            }
+            */
             ArrowLandEvent.trigger({ hitPosition })
             Client.scheduleTask(0, () => this.arrowLandListener.unregister()) // The game fucking crashes if I try to unregister it immediately?
             Client.scheduleTask(1, () => World.getWorld().func_72900_e(this.arrow))
