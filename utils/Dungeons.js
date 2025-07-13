@@ -20,6 +20,15 @@ export default new class Dungeons {
         }
         this.inDungeon = Scoreboard.getLines().some(line => removeUnicode(ChatLib.removeFormatting(line)).includes("The Catacombs"))
         this.teamMembers = {}
+        this.roomTypes = {
+            "Unknown": "Unknown",
+            "1x1": "1x1",
+            "1x2": "1x2",
+            "1x3": "1x3",
+            "1x4": "1x4",
+            "2x2": "2x2",
+            "L": "L"
+        }
 
         onScoreboardLine((_0, text) => {
             if (ChatLib.removeFormatting(text).includes("The Catacombs")) this.inDungeon = true
@@ -126,6 +135,272 @@ export default new class Dungeons {
         if (!currRoom) return yaw
         const roomRotation = currRoom.rotation
         return clampYaw(yaw - (this.rotationNumber.get(roomRotation.toString()) * 90))
+    }
+
+    _isLongRoom(room) {
+        if (room.roomComponents.length <= 1) {
+            return false;
+        }
+
+        let long = true;
+        let previousX = room.roomComponents[0].x;
+        let previousZ = room.roomComponents[0].z;
+        for (let i = 1; i < room.roomComponents.length; i++) {
+            if (previousX === room.roomComponents[i].x) {
+                previousZ = NaN;
+            } else if (previousZ === room.roomComponents[i].z) {
+                previousX = NaN;
+            } else {
+                long = false;
+                break;
+            }
+        }
+
+        return long;
+    }
+
+    roomType(room) {
+        if (!this._isValidRoom(room)) {
+            return this.roomTypes.Unknown;
+        }
+
+        if (room.roomComponents.length === 1) {
+            return this.roomTypes["1x1"];
+        }
+
+        if (this._isLongRoom(room)) {
+            switch (room.roomComponents.length) {
+                case 2:
+                    return this.roomTypes["1x2"];
+                case 3:
+                    return this.roomTypes["1x3"];
+                case 4:
+                    return this.roomTypes["1x4"];
+            }
+        }
+
+        switch (room.roomComponents.length) {
+            case 3:
+                return this.roomTypes["L"];
+            case 4:
+                return this.roomTypes["2x2"];
+        }
+
+        return this.roomTypes.Unknown;
+    }
+
+    sortComponents(room) {
+        if (!this._isValidRoom(room)) {
+            return;
+        }
+
+        if (room.roomComponents.length <= 1) {
+            return room.roomComponents;
+        }
+
+        const sort = (fn) => {
+            return [...room.roomComponents].sort(fn);
+        }
+
+        const rotation = room.rotation.toString();
+
+        if (this._isLongRoom(room)) {
+            switch (rotation) {
+                case "WEST":
+                    return sort((a, b) => a.z - b.z);
+                case "NORTH":
+                    return sort((a, b) => a.x - b.x);
+            }
+        }
+
+        if (room.roomComponents.length === 4) {
+            const minX = Math.min(room.roomComponents[0].x, room.roomComponents[1].x, room.roomComponents[2].x);
+            const maxX = Math.max(room.roomComponents[0].x, room.roomComponents[1].x, room.roomComponents[2].x);
+            const minZ = Math.min(room.roomComponents[0].z, room.roomComponents[1].z, room.roomComponents[2].z);
+            const maxZ = Math.max(room.roomComponents[0].z, room.roomComponents[1].z, room.roomComponents[2].z);
+            return [
+                { x: minX, z: minZ },
+                { x: maxX, z: minZ },
+                { x: minX, z: maxZ },
+                { x: maxX, z: maxZ }
+            ].map(vec => room.roomComponents.find(component => component.x === vec.x && component.z === vec.z));
+        }
+
+        if (room.roomComponents.length !== 3) {
+            return room.roomComponents;
+        }
+
+        const first = room.roomComponents[0];
+        const second = room.roomComponents[1];
+        const third = room.roomComponents[2];
+        const arr = [];
+        switch (rotation) {
+            case "NORTH":
+                arr.push(first.z > second.z ? first : second.z > third.z ? second : third);
+                arr.push(first.x === arr[0].x && first.z < arr[0].z ? first : second.x === arr[0].x && second.z < arr[0].z ? second : third);
+                arr.push(!arr.includes(first) ? first : !arr.includes(second) ? second : third);
+                break;
+            case "EAST":
+                arr.push(first.x < second.x ? first : second.x < third.x ? second : third);
+                arr.push(first.z === arr[0].z && first.x > arr[0].z ? first : second.z === arr[0].z && second.x > arr[0].x ? second : third);
+                arr.push(!arr.includes(first) ? first : !arr.includes(second) ? second : third);
+                break;
+            case "SOUTH":
+                arr.push(first.z < second.z ? first : second.z < third.z ? second : third);
+                arr.push(first.x === arr[0].x && first.z > arr[0].z ? first : second.x === arr[0].x && second.z > arr[0].z ? second : third);
+                arr.push(!arr.includes(first) ? first : !arr.includes(second) ? second : third);
+                break;
+            case "WEST":
+                arr.push(first.x > second.x ? first : second.x > third.x ? second : third);
+                arr.push(first.z === arr[0].z && first.x < arr[0].x ? first : second.z === arr[0].z && second.x < arr[0].x ? second : third);
+                arr.push(!arr.includes(first) ? first : !arr.includes(second) ? second : third);
+                break;
+        }
+
+        return arr;
+    }
+
+    getDoorLocations(room, components = null) {
+        const components = components ?? this.sortComponents(room);
+        const rotation = room.rotation.toString();
+
+        if (components.length === 1) {
+            const component = components[0];
+            switch (rotation) {
+                case "NORTH":
+                    return [
+                        new Vector3(component.x, 69, component.z + 16),
+                        new Vector3(component.x, 69, component.z - 16),
+                        new Vector3(component.x + 16, 69, component.z),
+                        new Vector3(component.x - 16, 69, component.z)
+                    ];
+                case "WEST":
+                    return [
+                        new Vector3(component.x + 16, 69, component.z),
+                        new Vector3(component.x - 16, 69, component.z),
+                        new Vector3(component.x, 69, component.z - 16),
+                        new Vector3(component.x, 69, component.z + 16)
+                    ];
+                case "SOUTH":
+                    return [
+                        new Vector3(component.x, 69, component.z - 16),
+                        new Vector3(component.x, 69, component.z + 16),
+                        new Vector3(component.x - 16, 69, component.z),
+                        new Vector3(component.x + 16, 69, component.z)
+                    ];
+                case "EAST":
+                    return [
+                        new Vector3(component.x - 16, 69, component.z),
+                        new Vector3(component.x + 16, 69, component.z),
+                        new Vector3(component.x, 69, component.z + 16),
+                        new Vector3(component.x, 69, component.z - 16)
+                    ];
+            }
+        }
+
+        if (this._isLongRoom(room)) {
+            let doors = [];
+            switch (rotation) {
+                case "WEST":
+                    doors = components.reduce(
+                        (acc, component) => {
+                            acc.push(new Vector3(component.x - 16, 69, component.z));
+                            acc.push(new Vector3(component.x + 16, 69, component.z));
+                            return acc;
+                        },
+                        []
+                    );
+                    doors.push(new Vector3(components[0].x, 69, components[0].z - 16));
+                    doors.push(new Vector3(components[components.length - 1].x, 69, components[components.length - 1].z + 16));
+                    break;
+                case "NORTH":
+                    doors = components.reduce(
+                        (acc, component) => {
+                            acc.push(new Vector3(component.x, 69, component.z - 16));
+                            acc.push(new Vector3(component.x, 69, component.z + 16));
+                            return acc;
+                        },
+                        []
+                    );
+                    doors.push(new Vector3(components[0].x - 16, 69, components[0].z));
+                    doors.push(new Vector3(components[components.length - 1].x + 16, 69, components[components.length - 1].z));
+                    break;
+            }
+            return doors;
+        }
+
+        if (components.length === 4) {
+            return [
+                new Vector3(components[0].x - 16, 69, components[0].z),
+                new Vector3(components[0].x, 69, components[0].z - 16),
+                new Vector3(components[1].x, 69, components[1].z - 16),
+                new Vector3(components[1].x + 16, 69, components[1].z),
+                new Vector3(components[3].x + 16, 69, components[3].z),
+                new Vector3(components[3].x, 69, components[3].z + 16),
+                new Vector3(components[2].x, 69, components[2].z + 16),
+                new Vector3(components[2].x - 16, 69, components[2].z)
+            ];
+        }
+
+        if (components.length !== 3) {
+            return [];
+        }
+
+        const first = components[0];
+        const second = components[1];
+        const third = components[2];
+        switch (rotation) {
+            case "NORTH":
+                return [
+                    new Vector3(first.x - 16, 69, first.z),
+                    new Vector3(first.x, 69, first.z + 16),
+                    new Vector3(first.x + 16, 69, first.z),
+                    new Vector3(second.x + 16, 69, second.z),
+                    new Vector3(second.x, 69, second.z - 16),
+                    new Vector3(third.x, 69, third.z - 16),
+                    new Vector3(third.x - 16, 69, third.z),
+                    new Vector3(third.x, 69, third.z + 16)
+                ];
+            case "WEST":
+                return [
+                    new Vector3(first.x, 69, first.z + 16),
+                    new Vector3(first.x + 16, 69, first.z),
+                    new Vector3(first.x, 69, first.z - 16),
+                    new Vector3(second.x, 69, second.z - 16),
+                    new Vector3(second.x - 16, 69, second.z),
+                    new Vector3(third.x - 16, 69, third.z),
+                    new Vector3(third.x, 69, third.z + 16),
+                    new Vector3(third.x + 16, 69, third.z)
+                ];
+            case "SOUTH":
+                return [
+                    new Vector3(first.x + 16, 69, first.z),
+                    new Vector3(first.x, 69, first.z - 16),
+                    new Vector3(first.x - 16, 69, first.z),
+                    new Vector3(second.x - 16, 69, second.z),
+                    new Vector3(second.x, 69, second.z + 16),
+                    new Vector3(third.x, 69, third.z + 16),
+                    new Vector3(third.x + 16, 69, third.z),
+                    new Vector3(third.x, 69, third.z - 16)
+                ];
+            case "EAST":
+                return [
+                    new Vector3(first.x, 69, first.z - 16),
+                    new Vector3(first.x - 16, 69, first.z),
+                    new Vector3(first.x, 69, first.z + 16),
+                    new Vector3(second.x, 69, second.z + 16),
+                    new Vector3(second.x + 16, 69, second.z),
+                    new Vector3(third.x + 16, 69, third.z),
+                    new Vector3(third.x, 69, third.z - 16),
+                    new Vector3(third.x - 16, 69, third.z)
+                ];
+        }
+
+        return [];
+    }
+
+    _isValidRoom(room) {
+        return room && room.roomComponents;
     }
 
     /**
