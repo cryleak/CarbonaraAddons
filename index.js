@@ -8,6 +8,7 @@ import "./features/AutoRoutes"
 import "./features/Doorless"
 import "./features/BonzoSimulator"
 import "./features/Doors"
+import "./features/4thDevSimulator"
 
 
 register("packetSent", (packet, event) => {
