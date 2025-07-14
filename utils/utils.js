@@ -516,5 +516,10 @@ export function playSound(soundName, volume, pitch) {
     } catch (e) { }
 }
 
+export function inSingleplayer() {
+    const ip = Server.getIP()
+    return ip === "localhost" || ip === "127.0.0.1" || ip === "127.0.0.1:25564"
+}
+
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy

@@ -1,8 +1,9 @@
 import Tick from "../events/Tick"
 import { Event } from "../events/CustomEvents"
 import { registerSubCommand } from "../utils/commands"
-import { chat, fireChannelRead, getEyeHeight, playSound, scheduleTask } from "../utils/utils"
+import { chat, fireChannelRead, getEyeHeight, inSingleplayer, playSound, scheduleTask } from "../utils/utils"
 import Vector3 from "../utils/Vector3"
+import RenderLibV2 from "../../RenderLibV2"
 
 const ArrowLandEvent = new Event()
 
@@ -14,6 +15,8 @@ const Mouse = Java.type("org.lwjgl.input.Mouse")
 const S23PacketBlockChange = Java.type("net.minecraft.network.play.server.S23PacketBlockChange")
 const Blocks = Java.type("net.minecraft.init.Blocks")
 const CustomArrow = Java.type("me.cryleak.CustomArrow") // Class that extends EntityArrow but doesn't do anything when onUpdate() is called, so we have complete control over when the arrow is updated.
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+const SecureRandom = Java.type("java.security.SecureRandom");
 
 const OdinSolver = Java.type("me.odinclient.features.impl.floor7.p3.ArrowsDevice$7");
 function ResetOdinSolver() {
@@ -26,7 +29,7 @@ function ResetOdinSolver() {
 }
 
 let ping = 100 // make this an optino idk
-const updateTimer = 8 // how often to check whether we should send a new emerald block or not
+const updateTimer = 10 // how often to check whether we should send a new emerald block or not
 
 registerSubCommand("setbowping", velo => {
     if (Number.isNaN(velo)) return
@@ -64,7 +67,7 @@ class DeviceManager {
         this.invincibilityItem = null
         this.phoenixUsed = false
         this.landed = []
-        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5)
+        this.remainingBlocks = [...this.blocks].sort(() => random() - 0.5)
         this.tickCounter = 0
 
         register("packetSent", () => this.tryShootBow(this.lastArrowShoot)).setFilteredClass(C0APacketAnimation)
@@ -98,6 +101,19 @@ class DeviceManager {
                 }
             }
         })
+
+        register("packetSent", (packet) => {
+            if (packet.func_149568_f() !== 255 || !this.isOnDevice()) return
+            this.tryShootBow(this.lastArrowShoot)
+        }).setFilteredClass(C08PacketPlayerBlockPlacement)
+
+        /*
+        register("renderWorld", () => {
+            this.remainingBlocks?.forEach(block => {
+                RenderLibV2.drawEspBox(block.x, block.y, block.z, 1, 1, 1, 1, 1, 1, true)
+            })
+        })
+        */
 
         ArrowLandEvent.register(data => {
             if (!this.deviceActive) {
@@ -201,7 +217,7 @@ class DeviceManager {
                     this.nextDeathTick = Date.now() + 3000
                     this.invincibilityItem = invincibilityItems.MASK
                     this.phoenixUsed = false
-                    this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5);
+                    this.remainingBlocks = [...this.blocks].sort(() => random() - 0.5);
                     const blockState = Blocks.field_150475_bE.func_176223_P()
                     this.triggerBlockUpdate(this.remainingBlocks[0].convertToBlockPos(), blockState)
                     return
@@ -232,7 +248,7 @@ class DeviceManager {
     }
 
     tryShootBow(lastShot) {
-        if (Date.now() - lastShot < 250 || Player?.getHeldItem()?.getID() !== 261) return
+        if (Date.now() - lastShot < 250) return
         const playerVec = new Vector3(Player)
         const yaw = Player.yaw
         const pitch = Player.pitch
@@ -255,12 +271,13 @@ class DeviceManager {
         this.deathTickTimer.unregister()
         this.devStarter.unregister()
         this.landed = []
-        this.remainingBlocks = [...this.blocks].sort(() => Math.random() - 0.5)
+        this.remainingBlocks = [...this.blocks].sort(() => random() - 0.5)
         ResetOdinSolver()
         Client.scheduleTask(20, () => this.devStarter.register())
     }
 
     isOnDevice() {
+        if (!inSingleplayer()) return false
         return new Vector3(Player).floor3D().equals(this.pressurePlateVector)
     }
 }
@@ -324,4 +341,8 @@ function cos(value) {
 
 function sin(value) {
     return MathHelper.func_76126_a(value)
+}
+
+function random() {
+    return new SecureRandom().nextDouble()
 }

@@ -1,6 +1,6 @@
 import RenderLibV2 from "../../RenderLibV2J"
 import { registerSubCommand } from "../utils/commands"
-import { chat, getEyeHeight, isBlockPassable, isWithinTolerence, scheduleTask, setVelocity } from "../utils/utils"
+import { chat, getEyeHeight, inSingleplayer, isBlockPassable, isWithinTolerence, scheduleTask, setVelocity } from "../utils/utils"
 import Vector3 from "../utils/Vector3"
 
 const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent")
@@ -15,7 +15,7 @@ const BonzoSimulator = new class {
         this.cancelInteractThisTick = false
 
         register(MouseEvent, (event) => {
-            if (Server.getIP() !== "localhost" && Server.getIP() !== "127.0.0.1" && Server.getIP() !== "127.0.0.1:25564") return
+            if (!inSingleplayer()) return
             if (Player?.getHeldItem()?.getID() !== 369) return
             const button = event.button
             const state = event.buttonstate
