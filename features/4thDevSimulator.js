@@ -1,12 +1,11 @@
 import Tick from "../events/Tick"
 import { Event } from "../events/CustomEvents"
 import { registerSubCommand } from "../utils/commands"
-import { chat, getEyeHeight, scheduleTask } from "../utils/utils"
+import { chat, fireChannelRead, getEyeHeight, playSound, scheduleTask } from "../utils/utils"
 import Vector3 from "../utils/Vector3"
 
 const ArrowLandEvent = new Event()
 
-const EntityArrow = Java.type("net.minecraft.entity.projectile.EntityArrow")
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
 const MCNBTTagCompound = Java.type("net.minecraft.nbt.NBTTagCompound")
 const C0APacketAnimation = Java.type("net.minecraft.network.play.client.C0APacketAnimation")
@@ -14,6 +13,7 @@ const JavaMath = Java.type("java.lang.Math")
 const Mouse = Java.type("org.lwjgl.input.Mouse")
 const S23PacketBlockChange = Java.type("net.minecraft.network.play.server.S23PacketBlockChange")
 const Blocks = Java.type("net.minecraft.init.Blocks")
+const CustomArrow = Java.type("me.cryleak.CustomArrow") // Class that extends EntityArrow but doesn't do anything when onUpdate() is called, so we have complete control over when the arrow is updated.
 
 const OdinSolver = Java.type("me.odinclient.features.impl.floor7.p3.ArrowsDevice$7");
 function ResetOdinSolver() {
@@ -22,7 +22,7 @@ function ResetOdinSolver() {
         field.setAccessible(true);
         const value = field.get(OdinSolver);
         value.invoke();
-    } catch (e) {}
+    } catch (e) { }
 }
 
 let ping = 100 // make this an optino idk
@@ -94,6 +94,7 @@ class DeviceManager {
                 else if (this.invincibilityItem) {
                     chat("You swapped to Phoenix too early you fucking retard")
                     this.phoenixUsed = true
+                    this.invincibilityItem = invincibilityItems.PHOENIX
                 }
             }
         })
@@ -118,7 +119,20 @@ class DeviceManager {
             if (this.invincibilityItem) {
                 if (this.invincibilityItem === invincibilityItems.MASK) {
                     chat("Spirit procced")
-                } else chat("Phoenix procced")
+                    new Thread(() => {
+                        playSound("random.eat", 0.8999999761581421, 0.5873016119003296)
+                        playSound("mob.zombie.remedy", 1, 2)
+                        Thread.sleep(1000)
+                        playSound("random.eat", 0.8999999761581421, 0.6984127163887024)
+                        Thread.sleep(1000)
+                        playSound("random.eat", 0.8999999761581421, 0.7936508059501648)
+                    }).start()
+                } else {
+                    chat("Phoenix procced")
+                    playSound("random.fizz", 1, 1.4920635223388672)
+                    playSound("mob.zombie.infect", 1, 1.1904761791229248)
+                    playSound("mob.ghast.affectionate_scream", 1, 1.4126983880996704)
+                }
                 this.invincibilityItem = null
                 this.nextDeathTick = Date.now() + 3000
             } else {
@@ -152,7 +166,7 @@ class DeviceManager {
             if (this.tickCounter++ % updateTimer && this.noBlock) {
                 this.noBlock = false;
                 const block = this.remainingBlocks[0];
-                Tick.scheduleTask(Math.round(ping / 50), () => {
+                Tick.Pre.scheduleTask(Math.round(ping / 50), () => {
                     if (!this.deviceActive) {
                         return;
                     }
@@ -256,7 +270,7 @@ export default Device
 class FakeArrow {
     constructor(position, yaw, pitch, yawOffset, middleArrow) {
         const velocity = (middleArrow ? 2.5 + 1 - (pitch + 90) / 180 : 3)
-        this.arrow = new EntityArrow(World.getWorld(), Player.getPlayer(), velocity)
+        this.arrow = new CustomArrow(World.getWorld(), Player.getPlayer(), velocity)
 
         const yawRadians = JavaMath.toRadians(yaw + yawOffset)
         const pitchRadians = JavaMath.toRadians(pitch)
@@ -269,35 +283,38 @@ class FakeArrow {
         this.arrow.func_70186_c(this.arrow.field_70159_w, this.arrow.field_70181_x, this.arrow.field_70179_y, velocity, 0.5)
 
         this.arrow.field_70251_a = 2
-        this.arrow.func_70071_h_()
         const x = this.arrow.field_70165_t
         const y = this.arrow.field_70163_u
         const z = this.arrow.field_70161_v
         Client.scheduleTask(0, () => World.getWorld().func_72838_d(this.arrow))
+        this.eventListener = Tick.Post // Change this if you want to change what event you want this shit to trigger on
 
-        this.arrowLandListener = register(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent, (event) => {
-            if (event.phase !== net.minecraftforge.fml.common.gameevent.TickEvent.Phase.END) return
-            // This is probably more performant than using Reflection to retrieve private fields
-            const tagCompound = new MCNBTTagCompound()
-            this.arrow.func_70014_b(tagCompound)
-            const ticksInGround = tagCompound.func_74762_e("life")
-            if (ticksInGround === 0) return
-            const xTile = tagCompound.func_74762_e("xTile")
-            const yTile = tagCompound.func_74762_e("yTile")
-            const zTile = tagCompound.func_74762_e("zTile")
-            const hitPosition = new Vector3(xTile, yTile, zTile)
-            /*
-            const ticksInAirField = this.arrow.class.getDeclaredField("field_70257_an")
-            ticksInAirField.setAccessible(true)
-            const ticksInAir = ticksInAirField.get(this.arrow)
-            for (let block of Device.blocks) {
-                if (hitPosition.equals(block.copy().floor3D())) ChatLib.chat(`Arrow hit ${hitPosition.toString()} in ${ticksInAir} ticks`)
-            }
-            */
-            ArrowLandEvent.trigger({ hitPosition })
-            Client.scheduleTask(0, () => this.arrowLandListener.unregister()) // The game fucking crashes if I try to unregister it immediately?
-            Client.scheduleTask(1, () => World.getWorld().func_72900_e(this.arrow))
-        })
+        this.arrowLandListener = this.eventListener.register(() => this.updateArrow())
+    }
+
+    updateArrow() {
+        this.arrow.performArrowTick()
+        // This is probably more performant than using Reflection to retrieve private fields
+        const tagCompound = new MCNBTTagCompound()
+        this.arrow.func_70014_b(tagCompound)
+        const ticksInGround = tagCompound.func_74762_e("life")
+        if (ticksInGround === 0) return
+        const xTile = tagCompound.func_74762_e("xTile")
+        const yTile = tagCompound.func_74762_e("yTile")
+        const zTile = tagCompound.func_74762_e("zTile")
+        const hitPosition = new Vector3(xTile, yTile, zTile)
+        /*
+        const ticksInAirField = this.arrow.class.getDeclaredField("field_70257_an")
+        ticksInAirField.setAccessible(true)
+        const ticksInAir = ticksInAirField.get(this.arrow)
+        for (let block of Device.blocks) {
+            if (hitPosition.equals(block.copy().floor3D())) ChatLib.chat(`Arrow hit ${hitPosition.toString()} in ${ticksInAir} ticks`)
+        }
+        */
+        ArrowLandEvent.trigger({ hitPosition })
+        // this.arrowLandListener.unregister()
+        this.eventListener.scheduleTask(0, () => this.arrowLandListener.unregister())
+        Client.scheduleTask(1, () => World.getWorld().func_72900_e(this.arrow))
     }
 }
 
@@ -307,8 +324,4 @@ function cos(value) {
 
 function sin(value) {
     return MathHelper.func_76126_a(value)
-}
-
-function fireChannelRead(packet) {
-    Client.getConnection().func_147298_b().channel().pipeline().fireChannelRead(packet);
 }

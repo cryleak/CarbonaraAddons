@@ -40,7 +40,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                 if (!(block instanceof BlockAir)) {
                     LivingUpdate.scheduleTask(0, () => {
                         SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
-                        Tick.scheduleTask(0, () => {
+                        Tick.Pre.scheduleTask(0, () => {
                             execer.execute(this)
                         });
                     });
