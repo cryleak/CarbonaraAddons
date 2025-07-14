@@ -21,7 +21,7 @@ const BonzoSimulator = new class {
             const state = event.buttonstate
             if (!state || button !== 1) return
 
-            scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, getEyeHeight(), 0]), this.yaw, this.pitch))
+            scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, 1, 0]), this.yaw, this.pitch))
         })
 
         registerSubCommand("setbonzoping", (ping) => {
@@ -102,6 +102,7 @@ class BonzoProjectile {
         this.velocityVector = Vector3.fromPitchYaw(pitch, yaw)
         this.exploded = false
         this.particles = []
+        this.ticksInAir = 0
 
         this.renderer = register("renderWorld", () => {
             if (this.exploded) {
@@ -109,36 +110,41 @@ class BonzoProjectile {
                     RenderLibV2.drawEspBox(particle.x, particle.y, particle.z, 0.1, 0.1, 1, 0, 0, 1, true)
                 }
             } else {
-                RenderLibV2.drawEspBox(this.currentPosition.x, this.currentPosition.y, this.currentPosition.z, 0.5, 0.5, 1, 1, 1, 1, true)
+                RenderLibV2.drawEspBox(this.currentPosition.x, this.currentPosition.y, this.currentPosition.z, 1, 1, 1, 1, 1, 1, true)
             }
         })
 
         this.movementSimulator = register("tick", () => {
-            const previousPosition = this.currentPosition
-            const nextPosition = this.currentPosition.copy().add(this.velocityVector)
-            const collision = BonzoSimulator.intersectsWithSolid(previousPosition, nextPosition)
-            if (collision) {
-                this.currentPosition = new Vector3(collision.field_72307_f)
-                this.movementSimulator.unregister()
-                this.exploded = true
-                this.particles = BonzoSimulator.generateExplosionParticles(this.currentPosition, 1, 2)
-                scheduleTask(200, () => {
-                    this.renderer.unregister()
-                })
-                const playerVec = BonzoSimulator.playerPosition.copy()
-                if (playerVec.distance3D(this.currentPosition) > 12.25) return // squared distance
-                const motionVector = playerVec.subtract(this.currentPosition)
-                const vectorLength = Math.sqrt(motionVector.x ** 2 + motionVector.z ** 2)
-                motionVector.multiply(isWithinTolerence(vectorLength, 0) ? 0 : 1 / vectorLength) // Multiply by 0 if the length is 0
-                const motionX = motionVector.x * 1.5
-                const motionZ = motionVector.z * 1.5
-                ChatLib.chat([motionX, 0.5, motionZ].toString())
-                setVelocity(motionX, 0.5, motionZ)
-                return
-            } else {
-                this.currentPosition = nextPosition
-            }
+            this.onUpdate()
         }).unregister()
         Client.scheduleTask(Math.round(BonzoSimulator.extraDelay / 50), () => this.movementSimulator.register())
+    }
+
+    onUpdate() {
+        this.ticksInAir++
+        const previousPosition = this.currentPosition
+        const nextPosition = this.currentPosition.copy().add(this.velocityVector)
+        const collision = BonzoSimulator.intersectsWithSolid(previousPosition, nextPosition)
+        if (collision) {
+            this.currentPosition = new Vector3(collision.field_72307_f)
+            this.movementSimulator.unregister()
+            this.exploded = true
+            this.particles = BonzoSimulator.generateExplosionParticles(this.currentPosition, 1, 2)
+            scheduleTask(40, () => {
+                this.renderer.unregister()
+            })
+            const playerVec = BonzoSimulator.playerPosition.copy()
+            if (playerVec.distance3D(this.currentPosition) > 9) return // squared distance
+            const motionVector = playerVec.subtract(this.currentPosition)
+            const vectorLength = Math.sqrt(motionVector.x ** 2 + motionVector.z ** 2)
+            motionVector.multiply(isWithinTolerence(vectorLength, 0) ? 0 : 1 / vectorLength) // Multiply by 0 if the length is 0
+            const motionX = motionVector.x * 1.5
+            const motionZ = motionVector.z * 1.5
+            ChatLib.chat([motionX, 0.5, motionZ].toString())
+            setVelocity(motionX, 0.5, motionZ)
+            return
+        } else {
+            this.currentPosition = nextPosition
+        }
     }
 }
