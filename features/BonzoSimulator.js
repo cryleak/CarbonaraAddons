@@ -1,5 +1,6 @@
 import RenderLibV2 from "../../RenderLibV2J"
-import { getEyeHeight, isBlockPassable, isWithinTolerence, scheduleTask, setVelocity } from "../utils/utils"
+import { registerSubCommand } from "../utils/commands"
+import { chat, getEyeHeight, isBlockPassable, isWithinTolerence, scheduleTask, setVelocity } from "../utils/utils"
 import Vector3 from "../utils/Vector3"
 
 const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent")
@@ -7,6 +8,7 @@ const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent")
 const BonzoSimulator = new class {
     constructor() {
         this.ping = 100
+        this.extraDelay = 50
         this.playerPosition = new Vector3(Player)
         this.yaw = Player.yaw
         this.pitch = Player.pitch
@@ -19,13 +21,20 @@ const BonzoSimulator = new class {
             const state = event.buttonstate
             if (!state || button !== 1) return
 
-            Client.scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, getEyeHeight(), 0]), this.yaw, this.pitch))
+            scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, getEyeHeight(), 0]), this.yaw, this.pitch))
         })
 
-        register("command", (ping) => {
+        registerSubCommand("setbonzoping", (ping) => {
             if (isNaN(ping)) return
             this.ping = parseInt(ping)
-        }).setName("setping")
+            chat(`Set Bonzo's Staff ping to ${this.ping}ms`)
+        })
+
+        registerSubCommand("setbonzoextradelay", (delay) => {
+            if (isNaN(delay)) return
+            this.extraDelay = parseInt(delay)
+            chat(`Set Bonzo's Staff extra delay to ${this.extraDelay}ms`)
+        })
 
         register("tick", () => {
             const position = new Vector3(Player)
@@ -39,13 +48,19 @@ const BonzoSimulator = new class {
         })
     }
 
-    inBB(vector3) {
-        const block = World.getBlockAt(Math.floor(vector3.x), Math.floor(vector3.y), Math.floor(vector3.z));
+    intersectsWithSolid(rayStart, rayEnd) { // Only works with vectors with a length of less than like 2 or something
+        return this.intersectsWithBB(rayStart, rayStart, rayEnd) || this.intersectsWithBB(rayEnd, rayStart, rayEnd)
+    }
+
+    intersectsWithBB(blockPosition, rayStart, rayEnd) {
+        const block = World.getBlockAt(Math.floor(blockPosition.x), Math.floor(blockPosition.y), Math.floor(blockPosition.z));
         if (isBlockPassable(block)) return false
         const mcBlock = block.type.mcBlock;
         const bb = mcBlock.func_180646_a(World.getWorld(), block.pos.toMCBlock());
-        const vec = vector3.convertToVec3()
-        return bb.func_72318_a(vec);
+        const previousVec = rayStart.convertToVec3()
+        const currentVec = rayEnd.convertToVec3()
+        const intercept = bb.func_72327_a(previousVec, currentVec)
+        return intercept
     }
 
     /**
@@ -99,11 +114,15 @@ class BonzoProjectile {
         })
 
         this.movementSimulator = register("tick", () => {
-            if (BonzoSimulator.inBB(this.currentPosition)) {
+            const previousPosition = this.currentPosition
+            const nextPosition = this.currentPosition.copy().add(this.velocityVector)
+            const collision = BonzoSimulator.intersectsWithSolid(previousPosition, nextPosition)
+            if (collision) {
+                this.currentPosition = new Vector3(collision.field_72307_f)
                 this.movementSimulator.unregister()
                 this.exploded = true
-                this.particles = BonzoSimulator.generateExplosionParticles(this.currentPosition, 50, 2)
-                scheduleTask(30, () => {
+                this.particles = BonzoSimulator.generateExplosionParticles(this.currentPosition, 1, 2)
+                scheduleTask(200, () => {
                     this.renderer.unregister()
                 })
                 const playerVec = BonzoSimulator.playerPosition.copy()
@@ -113,10 +132,13 @@ class BonzoProjectile {
                 motionVector.multiply(isWithinTolerence(vectorLength, 0) ? 0 : 1 / vectorLength) // Multiply by 0 if the length is 0
                 const motionX = motionVector.x * 1.5
                 const motionZ = motionVector.z * 1.5
+                ChatLib.chat([motionX, 0.5, motionZ].toString())
                 setVelocity(motionX, 0.5, motionZ)
                 return
+            } else {
+                this.currentPosition = nextPosition
             }
-            this.currentPosition.add(this.velocityVector)
-        })
+        }).unregister()
+        Client.scheduleTask(Math.round(BonzoSimulator.extraDelay / 50), () => this.movementSimulator.register())
     }
 }

@@ -21,7 +21,7 @@ class NodeExecutor {
             })
         }).setFilteredClass(S08PacketPlayerPosLook);
 
-        Tick.register(() => {
+        Tick.Pre.register(() => {
             this.execute();
             this._updateCoords();
         }, 0);

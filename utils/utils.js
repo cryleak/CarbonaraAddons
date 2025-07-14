@@ -139,7 +139,7 @@ export function scheduleTask(delay, task) {
     Client.scheduleTask(delay, () => codeToExec.push(task))
 }
 
-Tick.register(() => {
+Tick.Pre.register(() => {
     swappedThisTick = false
     while (codeToExec.length) codeToExec.shift()()
 }, 13482384929348)
@@ -498,6 +498,22 @@ export function isWithinTolerence(n1, n2) {
 export function capitalizeFirst(str) {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function fireChannelRead(packet) {
+    Client.getConnection().func_147298_b().channel().pipeline().fireChannelRead(packet);
+}
+
+/**
+ * Play a sound at the player's location.
+ * @param {String} soundName 
+ * @param {Number} volume 
+ * @param {Number} pitch 
+ */
+export function playSound(soundName, volume, pitch) {
+    try {
+        fireChannelRead(new net.minecraft.network.play.server.S29PacketSoundEffect(soundName, Player.getX(), Player.getY(), Player.getZ(), volume, pitch))
+    } catch (e) { }
 }
 
 global.System = Java.type("java.lang.System")

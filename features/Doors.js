@@ -13,7 +13,7 @@ function checkBlock(x, y, z) {
 
 let north = [];
 let west = [];
-Tick.register(() => {
+Tick.Pre.register(() => {
     north = [];
     west = [];
 
