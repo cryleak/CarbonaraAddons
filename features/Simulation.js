@@ -1,6 +1,6 @@
 import Settings from "../config"
 import { registerSubCommand } from "../utils/commands"
-import { chat, fireChannelRead } from "../utils/utils"
+import { chat, fireChannelRead, inSingleplayer } from "../utils/utils"
 
 let ping = 125
 let speed = 500
@@ -9,7 +9,7 @@ const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12
 const simulation = register("tick", () => {
     // const denmark = Player.getPlayer().func_110148_a(net.minecraft.entity.SharedMonsterAttributes.field_111263_d).func_111126_e()
     // if (denmark) ChatLib.chat(denmark)
-    if (Server.getIP() !== "localhost" && Server.getIP() !== "127.0.0.1" && Server.getIP() !== "127.0.0.1:25564") return
+    if (!inSingleplayer()) return
     if (Settings().simulateSpeed) {
         Player.getPlayer().func_110148_a(net.minecraft.entity.SharedMonsterAttributes.field_111263_d).func_111128_a(speed / 1000)
         Player.getPlayer().field_71075_bZ.func_82877_b(speed / 1000) // Make hclip work correctly
