@@ -10,5 +10,6 @@
 		"BloomCore",
 		"RenderLibV2J",
         "Atomx"
-    ]
+    ],
+    "asmEntry": "features/Terminator.js"
 }
