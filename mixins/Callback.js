@@ -1,0 +1,3 @@
+export default function Callback(callback, ...args) {
+    // Do something...
+}
