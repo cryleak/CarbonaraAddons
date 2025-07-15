@@ -2,7 +2,12 @@ import AsmUtils from "../utils/AsmUtils.js";
 
 export const callables = [];
 
-export default function Mixin(className, method, descriptor, callbackName) {
+export const atTarget = {
+    head: ASM => ASM.At(ASM.At.HEAD),
+    tail: ASM => ASM.At(ASM.At.TAIL)
+};
+
+export default function Mixin(className, method, descriptor, callbackName, target = atTarget.head) {
     const { parameters, returnType } = parseDescriptor(descriptor);
     const parameterCount = parameters.length;
 
@@ -17,7 +22,7 @@ export default function Mixin(className, method, descriptor, callbackName) {
             className,
             method,
             descriptor,
-            ASM.At(ASM.At.HEAD)
+            target(ASM)
         ).instructions($ => {
             const paramArray = $.bipush(parameterCount + 5).anewarray(OBJECT).astore().index;
 
