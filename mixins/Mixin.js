@@ -1,19 +1,15 @@
 import AsmUtils from "../utils/AsmUtils.js";
 
-export const callables = [];
+const callables = [];
+export {callables as callables};
 
-export const atTarget = {
-    head: ASM => ASM.At(ASM.At.HEAD),
-    tail: ASM => ASM.At(ASM.At.TAIL)
-};
-
-export default function Mixin(className, method, descriptor, callbackName, target = atTarget.head) {
+export default function Mixin(className, method, descriptor, callbackName, target) {
     const { parameters, returnType } = parseDescriptor(descriptor);
     const parameterCount = parameters.length;
 
-    console.log(`Injecting into ${className}.${method} 1`);
+    console.log(`Injecting into ${className}.${method} 0`);
     callables.push(ASM => {
-        console.log(`Injecting into ${className}.${method} 2`);
+        console.log(`Injecting into ${className}.${method} 1`);
 
         const {
             OBJECT, JumpCondition
@@ -25,6 +21,7 @@ export default function Mixin(className, method, descriptor, callbackName, targe
             descriptor,
             target(ASM)
         ).instructions($ => {
+            console.log(`Injecting into ${className}.${method} 2`);
             const paramArray = $.bipush(parameterCount + 5).anewarray(OBJECT).astore().index;
 
             // store the callback name as the first parameter

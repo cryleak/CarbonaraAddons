@@ -13,5 +13,5 @@ registerCallback("Terminator", (event, obj, itemStack, world, player) => {
 
 
 register("packetSent", (packet) => {
-ChatLib.chat(packet.func_180762_c())
+    ChatLib.chat(packet.func_180762_c())
 }).setFilteredClass(net.minecraft.network.play.client.C07PacketPlayerDigging)
