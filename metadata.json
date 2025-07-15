@@ -11,8 +11,5 @@
 		"RenderLibV2J",
         "Atomx"
     ],
-    "asmEntry": "features/Terminator.js",
-    "asmExposedFunctions": {
-        "mixinCallback": "mixins/Callback.js"
-    }
+    "asmEntry": "mixins/Entry.js"
 }

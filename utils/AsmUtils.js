@@ -1,17 +1,11 @@
 export default new class AsmUtils {
-    chat($, msg, stack = 1) {
-        const variables = {
-            mc: stack++,
-            player: stack++,
-            message: stack++
-        };
+    chat($, msg) {
+        const mc = $.invokeStatic("net/minecraft/client/Minecraft", "func_71410_x", "()Lnet/minecraft/client/Minecraft;")
+            .astore().index;
 
-        $.invokeStatic("net/minecraft/client/Minecraft", "func_71410_x", "()Lnet/minecraft/client/Minecraft;")
-            .astore(variables.mc);
-
-        $.aload(variables.mc)
+        const player = $.aload(mc)
              .getField("net/minecraft/client/Minecraft", "field_71439_g", "Lnet/minecraft/client/entity/EntityPlayerSP;")
-             .astore(variables.player);
+             .astore().index;
 
         $.new("net/minecraft/util/ChatComponentText")
             .dup();
@@ -22,13 +16,11 @@ export default new class AsmUtils {
             $.ldc(msg);
         }
 
-        $.invokeSpecial("net/minecraft/util/ChatComponentText", "<init>", "(Ljava/lang/String;)V")
-            .astore(variables.message);
+        const message = $.invokeSpecial("net/minecraft/util/ChatComponentText", "<init>", "(Ljava/lang/String;)V")
+            .astore().index;
 
-        $.aload(variables.player)
-            .aload(variables.message)
+        $.aload(player)
+            .aload(message)
             .invokeVirtual("net/minecraft/client/entity/EntityPlayerSP", "func_145747_a", "(Lnet/minecraft/util/IChatComponent;)V");
-
-        return stack;
     }
 };
