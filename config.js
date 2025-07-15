@@ -152,6 +152,12 @@ config
         category: "AutoP3",
         subcategory: "Simulation",
     })
+    .addSwitch({
+        configName: "autoRoutesEnabled",
+        title: "Toggle",
+        description: "",
+        category: "AutoRoutes"
+    })
     .addButton({
         configName: "movePacketCounter",
         title: "Move Packet Counter",

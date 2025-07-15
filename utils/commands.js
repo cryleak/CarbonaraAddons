@@ -29,6 +29,8 @@ const commandListener = register("command", (...args) => {
 
 const awaitLoading = register("tick", () => { // Bro why did i do this
     if (Date.now() - lastCommandRegistered < 1000) return
+    // this is fucking broken
+    /*
     commandListener.setTabCompletions(args => {
         if (args.length === 1) {
             const typedArgument = args[0]
@@ -45,6 +47,7 @@ const awaitLoading = register("tick", () => { // Bro why did i do this
             }
         }
     })
+        */
     commandListener.setName("carbonara").setAliases("ca")
     awaitLoading.unregister()
 })

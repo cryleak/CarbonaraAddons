@@ -2,6 +2,7 @@ import Vector3 from "../../utils/Vector3"
 import manager from "./NodeManager"
 import SecretEvent from "../../events/SecretListener"
 import Tick from "../../events/Tick"
+import Settings from "../../config"
 
 import { checkIntersection, debugMessage, releaseMovementKeys, movementKeys } from "../../utils/utils"
 
@@ -22,6 +23,7 @@ class NodeExecutor {
         }).setFilteredClass(S08PacketPlayerPosLook);
 
         Tick.Pre.register(() => {
+            if (!Settings().autoRoutesEnabled) return
             this.execute();
             this._updateCoords();
         }, 0);

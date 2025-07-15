@@ -71,9 +71,8 @@ class DeviceManager {
         this.tickCounter = 0
 
         register("packetSent", () => {
-            if (!this.isOnDevice()) {
-                return;
-            }
+            if (!this.isOnDevice()) return
+
 
             this.tryShootBow(this.lastArrowShoot)
         }).setFilteredClass(C0APacketAnimation)
