@@ -1,5 +1,13 @@
-import AsmUtils from "../utils/AsmUtils.js";
+import Mixin from "../mixins/Mixin.js";
 
+export default Mixin(
+    "net.minecraft.item.ItemBow",
+    "func_77659_a",
+    "(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;)Lnet/minecraft/item/ItemStack;",
+    "Terminator"
+);
+
+/*
 export default ASM => {
     const {
         desc, L, OBJECT, JumpCondition
@@ -13,17 +21,24 @@ export default ASM => {
         "(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;)Lnet/minecraft/item/ItemStack;",
         ASM.At(ASM.At.HEAD)
     ).instructions($ => {
-        let stack = 5;
+        let stack = 4;
 
         const variables = {
+            objects: stack++,
             itemName: stack++
         };
+
+        //$.iconst_3().anewarray(OBJECT).astore(variables.objects);
+        //$.aload(variables.objects).iconst_0().aload(1).aastore();
+        //$.aload(variables.objects).iconst_1().aload(2).aastore();
+        //$.aload(variables.objects).iconst_2().aload(3).aastore();
+        //$.aload(variables.objects).invokeJS("printMessage");
 
         $.aload(1)
             .invokeVirtual("net/minecraft/item/ItemStack", "func_82833_r", "()Ljava/lang/String;")
             .astore(variables.itemName);
 
-        stack = AsmUtils.chat($, variables.itemName, stack);
+        // stack = AsmUtils.chat($, variables.itemName, stack);
 
         variables.compareString = stack++;
 
@@ -42,3 +57,4 @@ export default ASM => {
             });
     }).execute();
 }
+*/
