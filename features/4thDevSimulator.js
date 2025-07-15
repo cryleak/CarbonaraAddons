@@ -70,7 +70,13 @@ class DeviceManager {
         this.remainingBlocks = [...this.blocks].sort(() => random() - 0.5)
         this.tickCounter = 0
 
-        register("packetSent", () => this.tryShootBow(this.lastArrowShoot)).setFilteredClass(C0APacketAnimation)
+        register("packetSent", () => {
+            if (!this.isOnDevice()) {
+                return;
+            }
+
+            this.tryShootBow(this.lastArrowShoot)
+        }).setFilteredClass(C0APacketAnimation)
 
         register(net.minecraftforge.client.event.MouseEvent, (event) => {
             const button = event.button
