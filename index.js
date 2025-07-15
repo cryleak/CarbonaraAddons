@@ -9,15 +9,18 @@ import "./features/Doorless"
 import "./features/BonzoSimulator"
 import "./features/Doors"
 import "./features/4thDevSimulator"
+import "./features/Terminator"
 
+// register("packetSent", (packet, event) => {
+    // Client.scheduleTask(0, () => {
+        // if (event.isCancelled()) return
+        // if (!packet./* getRotating */func_149463_k() && !packet.func_149466_j()) return
+        // let string = ""
+        // string += Date.now() + " "
+        // string += `x: ${packet./* getPositionX */func_149464_c()}, y: ${packet./* getPositionY */func_149467_d()}, z: ${packet./* getPositionZ */func_149472_e()}, yaw: ${packet./* getYaw */func_149462_g()}, pitch: ${packet./* getPitch */func_149470_h()}`
+        // // console.log(string)
+    // })
+// }).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer).unregister()
 
-register("packetSent", (packet, event) => {
-    Client.scheduleTask(0, () => {
-        if (event.isCancelled()) return
-        if (!packet./* getRotating */func_149463_k() && !packet.func_149466_j()) return
-        let string = ""
-        string += Date.now() + " "
-        string += `x: ${packet./* getPositionX */func_149464_c()}, y: ${packet./* getPositionY */func_149467_d()}, z: ${packet./* getPositionZ */func_149472_e()}, yaw: ${packet./* getYaw */func_149462_g()}, pitch: ${packet./* getPitch */func_149470_h()}`
-        // console.log(string)
-    })
-}).setFilteredClass(net.minecraft.network.play.client.C03PacketPlayer).unregister()
+import Callback from "./mixins/Callback";
+export { Callback as mixinCallback };
