@@ -1,14 +1,14 @@
 import AsmUtils from "../utils/AsmUtils.js";
 
 const callables = [];
-export {callables as callables};
+export { callables as callables };
 
 export default function Mixin(className, method, descriptor, callbackName, target) {
     const { parameters, returnType } = parseDescriptor(descriptor);
     const parameterCount = parameters.length;
 
     console.log(`Injecting into ${className}.${method} 0`);
-    callables.push(ASM => {
+    return ASM => {
         console.log(`Injecting into ${className}.${method} 1`);
 
         const {
@@ -98,7 +98,7 @@ export default function Mixin(className, method, descriptor, callbackName, targe
                 });
             });
         }).execute();
-    });
+    }
 };
 
 function parseDescriptor(descriptor) {
@@ -176,7 +176,7 @@ function zeroValueInsn($, type) {
         Void: () => $
     };
 
-    if (type.dimensinos > 0) {
+    if (type.dimensions > 0) {
         return defaults.Array();
     }
 
@@ -202,7 +202,7 @@ function returnInsn($, type) {
         Void: () => $.return()
     };
 
-    if (type.dimensinos > 0) {
+    if (type.dimensions > 0) {
         return defaults.Array();
     }
 
@@ -260,7 +260,7 @@ function loadAsObject($, local, type) {
         Void: () => $
     };
 
-    if (type.dimensinos > 0) {
+    if (type.dimensions > 0) {
         return defaults.Array();
     }
 
@@ -281,7 +281,7 @@ function returnFromObject($, type) {
         Long: () => $.invokeVirtual("java/lang/Long", "longValue", "()J"),
         Short: () => $.invokeVirtual("java/lang/Short", "shortValue", "()S"),
         Boolean: () => $.invokeVirtual("java/lang/Boolean", "booleanValue", "()Z"),
-        Void: () => $
+        Void: () => $.return()
     };
 
     if (type.dimensions > 0) {

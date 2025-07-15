@@ -12,7 +12,7 @@ import "./features/4thDevSimulator"
 import "./features/Terminator"
 import "./mixins/ASMFixer"
 
-import PostPacketSend from "./events/PostPacketSend"
+import "./events/PostPacketSend"
 
 import Callback from "./mixins/Callback";
 export { Callback as mixinCallback };

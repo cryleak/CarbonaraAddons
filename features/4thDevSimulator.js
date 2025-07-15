@@ -109,7 +109,7 @@ class DeviceManager {
 
         register("packetSent", (packet) => {
             if (packet.func_149568_f() !== 255 || !this.isOnDevice()) return
-            this.tryShootBow(this.lastArrowShoot)
+            this.tryShootBow(0)
         }).setFilteredClass(C08PacketPlayerBlockPlacement)
 
         /*
