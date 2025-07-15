@@ -11,8 +11,9 @@ export default function Mixin(className, method, descriptor, callbackName, targe
     const { parameters, returnType } = parseDescriptor(descriptor);
     const parameterCount = parameters.length;
 
+    console.log(`Injecting into ${className}.${method} 1`);
     callables.push(ASM => {
-        console.log(`Injecting into ${className}.${method}`);
+        console.log(`Injecting into ${className}.${method} 2`);
 
         const {
             OBJECT, JumpCondition
@@ -76,7 +77,7 @@ export default function Mixin(className, method, descriptor, callbackName, targe
 
             // store all the parameters
             for (let i = 0; i < parameterCount; i++) {
-                $.aload(paramArray).bipush(i+5);
+                $.aload(paramArray).bipush(i + 5);
                 loadAsObject($, i + 1, parameters[i]);
                 $.aastore();
             }
@@ -139,6 +140,8 @@ function parseDescriptor(descriptor) {
                 return { type: "Short", dimensions };
             case 'Z':
                 return { type: "Boolean", dimensions };
+            case 'V':
+                return { type: "Void" }
             default:
                 throw new Error(`Unknown type: ${c}`);
         }
@@ -163,16 +166,17 @@ function parseDescriptor(descriptor) {
 
 function zeroValueInsn($, type) {
     const defaults = {
-        Array:   () => $.aconst_null(),
-        Object:  () => $.aconst_null(),
-        Byte:    () => $.iconst_0(),
-        Char:    () => $.iconst_0(),
-        Double:  () => $.dconst_0(),
-        Float:   () => $.fconst_0(),
-        Int:     () => $.iconst_0(),
-        Long:    () => $.lconst_0(),
-        Short:   () => $.iconst_0(),
-        Boolean: () => $.iconst_0()
+        Array: () => $.aconst_null(),
+        Object: () => $.aconst_null(),
+        Byte: () => $.iconst_0(),
+        Char: () => $.iconst_0(),
+        Double: () => $.dconst_0(),
+        Float: () => $.fconst_0(),
+        Int: () => $.iconst_0(),
+        Long: () => $.lconst_0(),
+        Short: () => $.iconst_0(),
+        Boolean: () => $.iconst_0(),
+        Void: () => $
     };
 
     if (type.dimensinos > 0) {
@@ -188,16 +192,17 @@ function zeroValueInsn($, type) {
 
 function returnInsn($, type) {
     const defaults = {
-        Array:   () => $.areturn(),
-        Object:  () => $.areturn(),
-        Byte:    () => $.ireturn(),
-        Char:    () => $.ireturn(),
-        Double:  () => $.dreturn(),
-        Float:   () => $.freturn(),
-        Int:     () => $.ireturn(),
-        Long:    () => $.lreturn(),
-        Short:   () => $.ireturn(),
-        Boolean: () => $.ireturn()
+        Array: () => $.areturn(),
+        Object: () => $.areturn(),
+        Byte: () => $.ireturn(),
+        Char: () => $.ireturn(),
+        Double: () => $.dreturn(),
+        Float: () => $.freturn(),
+        Int: () => $.ireturn(),
+        Long: () => $.lreturn(),
+        Short: () => $.ireturn(),
+        Boolean: () => $.ireturn(),
+        Void: () => $.return()
     };
 
     if (type.dimensinos > 0) {
@@ -254,7 +259,8 @@ function loadAsObject($, local, type) {
             return $.new("java/lang/Boolean")
                 .iload(local)
                 .invokeSpecial("java/lang/Boolean", "<init>", "(Z)V")
-        }
+        },
+        Void: () => $
     };
 
     if (type.dimensinos > 0) {
@@ -270,14 +276,15 @@ function loadAsObject($, local, type) {
 
 function returnFromObject($, type) {
     const defaults = {
-        Byte:    () => $.invokeVirtual("java/lang/Byte", "byteValue", "()B"),
-        Char:    () => $.invokeVirtual("java/lang/Character", "charValue", "()C"),
-        Double:  () => $.invokeVirtual("java/lang/Double", "doubleValue", "()D"),
-        Float:   () => $.invokeVirtual("java/lang/Float", "floatValue", "()F"),
-        Int:     () => $.invokeVirtual("java/lang/Integer", "intValue", "()I"),
-        Long:    () => $.invokeVirtual("java/lang/Long", "longValue", "()J"),
-        Short:   () => $.invokeVirtual("java/lang/Short", "shortValue", "()S"),
-        Boolean: () => $.invokeVirtual("java/lang/Boolean", "booleanValue", "()Z")
+        Byte: () => $.invokeVirtual("java/lang/Byte", "byteValue", "()B"),
+        Char: () => $.invokeVirtual("java/lang/Character", "charValue", "()C"),
+        Double: () => $.invokeVirtual("java/lang/Double", "doubleValue", "()D"),
+        Float: () => $.invokeVirtual("java/lang/Float", "floatValue", "()F"),
+        Int: () => $.invokeVirtual("java/lang/Integer", "intValue", "()I"),
+        Long: () => $.invokeVirtual("java/lang/Long", "longValue", "()J"),
+        Short: () => $.invokeVirtual("java/lang/Short", "shortValue", "()S"),
+        Boolean: () => $.invokeVirtual("java/lang/Boolean", "booleanValue", "()Z"),
+        Void: () => $
     };
 
     if (type.dimensions > 0) {
