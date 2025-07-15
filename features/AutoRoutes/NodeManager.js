@@ -4,6 +4,7 @@ import Settings from "../../config"
 import Dungeons from "../../utils/Dungeons"
 import Location from "../../utils/Location"
 import Editable from "../../utils/ObjectEditor";
+import Settings from "../../config"
 
 import { drawLine3d } from "../../../BloomCore/utils/Utils";
 import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils";
@@ -15,7 +16,7 @@ class NodeManager {
     constructor() {
         try {
             this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => {
-                if (value && typeof(value.x) === "number" && typeof(value.y) === "number" && typeof(value.z) === "number") {
+                if (value && typeof (value.x) === "number" && typeof (value.y) === "number" && typeof (value.z) === "number") {
                     return new Vector3(value.x, value.y, value.z);
                 }
                 return value;
@@ -33,10 +34,12 @@ class NodeManager {
         this.subcommands = []
 
         scheduleTask(1, () => {
+            if (!Settings().autoRoutesEnabled) return
             this._normalizeData();
             this.currentRoom = Location.getCurrentLocationName()
             this._updateActive();
             register("tick", () => {
+                if (!Settings().autoRoutesEnabled) return
                 let newRoom = Location.getCurrentLocationName()
                 if (newRoom.type === this.currentRoom.type && newRoom.name === this.currentRoom.name) return
                 this.currentRoom = newRoom
@@ -65,6 +68,7 @@ class NodeManager {
         });
 
         register("renderWorld", () => {
+            if (!Settings().autoRoutesEnabled) return
             this._render();
         });
     }
