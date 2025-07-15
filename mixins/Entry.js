@@ -1,7 +1,7 @@
-
 import "./BowRightClickMixin.js";
 import "./PostPacketSendMixin.js"
 import { callables } from "./Mixin.js";
+import AsmUtils from "../utils/AsmUtils.js";
 
 
 export default ASM => {
@@ -52,6 +52,30 @@ export default ASM => {
     }).execute();
     */
 
-    callables.forEach(callable => callable(ASM));
+    ASM.injectBuilder(
+        "net/minecraft/network/NetworkManager",
+        "func_179290_a",
+        "(Lnet/minecraft/network/Packet;)V",
+        ASM.At(ASM.At.HEAD)
+    ).instructions($ => {
+        console.log("Packet send head!");
+        //AsmUtils.chat($, "Packet send head!");
+    }).execute();
+
+    ASM.injectBuilder(
+        "net/minecraft/network/NetworkManager",
+        "func_179290_a",
+        "(Lnet/minecraft/network/Packet;)V",
+        ASM.At(ASM.At.TAIL)
+    ).instructions($ => {
+        console.log("Packet send tail!");
+        //AsmUtils.chat($, "Packet send tail!");
+    }).execute();
+
+    console.log(`Length of callables: ${callables.length}`);
+    for (let callable of callables) {
+        console.log(callable);
+        callable(ASM);
+    }
 };
 
