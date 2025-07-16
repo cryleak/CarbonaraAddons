@@ -23,7 +23,7 @@ export default function Mixin(className, method, descriptor, callbackName, targe
         ).instructions($ => {
             console.log(`Injecting into ${className}.${method} 2`);
 
-            const cancellable = true;
+            const cancellable = returnType.type !== "Void";
             const handleReturn = returnType.type !== "Void";
             const additionalParameters = 2 + (handleReturn ? 2 : 0); // 2 for cir and callback name, + parameters
 

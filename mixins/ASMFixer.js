@@ -8,21 +8,22 @@ const check = () => {
     const ctFile = new File("./mods").list().find(fileName => /.*(?:ctjs|chattriggers).*/.test(fileName))
     if (!ctFile) return chat(`Can't find ChatTriggers mod jar. Report this please thanks`)
     const fileSize = new File(`./mods/${ctFile}`).length()
-    if (fileSize === 4163266) return
+    if (fileSize === 4162916) return
 
     register("worldLoad", () => { // Be as annoying as possible
         chat("Restart your game for modules using ASM to work. Your game will crash otherwise.")
     })
 
+    console.warn("Replacing ChatTriggers jar on shutdown.")
     Runtime.getRuntime().addShutdownHook(new java.lang.Thread(() => replaceChatTriggersJar()))
 
     const replaceChatTriggersJar = () => {
-        const url = "https://cdn.discordapp.com/attachments/1365648184067620976/1394641722365050961/ctjs-2.2.1-1.8.9.jar?ex=68778cd1&is=68763b51&hm=7775222f35f5d3d8e667d5e8b78497636a58f3bad1d233fd5aaba6fc0ca2b74a&"
+        const url = "https://cdn.discordapp.com/attachments/1365648184067620976/1395032086414622760/ctjs-2.2.1-1.8.9.jar?ex=6878f85f&is=6877a6df&hm=999678006eea186a5903b0396eed4bbc4b13cec88d317e7e49dedbf47a4e9721&"
         new ProcessBuilder(
             "powershell.exe",
             "-Command",
             "Invoke-WebRequest -Uri '" + url + "' -OutFile '" + path() + "\\mods\\" + ctFile + "'"
-        ).start()
+        ) // .start()
     }
 
 }
