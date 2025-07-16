@@ -22,7 +22,12 @@ export default function Mixin(className, method, descriptor, callbackName, targe
             target(ASM)
         ).instructions($ => {
             console.log(`Injecting into ${className}.${method} 2`);
-            const paramArray = $.bipush(parameterCount + 5).anewarray(OBJECT).astore().index;
+
+            const cancellable = true;
+            const handleReturn = returnType.type !== "Void";
+            const additionalParameters = 2 + (handleReturn ? 2 : 0); // 2 for cir and callback name, + parameters
+
+            const paramArray = $.bipush(additionalParameters + parameterCount + 1).anewarray(OBJECT).astore().index;
 
             // store the callback name as the first parameter
             $.new("java/lang/String")
@@ -47,56 +52,78 @@ export default function Mixin(className, method, descriptor, callbackName, targe
                 .aload(cancelled)
                 .aastore();
 
-            const returnValuePresent = $.new("java/util/concurrent/atomic/AtomicBoolean")
-                .dup()
-                .iconst_0()
-                .invokeSpecial("java/util/concurrent/atomic/AtomicBoolean", "<init>", "(Z)V")
-                .astore().index;
+            let returnValuePresent = null;
+            let returnValue = null;
+            if (handleReturn) {
+                returnValuePresent = $.new("java/util/concurrent/atomic/AtomicBoolean")
+                    .dup()
+                    .iconst_0()
+                    .invokeSpecial("java/util/concurrent/atomic/AtomicBoolean", "<init>", "(Z)V")
+                    .astore().index;
 
-            $.aload(paramArray)
-                .iconst_2()
-                .aload(returnValuePresent)
-                .aastore();
+                $.aload(paramArray)
+                    .iconst_2()
+                    .aload(returnValuePresent)
+                    .aastore();
 
-            const returnValue = $.new("java/util/concurrent/atomic/AtomicReference")
-                .dup()
-                .aconst_null()
-                .invokeSpecial("java/util/concurrent/atomic/AtomicReference", "<init>", "(Ljava/lang/Object;)V")
-                .astore().index;
+                returnValue = $.new("java/util/concurrent/atomic/AtomicReference")
+                    .dup()
+                    .aconst_null()
+                    .invokeSpecial("java/util/concurrent/atomic/AtomicReference", "<init>", "(Ljava/lang/Object;)V")
+                    .astore().index;
 
-            $.aload(paramArray)
-                .iconst_3()
-                .aload(returnValue)
-                .aastore();
+                $.aload(paramArray)
+                    .iconst_3()
+                    .aload(returnValue)
+                    .aastore();
 
-            // store this as the second parameter
-            $.aload(paramArray).iconst_4().aload(0).aastore();
+            }
+
+            let rest = additionalParameters;
+
+            $.aload(paramArray).bipush(rest++).aload(0).aastore();
 
             // store all the parameters
             for (let i = 0; i < parameterCount; i++) {
-                $.aload(paramArray).bipush(i + 5);
+                $.aload(paramArray).bipush(rest++);
                 loadAsObject($, i + 1, parameters[i]);
                 $.aastore();
             }
 
-            // invoke the mixin callback
-            $.aload(paramArray).invokeJS("mixinCallback").pop();
 
-            // handle the cir logic
-            $.aload(cancelled).invokeVirtual("java/util/concurrent/atomic/AtomicBoolean", "get", "()Z");
-            $.ifClause([JumpCondition.FALSE], $ => {
-                $.aload(returnValuePresent).invokeVirtual("java/util/concurrent/atomic/AtomicBoolean", "get", "()Z");
-                $.ifElseClause([JumpCondition.TRUE], $ => {
-                    $.ifCode($ => {
-                        $.aload(returnValue).invokeVirtual("java/util/concurrent/atomic/AtomicReference", "get", "()Ljava/lang/Object;");
-                        returnFromObject($, returnType);
-                        returnInsn($, returnType);
-                    }).elseCode($ => {
+            if (handleReturn) {
+                // invoke the mixin callback
+                $.aload(paramArray).invokeJS("mixinCancellableReturnableCallback").pop();
+            } else if (cancellable) {
+                $.aload(paramArray).invokeJS("mixinCancellableCallback").pop();
+            } else {
+                $.aload(paramArray).invokeJS("mixinCallback").pop();
+            }
+
+            if (cancellable) {
+                // handle the cir logic
+                $.aload(cancelled).invokeVirtual("java/util/concurrent/atomic/AtomicBoolean", "get", "()Z");
+                $.ifClause([JumpCondition.FALSE], $ => {
+                    if (!handleReturn) {
+                        // $.methodReturn();
                         zeroValueInsn($, returnType);
                         returnInsn($, returnType);
+                        return;
+                    }
+
+                    $.aload(returnValuePresent).invokeVirtual("java/util/concurrent/atomic/AtomicBoolean", "get", "()Z");
+                    $.ifElseClause([JumpCondition.TRUE], $ => {
+                        $.ifCode($ => {
+                            $.aload(returnValue).invokeVirtual("java/util/concurrent/atomic/AtomicReference", "get", "()Ljava/lang/Object;");
+                            returnFromObject($, returnType);
+                            returnInsn($, returnType);
+                        }).elseCode($ => {
+                            zeroValueInsn($, returnType);
+                            returnInsn($, returnType);
+                        });
                     });
                 });
-            });
+            }
         }).execute();
     }
 };
@@ -199,7 +226,7 @@ function returnInsn($, type) {
         Long: () => $.lreturn(),
         Short: () => $.ireturn(),
         Boolean: () => $.ireturn(),
-        Void: () => $.return()
+        Void: () => $.methodReturn()
     };
 
     if (type.dimensions > 0) {

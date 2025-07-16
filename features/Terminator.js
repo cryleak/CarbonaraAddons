@@ -1,8 +1,6 @@
 import { registerCallback } from "../mixins/Callback"
 
 registerCallback("Terminator", (event, obj, itemStack, world, player) => {
-    ChatLib.chat("yo")
-    return
     const wrappedItem = new Item(itemStack)
     if (wrappedItem.getLore().some(thing => thing.removeFormatting() === "Shortbow: Instantly shoots!")) {
         event.cancel();
