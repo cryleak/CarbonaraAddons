@@ -14,5 +14,8 @@ import "./mixins/ASMFixer"
 
 import "./events/PostPacketSend"
 
-import Callback from "./mixins/Callback";
+import { Callback, CancellableCallback, CancellableReturnableCallback } from "./mixins/Callback";
+
+export { CancellableReturnableCallback as mixinCancellableReturnableCallback };
+export { CancellableCallback as mixinCancellableCallback };
 export { Callback as mixinCallback };

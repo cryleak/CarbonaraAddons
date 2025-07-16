@@ -1,5 +1,7 @@
 import { registerCallback } from "../mixins/Callback";
 
 registerCallback("PostPacketSend", (event, networkManager, packet) => {
-    ChatLib.chat("pöacket")
+    if (packet) {
+        console.log("Packet sent: " + packet);
+    }
 })

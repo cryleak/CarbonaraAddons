@@ -5,7 +5,7 @@ export function registerCallback(name, fn) {
     callbacks[name] = fn;
 }
 
-export default function Callback(callback, cir, returnValueSet, returnValue, ...args) {
+export function CancellableReturnableCallback(callback, cir, returnValueSet, returnValue, ...args) {
     if (!callbacks[callback]) {
         console.log(`Callback "${callback}" not found.`);
         console.log("Available callbacks:", Object.keys(callbacks));
@@ -22,4 +22,27 @@ export default function Callback(callback, cir, returnValueSet, returnValue, ...
     }
 
     callbacks[callback](event, ...args);
+}
+
+export function CancellableCallback(callback, cir, ...args) {
+    if (!callbacks[callback]) {
+        console.log(`Callback "${callback}" not found.`);
+        console.log("Available callbacks:", Object.keys(callbacks));
+        return;
+    }
+    const event = {
+        cancel: () => cir.set(true)
+    }
+
+    callbacks[callback](event, ...args);
+}
+
+export function Callback(callback, ...args) {
+    if (!callbacks[callback]) {
+        console.log(`Callback "${callback}" not found.`);
+        console.log("Available callbacks:", Object.keys(callbacks));
+        return;
+        // throw new Error(`Callback "${callback}" is not registered.`);
+    }
+    callbacks[callback](...args);
 }
