@@ -7,7 +7,7 @@ const config = new DefaultConfig("CarbonaraAddons", "settings.json")
 config
     .addSwitch({
         configName: "displayIndex",
-        title: "Display index of nodes on screen",
+        title: "Display index and type of nodes on screen",
         description: "Helpful for deleting and editing nodes.",
         category: "Node Rendering",
         value: false

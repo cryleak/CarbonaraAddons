@@ -4,6 +4,8 @@
  * @param {T} [data] The data passed when the event is triggered.
  */
 
+import WrappedJavaEvent from "./WrappedJavaEvent"
+
 /**
  * @typedef {Object} EventHandler
  * @property {() => EventHandler} register - Register an event listener.
@@ -22,12 +24,17 @@
  * @property {(data: T) => void} trigger - Trigger the event with data
  */
 
+
+export const JavaEvent = Java.type("me.cryleak.carbonaraloader.event.Event")
+
 /**
  * Event constructor imported from Java
  * @template T
- * @type {new <T>() => EventInstance<T>}
+ * @type {new () => EventInstance<T>}
  */
-export const Event = Java.type("me.cryleak.carbonaraloader.event.Event");
+export const Event = function () { // This is ltierally the only fucking way to have it be a constructor and return the correct shit
+    return new WrappedJavaEvent(new JavaEvent())
+}
 
 /**
  * @template T
@@ -39,9 +46,14 @@ export const Event = Java.type("me.cryleak.carbonaraloader.event.Event");
  * @description A wrapper for the data passed to the event listener.
  */
 
+
+export const JavaCancellableEvent = Java.type("me.cryleak.carbonaraloader.event.CancellableEvent");
+
 /**
  * CancellableEvent constructor imported from Java
  * @template T
- * @type {new <T>() => EventInstance<Data<T>>}
+ * @type {new () => EventInstance<Data<T>>}
  */
-export const CancellableEvent = Java.type("me.cryleak.carbonaraloader.event.CancellableEvent");
+export const CancellableEvent = function () {
+    return new WrappedJavaEvent(new JavaCancellableEvent())
+}
