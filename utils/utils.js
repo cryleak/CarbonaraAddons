@@ -1,7 +1,6 @@
 import Settings from "../config"
 import Vector3 from "./Vector3"
 import Tick from "../events/Tick"
-import LivingUpdate from "../events/LivingUpdate"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
@@ -68,6 +67,7 @@ export function renderBox(pos, width, height, colors) {
 }
 
 import RenderLibV2 from "../../RenderLibV2J"
+import { UpdateWalkingPlayer } from "../events/JavaEvents"
 
 /**
  * Draws a box that looks like a scandinavian flag with specified colors.
@@ -462,7 +462,7 @@ export function swapToSlot(slot, callback) {
     }
 
     if (swappedThisTick) {
-        const done = LivingUpdate.register(() => {
+        const done = UpdateWalkingPlayer.Pre.register(() => {
             done.unregister()
             swapToSlot(slot, callback)
             debugMessage(`Awaiting before swap`)

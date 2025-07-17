@@ -1,6 +1,5 @@
 import Settings from "../config"
 import Vector3 from "../utils/Vector3";
-import LivingUpdate from "../events/LivingUpdate";
 import Rotations from "../utils/Rotations";
 import Dungeons from "../utils/Dungeons";
 import FreezeManager from "./AutoRoutes/FreezeManager";
@@ -8,7 +7,7 @@ import ServerTeleport from "../events/ServerTeleport"
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
 import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
-import { UpdateWalkingPlayerPre } from "../events/JavaEvents";
+import { UpdateWalkingPlayer } from "../events/JavaEvents";
 
 const MCBlock = Java.type("net.minecraft.block.Block");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -26,7 +25,7 @@ let debug = true
 
 class Doorless {
     constructor() {
-        this.trigger = UpdateWalkingPlayerPre.register(event => {
+        this.trigger = UpdateWalkingPlayer.Pre.register(event => {
             if (!Settings().doorlessEnabled || !Dungeons.isInDungeons()) {
                 return;
             }
@@ -154,7 +153,7 @@ class Doorless {
             swapFromName("ender pearl", (result) => {
                 switch (result) {
                     case itemSwapSuccess.SUCCESS:
-                        LivingUpdate.scheduleTask(0, () => {
+                        UpdateWalkingPlayer.Pre.scheduleTask(0, () => {
                             this.doDoorless(xOffset, zOffset, offsetTimes, holding);
                         });
                         break;
@@ -207,7 +206,7 @@ class Doorless {
             }
 
             if (!done) {
-                const triggered = UpdateWalkingPlayerPre.register(event => {
+                const triggered = UpdateWalkingPlayer.Pre.register(event => {
                     event.cancelled = true;
                     event.breakChain = true;
 

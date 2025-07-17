@@ -1,4 +1,4 @@
-import { UpdateWalkingPlayerPre } from "../events/JavaEvents"
+import { UpdateWalkingPlayer } from "../events/JavaEvents"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 
@@ -8,7 +8,7 @@ export default new class Rotations {
         this.pitch = null
         this.postPacketSend = null
         this.noMove = false
-        UpdateWalkingPlayerPre.register(event => {
+        UpdateWalkingPlayer.Pre.register(event => {
             if (event.cancelled) return
             if (this.yaw === null || this.pitch === null) return
 

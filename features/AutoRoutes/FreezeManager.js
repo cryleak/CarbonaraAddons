@@ -1,4 +1,4 @@
-import { UpdateWalkingPlayerPre } from "../../events/JavaEvents"
+import { UpdateWalkingPlayer} from "../../events/JavaEvents"
 import Vector3 from "../../utils/Vector3"
 import { setVelocity, setPlayerPosition } from "../../utils/utils"
 
@@ -9,7 +9,7 @@ export default new class FreezeManager {
         this.position = new Vector3(Player);
         this.previousVelocity = [Player.getMotionX(), Player.getMotionY(), Player.getMotionZ()];
         this.amount = 0;
-        UpdateWalkingPlayerPre.register(event => {
+        UpdateWalkingPlayer.Pre.register(event => {
             if (!this.freezing) return
 
             this.amount++;

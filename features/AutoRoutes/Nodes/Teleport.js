@@ -8,7 +8,7 @@ import SecretAuraClick from "../../../events/SecretAuraClick"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
-import { UpdateWalkingPlayerPre } from "../../../events/JavaEvents";
+import { UpdateWalkingPlayer } from "../../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
@@ -156,7 +156,7 @@ class TeleportRecorder {
         this.lastPacket = null;
 
         this.trigger = bind(
-            UpdateWalkingPlayerPre.register((event) => {
+            UpdateWalkingPlayer.Pre.register((event) => {
                 // Client.sendPacket(replacementPacket);
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
                 setPlayerPosition(x, y, z, true);

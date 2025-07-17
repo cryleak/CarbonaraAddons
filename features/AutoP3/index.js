@@ -7,7 +7,6 @@ import Dungeons from "../../utils/Dungeons"
 import fakeKeybinds from "../../utils/fakeKeybinds"
 import Blink from "./Blink"
 import Motion from "../../utils/Motion"
-import LivingUpdate from "../../events/LivingUpdate"
 import Vector3 from "../../utils/Vector3"
 import Rotations from "../../utils/Rotations"
 
@@ -15,6 +14,7 @@ import { Terminal, jump, getTermPhase } from "./autoP3Utils"
 import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick, itemSwapSuccess } from "../../utils/utils"
 import { onChatPacket } from "../../../BloomCore/utils/Events"
 import { registerSubCommand } from "../../utils/commands"
+import { UpdateWalkingPlayer } from "../../events/JavaEvents"
 
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
@@ -156,7 +156,7 @@ const nodeTypes = {
         if (!Player.getPlayer().field_70122_E) {
             Motion.running = false
             setVelocity(0, null, 0)
-            LivingUpdate.scheduleTask(1, () => {
+            UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
                 Motion.running = true
             })
         }
@@ -195,12 +195,14 @@ const nodeTypes = {
         const clip = () => {
             releaseMovementKeys()
             setVelocity(0, null, 0)
-            LivingUpdate.scheduleTask(0, () => {
+            let start = Date.now()
+            UpdateWalkingPlayer.Pre.scheduleTask(0, () => {
+                ChatLib.chat(Date.now() - start)
                 const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * (43 / 15)
                 const radians = args.yaw * Math.PI / 180
                 setVelocity(-Math.sin(radians) * speed, null, Math.cos(radians) * speed)
             })
-            LivingUpdate.scheduleTask(1, repressMovementKeys)
+            UpdateWalkingPlayer.Pre.scheduleTask(1, repressMovementKeys)
         }
 
         if (Player.getPlayer().field_70122_E && args.jumpOnHClip) {
@@ -384,7 +386,6 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     cancel(event)
     blinkingVelo = true
     for (let i = 0; i < blinkVeloTicks; i++) {
-        if (!LivingUpdate.trigger()) continue
         Player.getPlayer().func_70636_d()
         Player.getPlayer().func_175161_p()
         executeNodes(playerCoords().player)

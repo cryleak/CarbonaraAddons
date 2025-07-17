@@ -4,7 +4,7 @@ import NodeManager from "../NodeManager"
 
 import { releaseMovementKeys, setVelocity } from "../../../utils/utils"
 import { Node } from "../Node"
-import LivingUpdate from "../../../events/LivingUpdate"
+import { UpdateWalkingPlayer } from "../../../events/JavaEvents"
 NodeManager.registerNode(class MotionNode extends Node {
     static identifier = "motion"
     static priority = 0
@@ -23,7 +23,7 @@ NodeManager.registerNode(class MotionNode extends Node {
         if (!Player.getPlayer().field_70122_E) {
             Motion.running = false
             setVelocity(0, null, 0)
-            LivingUpdate.scheduleTask(1, () => {
+            UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
                 Motion.running = true
             })
         }

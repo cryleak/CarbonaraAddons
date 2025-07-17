@@ -1,12 +1,12 @@
 import Settings from "../config"
 import fakeKeybinds from "../utils/fakeKeybinds"
 import Dungeons from "../utils/Dungeons"
-import LivingUpdate from "../events/LivingUpdate"
 import SecretAuraClick from "../events/SecretAuraClick"
 
 import { chat } from "../utils/utils"
 import Vector3 from "../utils/Vector3"
 import RenderLib from "../../RenderLibV2J"
+import { UpdateWalkingPlayer } from "../events/JavaEvents"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
@@ -55,7 +55,7 @@ export default new class SecretAura {
                     })
                 }
 
-                LivingUpdate.scheduleTask(0, () => { // This runs right before the next living update (same tick)
+                UpdateWalkingPlayer.Pre.scheduleTask(0, () => { // This runs right before the next living update (same tick)
                     this.rightClickBlock(block, blockPos)
                     if (block instanceof BlockSkull) {
                         const tileEntity = World.getWorld().func_175625_s(javaBlockPos)

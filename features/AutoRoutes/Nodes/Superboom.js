@@ -2,13 +2,13 @@ import Dungeons from "../../../utils/Dungeons"
 import Vector3 from "../../../utils/Vector3"
 import NodeManager from "../NodeManager"
 import SecretAura from "../../SecretAura"
-import LivingUpdate from "../../../events/LivingUpdate"
 import Tick from "../../../events/Tick"
 import manager from "../NodeManager"
 import tpManager from "../TeleportManager"
 
 import { Node } from "../Node"
 import { chat, itemSwapSuccess, swapFromItemID, syncCurrentPlayItem, debugMessage } from "../../../utils/utils"
+import { UpdateWalkingPlayer } from "../../../events/JavaEvents"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const BlockAir = Java.type("net.minecraft.block.BlockAir")
@@ -38,7 +38,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
                 if (!(block instanceof BlockAir)) {
-                    LivingUpdate.scheduleTask(0, () => {
+                    UpdateWalkingPlayer.Pre.scheduleTask(0, () => {
                         SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
                         Tick.Pre.scheduleTask(0, () => {
                             execer.execute(this)

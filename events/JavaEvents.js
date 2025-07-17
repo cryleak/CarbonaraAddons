@@ -54,15 +54,11 @@ export const EntityArrowLand = new WrappedJavaEvent(events.EntityArrowLand)
  * @property {number} pitch
  * @property {boolean} onGround
  */
-
 /**
  * @const
- * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
+ * @type {{
+ *   Pre: import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>,
+ *   Post: import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>,
+ * }}
  */
-export const UpdateWalkingPlayerPre = new WrappedJavaEvent(events.UpdateWalkingPlayerPre)
-
-/**
- * @const
- * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
- */
-export const UpdateWalkingPlayerPost = new WrappedJavaEvent(events.UpdateWalkingPlayerPost)
+export const UpdateWalkingPlayer = { Pre: new WrappedJavaEvent(events.UpdateWalkingPlayerPre), Post: new WrappedJavaEvent(events.UpdateWalkingPlayerPost), }

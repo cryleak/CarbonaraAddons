@@ -3,12 +3,12 @@ import FastLeap from "./FastLeap"
 import LeapHelper from "../utils/leapUtils"
 import SecretAura from "./SecretAura"
 import Blink from "./AutoP3/Blink"
-import LivingUpdate from "../events/LivingUpdate"
 
 import { getDistanceToEntity, releaseMovementKeys, setVelocity } from "../utils/utils"
 import { onChatPacket } from "../../BloomCore/utils/Events"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 import Vector3 from "../utils/Vector3"
+import { UpdateWalkingPlayer } from "../events/JavaEvents"
 
 const ArmorStand = Java.type("net.minecraft.entity.item.EntityArmorStand")
 const Vec3 = Java.type("net.minecraft.util.Vec3")
@@ -65,7 +65,7 @@ export default new class Relic {
             const blockState = World.getWorld().func_180495_p(javaBlockPos)
             const block = blockState.func_177230_c()
             Player.setHeldItemIndex(8)
-            LivingUpdate.scheduleTask(0, () => SecretAura.rightClickBlock(block, blockPos))
+            UpdateWalkingPlayer.Pre.scheduleTask(0, () => SecretAura.rightClickBlock(block, blockPos))
             this.relicPlaceAura.unregister()
         }).unregister()
 

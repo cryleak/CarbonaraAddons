@@ -6,7 +6,7 @@ import { chat, setPlayerPosition, setVelocity, debugMessage } from "../../utils/
 import { registerSubCommand } from "../../utils/commands"
 import { packetCounterGui } from "../../config"
 import Vector3 from "../../utils/Vector3"
-import { UpdateWalkingPlayerPre } from "../../events/JavaEvents"
+import { UpdateWalkingPlayer } from "../../events/JavaEvents"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")
@@ -99,7 +99,7 @@ class Blink {
             else this.toggleCharge(!global.carbonara.autop3.blinkEnabled)
         })
 
-        this.packetCollector = UpdateWalkingPlayerPre.register(event => {
+        this.packetCollector = UpdateWalkingPlayer.Pre.register(event => {
             if (Settings().pauseCharging && Date.now() - global.carbonara.autop3.lastBlink < 1000) return
             if (this.recordingRouteName) return
 
@@ -140,7 +140,7 @@ class Blink {
             this.packetLogger.register()
         })
 
-        this.packetLogger = UpdateWalkingPlayerPre.register(event => {
+        this.packetLogger = UpdateWalkingPlayer.Pre.register(event => {
             const data = event.data
             let ignorePacket = true
 
