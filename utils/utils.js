@@ -261,28 +261,19 @@ export function setVelocity(x, y, z) {
     if (typeof z === "number") Player.getPlayer().field_70179_y = z
 }
 
-const leftClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147116_af", null)
-leftClickMethod.setAccessible(true)
 export function leftClick() {
-    leftClickMethod.invoke(Client.getMinecraft(), null)
+    Client.getMinecraft().func_147116_af();
 }
 
-const rightClickMethod = Client.getMinecraft().getClass().getDeclaredMethod("func_147121_ag", null)
-rightClickMethod.setAccessible(true);
 export function rightClick() {
-    rightClickMethod.invoke(Client.getMinecraft(), null)
+    Client.getMinecraft().func_147121_ag();
 }
-
-const PlayerControllerMP = Java.type("net.minecraft.client.multiplayer.PlayerControllerMP")
-
-const syncCurrentPlayItemMethod = PlayerControllerMP.class.getDeclaredMethod("func_78750_j")
-syncCurrentPlayItemMethod.setAccessible(true)
 
 /**
- * (Preferably don't use this; it uses Reflection) Sends an item swap packet if you haven't already sent one.
+ * (Preferably don't use this; it banned meowmeowmeow7422) Sends an item swap packet if you haven't already sent one.
  */
 export function syncCurrentPlayItem() {
-    syncCurrentPlayItemMethod.invoke(Client.getMinecraft().field_71442_b, null)
+    Client.getMinecraft().field_71442_b.func_78750_j();
 }
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
