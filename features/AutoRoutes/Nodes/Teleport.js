@@ -202,7 +202,7 @@ class TeleportRecorder {
             ServerTeleport.register((event) => {
                 debugMessage("Server Forced your rotation. This is really bad.");
                 this.end(false);
-                event.break = true;
+                event.breakChain = true;
             }, 1349239233),
             SecretAuraClick.Post.register((data) => {
                 this.nodes[this.nodes.length - 1].awaitSecret++;
@@ -273,7 +273,7 @@ class TeleportRecorder {
             this.lastPacket = new Vector3(coords);
 
             setPlayerPosition(coords[0], coords[1], coords[2], true);
-            event.break = true;
+            event.breakChain = true;
         }, 1349239234);
     }
 

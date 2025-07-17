@@ -16,8 +16,8 @@ export default new class FreezeManager {
             setPlayerPosition(this.position.x, this.position.y, this.position.z, true);
             setVelocity(0, 0, 0)
             event.cancelled = true
-            event.break = true
-        }, 1000000000000)
+            event.breakChain = true
+        }, 100000)
     }
 
     setFreezing(state) {

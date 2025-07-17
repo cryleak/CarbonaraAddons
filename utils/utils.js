@@ -142,7 +142,7 @@ export function scheduleTask(delay, task) {
 Tick.Pre.register(() => {
     swappedThisTick = false
     while (codeToExec.length) codeToExec.shift()()
-}, 13482384929348)
+}, 134823849)
 
 export function getDistance2DSq(x1, y1, x2, y2) {
     return (x2 - x1) ** 2 + (y2 - y1) ** 2

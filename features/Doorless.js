@@ -131,7 +131,7 @@ class Doorless {
 
         cooldown = Date.now()
         event.cancelled = true;
-        event.break = true;
+        event.breakChain = true;
         let pitch = 0;
         if (World.getBlockAt(x - 1, y + 3, z - 1).type.getID() === 0) {
             pitch = -90;
@@ -209,7 +209,7 @@ class Doorless {
             if (!done) {
                 const triggered = OnUpdateWalkingPlayerPre.register(event => {
                     event.cancelled = true;
-                    event.break = true;
+                    event.breakChain = true;
 
                     sendNextPacket();
                     if (done) {

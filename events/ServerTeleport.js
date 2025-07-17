@@ -12,7 +12,7 @@ register("packetReceived", (packet, event) => {
     const yaw = packet.func_148931_f()
     const pitch = packet.func_148930_g()
     const enumFlags = packet.func_179834_f()
-    if (!ServerTeleport.trigger({ packet, x, y, z, yaw, pitch, enumFlags })) {
+    if (ServerTeleport.trigger({ packet, x, y, z, yaw, pitch, enumFlags }).cancelled) {
         cancel(event);
     }
 }).setFilteredClass(S08PacketPlayerPosLook);
