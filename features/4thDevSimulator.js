@@ -119,12 +119,11 @@ class DeviceManager {
         })
         */
 
-        EntityArrowLand.register(event => {
-            const data = event.data
+        EntityArrowLand.register(data => {
             Client.scheduleTask(1, () => {
                 for (let i = 0; i < this.activeFakeArrows.length; i++) {
                     let arrow = this.activeFakeArrows[i]
-                    if (arrow !== data.arrow) continue
+                    if (!arrow.equals(data.arrow)) continue
                     World.getWorld().func_72900_e(data.arrow)
                     this.activeFakeArrows.splice(i, 1)
                 }

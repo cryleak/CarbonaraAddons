@@ -4,7 +4,7 @@ import tpManager from "./AutoRoutes/TeleportManager";
 
 import { UpdateWalkingPlayer } from "../events/JavaEvents";
 import { registerSubCommand } from "../utils/commands";
-import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate} from "../utils/utils";
+import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate } from "../utils/utils";
 
 function checkBlock(x, y, z) {
     const block = World.getBlockAt(x, y, z);
@@ -24,7 +24,7 @@ Tick.Pre.register(() => {
                 continue;
             }
 
-            west.push({x, z});
+            west.push({ x, z });
         }
     }
     for (let z = -169; z <= -9; z += 32) {
@@ -33,7 +33,7 @@ Tick.Pre.register(() => {
                 continue;
             }
 
-            north.push({x, z});
+            north.push({ x, z });
         }
     }
 });
@@ -54,13 +54,13 @@ class Doer {
         this.pearlItem(90, 62, () => {
             this.teleportDown(new Vector3(Player), 8, (pos) => {
                 this.teleportRoomLeft(pos, 1, (pos) => {
-                this.teleportRoomUp(pos, 4, (pos) => {
-                    this.teleportRightBelowBlood(pos, () => {
-                        tpManager.sync(Player.yaw, -90, true);
-                        rotate(Player.yaw, -90);
-                        this.pearlItem(-90, 68, () => {});
+                    this.teleportRoomUp(pos, 4, (pos) => {
+                        this.teleportRightBelowBlood(pos, () => {
+                            tpManager.sync(Player.yaw, -90, true);
+                            rotate(Player.yaw, -90);
+                            this.pearlItem(-90, 68, () => { });
+                        });
                     });
-                });
                 });
             });
         });
@@ -137,7 +137,7 @@ class Doer {
     pearlItem(pitch, yPos, callback) {
         swapFromName("Ender Pearl", result => {
             if (result === itemSwapSuccess.FAIL) return
-            UpdateWalkingPlayer.Pre.scheduleTask(1, _ => {
+            UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
                 const registered = UpdateWalkingPlayer.Pre.register(event => {
                     registered.unregister();
                     if (event.cancelled) return;
@@ -152,35 +152,30 @@ class Doer {
         })
     }
 }
-
-function limeCheckAt(block) {
-    return block.type.getID() === 35 && block.getMetadata() === 5;
-}
-
 const coordinates = [
     [
-        {x: 2, z: 2},
-        {x: 8, z: 2},
-        {x: 2, z: 6},
-        {x: 8, z: 6},
+        { x: 2, z: 2 },
+        { x: 8, z: 2 },
+        { x: 2, z: 6 },
+        { x: 8, z: 6 },
     ],
     [
-        {x: 2, z: 28},
-        {x: 6, z: 28},
-        {x: 2, z: 22},
-        {x: 6, z: 22}
+        { x: 2, z: 28 },
+        { x: 6, z: 28 },
+        { x: 2, z: 22 },
+        { x: 6, z: 22 }
     ],
     [
-        {x: 28, z: 2},
-        {x: 24, z: 2},
-        {x: 28, z: 8},
-        {x: 24, z: 8}
+        { x: 28, z: 2 },
+        { x: 24, z: 2 },
+        { x: 28, z: 8 },
+        { x: 24, z: 8 }
     ],
     [
-        {x: 28, z: 28},
-        {x: 22, z: 28},
-        {x: 28, z: 24},
-        {x: 22, z: 24}
+        { x: 28, z: 28 },
+        { x: 22, z: 28 },
+        { x: 28, z: 24 },
+        { x: 22, z: 24 }
     ]
 ];
 
@@ -188,7 +183,8 @@ function checkFor(room) {
     return coordinates.some(rotation => {
         return !rotation.some(coord => {
             const at = room.copy().add(coord.x, 0, coord.z);
-            return !limeCheckAt(World.getBlockAt(at.x, at.y, at.z));
+            const block = World.getBlockAt(new BlockPos(at.convertToBlockPos()))
+            return block.type.getID() !== 35 || block.getMetadata() !== 5;
         });
     });
 }
@@ -208,6 +204,6 @@ Tick.Pre.register(() => {
     found = null;
 }, 234999);
 
-registerSubCommand("do", (_) => {
+registerSubCommand("do", () => {
     new Doer().setup();
 });
