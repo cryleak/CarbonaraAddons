@@ -4,11 +4,10 @@ export default class WrappedJavaEvent {
         return new Proxy(this, {
             get(target, prop, receiver) {
                 if (prop in target) return Reflect.get(target, prop, receiver)
-                const value = target.event[prop]
-                if (typeof value === 'function') {
-                    return value.bind(target.event)
-                }
-                return value
+                const method = target.event[prop]
+                if (typeof method === "function") return method.bind(target.event)
+
+                return method
             }
         })
     }
