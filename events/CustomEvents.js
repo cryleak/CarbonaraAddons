@@ -1,86 +1,48 @@
-export class Event {
-	constructor() {
-		this.listeners = [];
-        this.tasks = [];
-	}
+/**
+ * @template T
+ * @callback EventListenerCallback
+ * @param {T} [data] The data passed when the event is triggered.
+ */
 
-    scheduleTask(delay, func) {
-        this.tasks.push({ func, delay });
-    }
+/**
+ * @typedef {Object} EventHandler
+ * @property {() => EventHandler} register - Register an event listener.
+ * @property {() => EventHandler} unregister - Unregister the listener associated with this handler.
+ * @property {boolean} registered - Indicates if the listener is currently registered.
+ * @description A handle to control the registration of a single listener. It allows you
+ * to register or unregister the listener it's associated with.
+ */
 
-	/**
-	 * Registers a listener that runs before every player update event.
-	 * @param {Function} func
-	 */
-	register(func, prio = 1000) {
-		return this._register({func, prio});
-	}
+/**
+ * @template T
+ * @typedef {Object} EventInstance
+ * @property {() => boolean} hasListeners - Check if the event has any listeners
+ * @property {(delay: number, callback: EventListenerCallback<T>) => EventHandler} scheduleTask - Schedule a task with delay
+ * @property {(callback: EventListenerCallback<T>, priority: number = 1000) => EventHandler} register - Register an event listener with priority
+ * @property {(data: T) => void} trigger - Trigger the event with data
+ */
 
-	_listenerMap(l) {
-		return {
-			unregister: () => this._unregister(l),
-			register: () => this._register(l)
-		};
-	}
+/**
+ * Event constructor imported from Java
+ * @template T
+ * @type {new <T>() => EventInstance<T>}
+ */
 
-	_unregister(l) {
-		const id = this.listeners.indexOf(l);
-		if (id !== -1) {
-			this.listeners = this.listeners.splice(id, 1);
-		}
+export const Event = Java.type("me.cryleak.carbonaraloader.event.Event");
 
-		return this._listenerMap(l);
-	}
+/**
+ * @template T
+ * @typedef {Object} Data
+ * @property {boolean} cancelled - Indicates if the event has been cancelled.
+ * @property {boolean} breakChain - If true, prevents further event propagation.
+ * @property {any} returnValue - The value to return from the event listener.
+ * @property {T} data - The data passed when the event is triggered.
+ * @description A wrapper for the data passed to the event listener.
+ */
 
-	_register(l) {
-        this.listeners.push(l);
-        this.listeners.sort((a, b) => b.prio - a.prio);
-		return this._listenerMap(l);
-	}
-
-    _triggerTasks(data) {
-        for (let i = this.tasks.length - 1; i >= 0; i--) {
-            let curr = this.tasks[i];
-            if (curr.delay-- > 0) {
-                continue;
-            }
-
-            this.tasks.splice(i, 1);
-            curr.func(data);
-        }
-    }
-
-	/**
-	 * (Internal use) Trigger this to trigger the event.
-	 *
-	 * @param { data } data - The arguments to pass to each listener callback.
-	 */
-	trigger(data) {
-        this._triggerTasks(data);
-		this.listeners.forEach(l => l.func(data));
-	}
-};
-
-export class CancellableEvent extends Event {
-	/**
-	 * (Internal use) Trigger this to trigger the event.
-	 *
-	 * @param { data } data - The data in the event object to pass to all listeners.
-	 */
-    trigger(data) {
-        this._triggerTasks(data);
-
-        const event = {
-            cancelled: false,
-            break: false,
-            data,
-        };
-
-        this.listeners.some(l => {
-            l.func(event);
-            return event.break;
-        });
-
-        return !event.cancelled;
-    }
-};
+/**
+ * CancellableEvent constructor imported from Java
+ * @template T
+ * @type {new <T>() => EventInstance<Data<T>>}
+ */
+export const CancellableEvent = Java.type("me.cryleak.carbonaraloader.event.CancellableEvent");

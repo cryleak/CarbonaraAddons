@@ -1,15 +1,18 @@
 import Settings from "../config"
+import { registerSubCommand } from "../utils/commands"
+import { chat, fireChannelRead, inSingleplayer } from "../utils/utils"
 
 let ping = 125
+let speed = 500
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 
 const simulation = register("tick", () => {
     // const denmark = Player.getPlayer().func_110148_a(net.minecraft.entity.SharedMonsterAttributes.field_111263_d).func_111126_e()
     // if (denmark) ChatLib.chat(denmark)
-    if (Server.getIP() !== "localhost" && Server.getIP() !== "127.0.0.1" && Server.getIP() !== "127.0.0.1:25564") return
+    if (!inSingleplayer()) return
     if (Settings().simulateSpeed) {
-        Player.getPlayer().func_110148_a(net.minecraft.entity.SharedMonsterAttributes.field_111263_d).func_111128_a(0.50000000745)
-        Player.getPlayer().field_71075_bZ.func_82877_b(0.50000000745) // Make hclip work correctly
+        Player.getPlayer().func_110148_a(net.minecraft.entity.SharedMonsterAttributes.field_111263_d).func_111128_a(speed / 1000)
+        Player.getPlayer().field_71075_bZ.func_82877_b(speed / 1000) // Make hclip work correctly
     }
 
     // Lava bounce
@@ -26,7 +29,9 @@ const simulation = register("tick", () => {
     }
 })
 
-
-function fireChannelRead(packet) {
-    Client.getConnection().func_147298_b().channel().pipeline().fireChannelRead(packet);
-}
+registerSubCommand("setsimulationmovementspeed", (movementspeed) => {
+    const requestSpeed = parseInt(movementspeed)
+    if (isNaN(requestSpeed)) return
+    speed = requestSpeed
+    chat(`Set speed to ${speed}. (This doesn't last after you CT load)`)
+})

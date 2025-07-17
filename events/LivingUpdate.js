@@ -5,7 +5,7 @@ export default LivingUpdate;
 
 register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (event) => {
     if (event.entity !== Player.getPlayer()) return
-    if (!LivingUpdate.trigger(event)) {
+    if (LivingUpdate.trigger(event).cancelled) {
         cancel(event)
     }
 })

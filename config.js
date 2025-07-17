@@ -5,6 +5,42 @@ export const packetCounterGui = new Gui()
 const config = new DefaultConfig("CarbonaraAddons", "settings.json")
 
 config
+    .addSwitch({
+        configName: "displayIndex",
+        title: "Display index of nodes on screen",
+        description: "Helpful for deleting and editing nodes.",
+        category: "Node Rendering",
+        value: false
+    })
+    .addColorPicker({
+        configName: "nodeColor",
+        title: "Node Colors",
+        description: "",
+        category: "Node Rendering",
+        value: [0, 255, 255, 255],
+    })
+    .addColorPicker({
+        configName: "smallNodeColor",
+        title: "Small Node Colors",
+        description: "Colors for the 0 radius ones",
+        category: "Node Rendering",
+        value: [0, 0, 255, 255],
+    })
+    .addSlider({
+        configName: "smallNodeRadius",
+        title: "Small Node Radius",
+        description: "Visual radius for nodes with zero radius (aka you need to stand exactly on it)",
+        category: "Node Rendering",
+        options: [0.001, 1],
+        value: "0.2",
+    })
+    .addTextInput({
+        configName: "nodeSlices",
+        title: "Node Slices",
+        description: "The amount of triangles that makes up one ring. It becomes more circular with a higher value but will have worse performance.",
+        category: "Node Rendering",
+        value: "3",
+    })
     .addKeybind({
         configName: "hClipKeybind",
         title: "HClip Keybind",
@@ -52,27 +88,6 @@ config
         description: "",
         category: "AutoP3",
         value: false
-    })
-    .addSwitch({
-        configName: "displayIndex",
-        title: "Display index of nodes on screen",
-        description: "Helpful for deleting and editing nodes.",
-        category: "AutoP3",
-        value: false
-    })
-    .addColorPicker({
-        configName: "nodeColor",
-        title: "Node Colors",
-        description: "",
-        category: "AutoP3",
-        value: [0, 255, 255, 255],
-    })
-    .addTextInput({
-        configName: "nodeSlices",
-        title: "Node Slices",
-        description: "The amount of triangles that makes up one ring. It becomes more circular with a higher value but will have worse performance.",
-        category: "AutoP3",
-        value: "3",
     })
     .addTextInput({
         configName: "configName",
@@ -136,6 +151,12 @@ config
         description: "",
         category: "AutoP3",
         subcategory: "Simulation",
+    })
+    .addSwitch({
+        configName: "autoRoutesEnabled",
+        title: "Toggle",
+        description: "",
+        category: "AutoRoutes"
     })
     .addButton({
         configName: "movePacketCounter",
@@ -272,17 +293,26 @@ config
         description: "Resets clicked blocks when pressed.",
         category: "Block Aura"
     })
+    .addDropDown({
+        configName: "secretAuraSwapOn",
+        title: "Swap on",
+        description: "Select an option",
+        category: "Block Aura",
+        options: ["None", "Essence", "All"]
+    })
     .addTextInput({
         configName: "secretAuraItem",
         title: "Item to swap to",
         description: "You can either set this to a number to choose a static hotbar slot or swap to an item with a specific name.",
-        category: "Block Aura"
+        category: "Block Aura",
+        shouldShow: data => data.secretAuraSwapOn !== 0
     })
     .addSwitch({
         configName: "secretAuraSwapBack",
         title: "Swap Back",
         description: "Swap back to previously held item after clicking",
-        category: "Block Aura"
+        category: "Block Aura",
+        shouldShow: data => data.secretAuraSwapOn !== 0
     })
     .addSwitch({
         configName: "randomColors",
@@ -331,7 +361,71 @@ config
         description: "More leniency than cgy for where you can stand.",
         category: "Wither King"
     })
-
+    .addSwitch({
+        configName: "zeroPingHype",
+        title: "Zero Ping TP On All Items",
+        description: "Uses ZPH to use zero ping teleport for Instant Transmission and Wither Impact on node-triggered teleports. You must toggle Zero Ping TP in AutoRoutes to make it work. Disable other zpews if you have any.",
+        category: "Zero Ping TP",
+        value: false
+    })
+    .addSwitch({
+        configName: "zpewEnabled",
+        title: "Toggle",
+        description: "",
+        category: "Zero Ping TP",
+    })
+    .addSwitch({
+        configName: "singleplayer",
+        title: "Singleplayer mode",
+        description: "Detects Iron Sword and Diamond Shovel as teleport items. This mode also disables all failsafes so disable it before you log on Hypixel probably",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSlider({
+        configName: "maxFails",
+        title: "Max fails in last 20 seconds",
+        description: "Note that you will probably get banned regardless of if you fail 1000 times in 20 minutes or 1 minute (on the same server) due to how timer balance works. You can try using the option to cancel movement packets in this mod.",
+        category: "Zero Ping TP",
+        options: [3, 20],
+        value: 3,
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "aotv",
+        title: "Toggle Instant Transmission",
+        description: "This will still trigger if you enable Zero Ping TP On All Items",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "ether",
+        title: "Toggle Etherwarp",
+        description: "This will still trigger if you enable Zero Ping TP On All Items",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "hype",
+        title: "Toggle Hyperion",
+        description: "This will still trigger if you enable Zero Ping TP On All Items",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
+        configName: "doorlessEnabled",
+        title: "Toggle",
+        description: "Allows you to go through doors without opening them.",
+        category: "Doorless",
+        value: false
+    })
+    .addTextInput({
+        configName: "doorlessPacketAmount",
+        title: "Amount of packets",
+        description: "How many positions to use to go through the door.",
+        category: "Doorless",
+        value: "0.925,0.925",
+        shouldShow: data => data.doorlessEnabled
+    })
 
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")
