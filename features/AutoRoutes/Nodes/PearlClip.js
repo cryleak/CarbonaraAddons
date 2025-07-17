@@ -1,11 +1,11 @@
 import Rotations from "../../../utils/Rotations"
 import NodeManager from "../NodeManager"
 import tpManager from "../TeleportManager";
-import OnUpdateWalkingPlayerPre from "../../../events/onUpdateWalkingPlayerPre"
 import LivingUpdate from "../../../events/LivingUpdate"
 
 import { chat, findAirOpening, itemSwapSuccess, scheduleTask, sendAirClick, setPlayerPosition, swapFromName } from "../../../utils/utils"
 import { Node } from "../Node"
+import { UpdateWalkingPlayerPre } from "../../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 
@@ -32,7 +32,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                 return
             }
             chat(`Pearlclipped ${(originalY - yPosition).toFixed(2)} blocks down.`)
-            const trigger = OnUpdateWalkingPlayerPre.register(event => {
+            const trigger = UpdateWalkingPlayerPre.register(event => {
                 trigger.unregister();
                 event.breakChain = true;
                 event.cancelled = true;

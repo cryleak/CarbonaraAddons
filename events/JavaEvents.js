@@ -42,3 +42,25 @@ export const BowItemRightClick = events.BowItemRightClick;
  * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<EntityArrowLandData>>}
  */
 export const EntityArrowLand = events.EntityArrowLand
+
+/**
+ * @typedef {Object} UpdateWalkingPlayerData
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} yaw
+ * @property {number} pitch
+ * @property {boolean} onGround
+ */
+
+/**
+ * @const
+ * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
+ */
+export const UpdateWalkingPlayerPre = events.UpdateWalkingPlayerPre
+
+/**
+ * @const
+ * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
+ */
+export const UpdateWalkingPlayerPost = events.UpdateWalkingPlayerPost

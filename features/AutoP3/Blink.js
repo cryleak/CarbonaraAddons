@@ -5,8 +5,8 @@ import PogObject from "../../../PogData"
 import { chat, setPlayerPosition, setVelocity, debugMessage } from "../../utils/utils"
 import { registerSubCommand } from "../../utils/commands"
 import { packetCounterGui } from "../../config"
-import OnUpdateWalkingPlayerPre from "../../events/onUpdateWalkingPlayerPre"
 import Vector3 from "../../utils/Vector3"
+import { UpdateWalkingPlayerPre } from "../../events/JavaEvents"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 const File = Java.type("java.io.File")
@@ -99,7 +99,7 @@ class Blink {
             else this.toggleCharge(!global.carbonara.autop3.blinkEnabled)
         })
 
-        this.packetCollector = OnUpdateWalkingPlayerPre.register(event => {
+        this.packetCollector = UpdateWalkingPlayerPre.register(event => {
             if (Settings().pauseCharging && Date.now() - global.carbonara.autop3.lastBlink < 1000) return
             if (this.recordingRouteName) return
 
@@ -108,16 +108,14 @@ class Blink {
 
             if (data.onGround !== this.lastC03PacketState.onGround) cancelPacket = false
             this.lastC03PacketState.onGround = data.onGround
-            if (data.isRotating && Settings().allowRotations) { // If rotating
+            if (Settings().allowRotations) { // If rotating
                 if (this.lastC03PacketState.rotation.yaw !== data.yaw || this.lastC03PacketState.rotation.pitch !== data.pitch) cancelPacket = false
                 this.lastC03PacketState.rotation.yaw = data.yaw
                 this.lastC03PacketState.rotation.pitch = data.pitch
             }
-            if (data.isMoving) {// If moving
-                const currentPosition = new Vector3(data.x, data.y, data.z)
-                if (!currentPosition.equals(this.lastC03PacketState.position)) cancelPacket = false
-                this.lastC03PacketState.position = currentPosition
-            }
+            const currentPosition = new Vector3(data.x, data.y, data.z)
+            if (!currentPosition.equals(this.lastC03PacketState.position)) cancelPacket = false
+            this.lastC03PacketState.position = currentPosition
 
             if (cancelPacket) event.cancelled = true
         }, 10000).unregister()
@@ -142,11 +140,9 @@ class Blink {
             this.packetLogger.register()
         })
 
-        this.packetLogger = OnUpdateWalkingPlayerPre.register(event => {
+        this.packetLogger = UpdateWalkingPlayerPre.register(event => {
             const data = event.data
             let ignorePacket = true
-
-            if (!data.isMoving) return
 
             if (data.onGround !== this.lastC03PacketState.onGround) ignorePacket = false
             this.lastC03PacketState.onGround = data.onGround

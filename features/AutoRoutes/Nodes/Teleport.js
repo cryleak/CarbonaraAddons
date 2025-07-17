@@ -1,7 +1,6 @@
 import Vector3 from "../../../utils/Vector3"
 import ServerTeleport from "../../../events/ServerTeleport";
 import manager from "../NodeManager";
-import OnUpdateWalkingPlayerPre from "../../../events/OnUpdateWalkingPlayerPre"
 import Dungeons from "../../../utils/Dungeons"
 import bind from "../../../utils/bind"
 import tpManager from "../TeleportManager";
@@ -9,6 +8,7 @@ import SecretAuraClick from "../../../events/SecretAuraClick"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
 import { Node } from "../Node"
+import { UpdateWalkingPlayerPre } from "../../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
@@ -156,7 +156,7 @@ class TeleportRecorder {
         this.lastPacket = null;
 
         this.trigger = bind(
-            OnUpdateWalkingPlayerPre.register((event) => {
+            UpdateWalkingPlayerPre.register((event) => {
                 // Client.sendPacket(replacementPacket);
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
                 setPlayerPosition(x, y, z, true);
