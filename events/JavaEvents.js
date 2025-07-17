@@ -61,4 +61,16 @@ export const EntityArrowLand = new WrappedJavaEvent(events.EntityArrowLand)
  *   Post: import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>,
  * }}
  */
-export const UpdateWalkingPlayer = { Pre: new WrappedJavaEvent(events.UpdateWalkingPlayerPre), Post: new WrappedJavaEvent(events.UpdateWalkingPlayerPost), }
+export const UpdateWalkingPlayer = { Pre: new WrappedJavaEvent(events.UpdateWalkingPlayerPre), Post: new WrappedJavaEvent(events.UpdateWalkingPlayerPost) }
+
+/**
+ * @typedef {Object} UpdatePlayerData
+ * @property {EntityPlayer} EntityPlayerSP
+ */
+/** An event that is triggered right before the Player is updated (happens once per tick)
+ * @const
+ * @type {{
+ *   Pre: import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdatePlayerData>>,
+ * }}
+ */
+export const UpdatePlayer = { Pre: new WrappedJavaEvent(events.UpdatePlayerPre) }

@@ -14,7 +14,7 @@ import { Terminal, jump, getTermPhase } from "./autoP3Utils"
 import { chat, scheduleTask, movementKeys, playerCoords, releaseMovementKeys, repressMovementKeys, rotate, setWalking, swapFromItemID, swapFromName, setVelocity, findAirOpening, leftClick, setPlayerPosition, checkIntersection, sendAirClick, itemSwapSuccess } from "../../utils/utils"
 import { onChatPacket } from "../../../BloomCore/utils/Events"
 import { registerSubCommand } from "../../utils/commands"
-import { UpdateWalkingPlayer } from "../../events/JavaEvents"
+import { UpdatePlayer, UpdateWalkingPlayer } from "../../events/JavaEvents"
 
 const S12PacketEntityVelocity = Java.type("net.minecraft.network.play.server.S12PacketEntityVelocity")
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
@@ -156,7 +156,7 @@ const nodeTypes = {
         if (!Player.getPlayer().field_70122_E) {
             Motion.running = false
             setVelocity(0, null, 0)
-            UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
+            UpdatePlayer.Pre.scheduleTask(1, () => {
                 Motion.running = true
             })
         }

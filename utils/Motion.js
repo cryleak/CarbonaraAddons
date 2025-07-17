@@ -1,6 +1,6 @@
 import Settings from "../config"
 import { setVelocity } from "../utils/utils"
-import { UpdateWalkingPlayer } from "../events/JavaEvents"
+import { UpdatePlayer } from "../events/JavaEvents"
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
 
@@ -20,7 +20,7 @@ export default new class Motion {
             this.jumping = true
         })
 
-        UpdateWalkingPlayer.Pre.register((data) => {
+        UpdatePlayer.Pre.register((data) => {
             if (data.cancelled) {
                 return;
             }
