@@ -1,7 +1,8 @@
 import { Event } from "./CustomEvents"
 import { getDistanceToEntity } from "../utils/utils"
 
-export default BatSpawnEvent = new Event();
+const BatSpawnEvent = new Event();
+export default BatSpawnEvent;
 
 register("tick", () => {
     if (!BatSpawnEvent.hasListeners()) return
