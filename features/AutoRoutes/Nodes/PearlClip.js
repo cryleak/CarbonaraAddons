@@ -8,7 +8,7 @@ import { UpdateWalkingPlayer } from "../../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 
-NodeManager.registerNode(class PearlClipNode extends Node {
+export default class PearlClipNode extends Node {
     static identifier = "pearlclip"
     static priority = 10
     constructor(args) {
@@ -21,7 +21,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
         let listening = true
         let yPosition = this.distance === 0 ? findAirOpening() : Player.getY() - this.distance
         const originalY = Player.y
-        const soundListener = register("soundPlay", (pos, name, vol) => {
+        const soundListener = register("soundPlay", (_, name, vol) => {
             if (name !== "mob.endermen.portal" || vol !== 1) return
             listening = false
             soundListener.unregister()
@@ -39,7 +39,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
                 setPlayerPosition(Player.x, yPosition, Player.z, true)
                 execer.execute(this)
-            }, 2934285349853);
+            }, 2934285);
         })
 
         scheduleTask(60, () => {
@@ -95,4 +95,6 @@ NodeManager.registerNode(class PearlClipNode extends Node {
     _handleRotate() {
         return
     }
-})
+}
+
+NodeManager.registerNode(PearlClipNode)

@@ -11,7 +11,7 @@ const defaultColor = "§f"
 const colors = ["§4", "§c", "§6", "§e", "§2", "§a", "§b", "§3", "§1", "§9", "§d", "§5", "§f", "§7", "§8", "§0"]
 /**
  * Prints in chat a message with a prefix
- * @param {String} message 
+ * @param {String} message
  */
 export function chat(message) {
     if (!Settings().randomColors) ChatLib.chat("§0[§4Carbonara§0] " + defaultColor + message.toString().replaceAll(/(?:&r|§r)/gi, defaultColor))
@@ -40,11 +40,11 @@ register("chat", event => {
 
 /**
  * Prints in chat a debug message if debug messages are enabled.
- * @param {String} message 
+ * @param {String} message
  */
 export function debugMessage(message) {
     // if (!Settings().debugMessages) return
-    return
+    // return
     ChatLib.chat("§0[§4CarbonaraDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 
@@ -54,9 +54,9 @@ const worldRenderer = tessellatorInstance.func_178180_c()
 
 /**
  * Renders a box made out of squares.
- * @param {Array} pos 
- * @param {Number} width 
- * @param {Number} height 
+ * @param {Array} pos
+ * @param {Number} width
+ * @param {Number} height
  * @param {Array} colors An array of any number of arrays which consist each of 3 floats containing color values from 0-1
  */
 export function renderBox(pos, width, height, colors) {

@@ -3,19 +3,15 @@ import RenderLibV2 from "../../../RenderLibV2J"
 import Settings from "../../config"
 import Dungeons from "../../utils/Dungeons"
 import Location from "../../utils/Location"
-import Editable from "../../utils/ObjectEditor";
 import Settings from "../../config"
 
-import { drawLine3d } from "../../../BloomCore/utils/Utils";
 import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils";
 import { registerSubCommand } from "../../utils/commands";
-
-const RoomEnterEvent = Java.type("me.odinmain.events.impl.RoomEnterEvent");
 
 class NodeManager {
     constructor() {
         try {
-            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (key, value) => {
+            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (_, value) => {
                 if (value && typeof (value.x) === "number" && typeof (value.y) === "number" && typeof (value.z) === "number") {
                     return new Vector3(value.x, value.y, value.z);
                 }
@@ -157,6 +153,7 @@ class NodeManager {
     }
 
     _updateActive() {
+        debugMessage(`&aUpdating active nodes for room: ${this.currentRoom.name}`);
         if (!this.currentRoom || this.currentRoom.name === "Unknown") {
             this.active = false;
             this.activeNodes = [];

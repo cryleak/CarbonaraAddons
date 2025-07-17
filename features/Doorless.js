@@ -214,7 +214,7 @@ class Doorless {
                     if (done) {
                         triggered.unregister();
                     }
-                }, 10000002348);
+                }, 100000);
             }
 
             debugMessage(`Gooned next to a door for ${amountToSend} blinked and ${offsetTimes.length - amountToSend} regular pos packets`);
@@ -222,7 +222,7 @@ class Doorless {
             if (holding) {
                 swapToSlot(holding);
             }
-        }, 1000000000000000)
+        }, 10000000)
 
         sendAirClick();
     }
