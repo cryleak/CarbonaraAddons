@@ -43,6 +43,6 @@ export const Event = Java.type("me.cryleak.carbonaraloader.event.Event");
 /**
  * CancellableEvent constructor imported from Java
  * @template T
- * @type {new <T>() => Event<Data<T>>}
+ * @type {new <T>() => EventInstance<Data<T>>}
  */
 export const CancellableEvent = Java.type("me.cryleak.carbonaraloader.event.CancellableEvent");
