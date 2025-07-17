@@ -7,7 +7,8 @@ import { Event } from "./CustomEvents"
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 const BlockSkull = Java.type("net.minecraft.block.BlockSkull")
-export default SecretEvent = new Event();
+const SecretEvent = new Event();
+export default SecretEvent;
 
 SecretAuraClick.Post.register(data => {
     // if (!SecretEvent.hasListeners()) return
