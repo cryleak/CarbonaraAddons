@@ -196,10 +196,12 @@ export function checkIntersection(start, end, target, horizontalTolerance, verti
 
     if (isPointInBounds(start) || isPointInBounds(end)) return true
 
-    const direction = end.subtract(start).normalize()
+    const direction = end.subtract(start)
+    const directionLength = direction.getLength()
+    direction.normalize(directionLength)
     const dotProduct = target.subtract(start).dotProduct(direction)
 
-    if (dotProduct < 0 || dotProduct > direction.getLength()) return false
+    if (dotProduct < 0 || dotProduct > directionLength) return false
 
     const closestPoint = new Vector3(start.x + dotProduct * direction.x, start.y + dotProduct * direction.y, start.z + dotProduct * direction.z)
 

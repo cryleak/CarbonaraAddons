@@ -81,6 +81,18 @@ export default class Vector3 extends BumVector3 {
         return this
     }
 
+    /**
+    * Normalizes the vector
+    * @param {Number} length
+    * @returns {Vector3}
+    */
+    normalize(length = this.getLength()) {
+        this.x = this.x / length
+        this.y = this.y / length
+        this.z = this.z / length
+        return this
+    }
+
     // I need to override all this bullshit so it keeps the methods of the extended Vector3 class.
 
     /**
