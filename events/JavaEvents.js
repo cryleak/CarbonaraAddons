@@ -1,3 +1,5 @@
+import WrappedJavaEvent from "./WrappedJavaEvent";
+
 const events = Java.type("me.cryleak.carbonaraloader.event.Events");
 
 register("gameUnload", () => {
@@ -5,11 +7,11 @@ register("gameUnload", () => {
 });
 
 /**
- * An event that is triggered when a player right-clicks with a bow item.
+ * An event that is triggered when a packet is sent to the client.
  * @const
  * @type {import('./CustomEvents').EventInstance<Packet>}
  */
-export const PostPacketSend = events.PostPacketSend;
+export const PostPacketSend = new WrappedJavaEvent(events.PostPacketSend);
 
 /**
  * Represents data for an arrow that has landed on a block/tile.
@@ -25,7 +27,7 @@ export const PostPacketSend = events.PostPacketSend;
  * @const
  * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<BowItemRightClick>>}
  */
-export const BowItemRightClick = events.BowItemRightClick;
+export const BowItemRightClick = new WrappedJavaEvent(events.BowItemRightClick);
 
 /**
  * Represents data for an arrow that has landed on a block/tile.
@@ -41,7 +43,7 @@ export const BowItemRightClick = events.BowItemRightClick;
  * @const
  * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<EntityArrowLandData>>}
  */
-export const EntityArrowLand = events.EntityArrowLand
+export const EntityArrowLand = new WrappedJavaEvent(events.EntityArrowLand)
 
 /**
  * @typedef {Object} UpdateWalkingPlayerData
@@ -57,10 +59,10 @@ export const EntityArrowLand = events.EntityArrowLand
  * @const
  * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
  */
-export const UpdateWalkingPlayerPre = events.UpdateWalkingPlayerPre
+export const UpdateWalkingPlayerPre = new WrappedJavaEvent(events.UpdateWalkingPlayerPre)
 
 /**
  * @const
  * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
  */
-export const UpdateWalkingPlayerPost = events.UpdateWalkingPlayerPost
+export const UpdateWalkingPlayerPost = new WrappedJavaEvent(events.UpdateWalkingPlayerPost)

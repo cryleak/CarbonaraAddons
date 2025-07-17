@@ -27,7 +27,6 @@
  * @template T
  * @type {new <T>() => EventInstance<T>}
  */
-
 export const Event = Java.type("me.cryleak.carbonaraloader.event.Event");
 
 /**
