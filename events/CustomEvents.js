@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export class Event {
 	constructor() {
 		this.listeners = [];
@@ -128,3 +129,7 @@ export class CancellableEvent extends Event {
 		return !event.cancelled;
 	}
 };
+=======
+export const Event = Java.type("me.cryleak.carbonaraloader.event.Event");
+export const CancellableEvent = Java.type("me.cryleak.carbonaraloader.event.CancellableEvent");
+>>>>>>> dc555aa (moved to using java event types)

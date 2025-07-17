@@ -34,7 +34,7 @@ NodeManager.registerNode(class PearlClipNode extends Node {
             chat(`Pearlclipped ${(originalY - yPosition).toFixed(2)} blocks down.`)
             const trigger = OnUpdateWalkingPlayerPre.register(event => {
                 trigger.unregister();
-                event.break = true;
+                event.breakChain = true;
                 event.cancelled = true;
 
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));

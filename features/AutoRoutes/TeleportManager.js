@@ -60,7 +60,7 @@ class TeleportManager {
             } else {
                 this.recentlyPushedC06s.splice(found, 1);
                 event.cancelled = true
-                event.break = true
+                event.breakChain = true
             }
         }, 10000);
     }
@@ -185,7 +185,7 @@ class TeleportManager {
             setSneaking(sneaking)
             const playerUpdateListener = OnUpdateWalkingPlayerPre.register((event) => {
                 event.cancelled = true
-                event.break = true
+                event.breakChain = true
                 Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, false))
                 playerUpdateListener.unregister()
                 sendAirClick();
@@ -194,7 +194,7 @@ class TeleportManager {
                 const listener = ServerTeleport.register((event) => {
                     if (packetsReceived-- !== 0) return
                     awaiting = false
-                    event.break = true
+                    event.breakChain = true
                     listener.unregister()
 
                     const data = event.data

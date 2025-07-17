@@ -126,7 +126,7 @@ export default new class SecretAura {
         const mop = this.getMOPOnBlock(block, javaBlockPos)
         const itemStack = Player.getHeldItem()?.getItemStack() ?? null
 
-        if (!SecretAuraClick.Pre.trigger({ block, blockPos, itemStack })) return
+        if (SecretAuraClick.Pre.trigger({ block, blockPos, itemStack }).cancelled) return
 
 
         Client.sendPacket(new C08PacketPlayerBlockPlacement(javaBlockPos, mop.sideHit.func_176745_a(), itemStack, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z))
