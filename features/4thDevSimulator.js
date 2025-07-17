@@ -1,20 +1,18 @@
 import Tick from "../events/Tick"
-import { Event } from "../events/CustomEvents"
+import Vector3 from "../utils/Vector3"
+
 import { registerSubCommand } from "../utils/commands"
 import { chat, fireChannelRead, getEyeHeight, inSingleplayer, playSound, scheduleTask } from "../utils/utils"
-import Vector3 from "../utils/Vector3"
-import RenderLibV2 from "../../RenderLibV2"
+import { EntityArrowLand } from "../events/JavaEvents"
 
-const ArrowLandEvent = new Event()
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")
-const MCNBTTagCompound = Java.type("net.minecraft.nbt.NBTTagCompound")
+const EntityArrow = Java.type("net.minecraft.entity.projectile.EntityArrow")
 const C0APacketAnimation = Java.type("net.minecraft.network.play.client.C0APacketAnimation")
 const JavaMath = Java.type("java.lang.Math")
 const Mouse = Java.type("org.lwjgl.input.Mouse")
 const S23PacketBlockChange = Java.type("net.minecraft.network.play.server.S23PacketBlockChange")
 const Blocks = Java.type("net.minecraft.init.Blocks")
-const CustomArrow = Java.type("me.cryleak.CustomArrow") // Class that extends EntityArrow but doesn't do anything when onUpdate() is called, so we have complete control over when the arrow is updated.
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 const SecureRandom = Java.type("java.security.SecureRandom");
 
@@ -69,6 +67,7 @@ class DeviceManager {
         this.landed = []
         this.remainingBlocks = [...this.blocks].sort(() => random() - 0.5)
         this.tickCounter = 0
+        this.activeFakeArrows = []
 
         register("packetSent", () => {
             if (!this.isOnDevice()) return
@@ -120,11 +119,19 @@ class DeviceManager {
         })
         */
 
-        ArrowLandEvent.register(data => {
-            if (!this.deviceActive) {
-                return;
-            }
-            const landPosition = data.hitPosition;
+        EntityArrowLand.register(event => {
+            const data = event.data
+            Client.scheduleTask(1, () => {
+                for (let i = 0; i < this.activeFakeArrows.length; i++) {
+                    let arrow = this.activeFakeArrows[i]
+                    if (arrow !== data.arrow) continue
+                    World.getWorld().func_72900_e(data.arrow)
+                    this.activeFakeArrows.splice(i, 1)
+                }
+            })
+            if (!this.isOnDevice()) return
+            if (!this.deviceActive) return;
+            const landPosition = new Vector3(data.xTile, data.yTile, data.zTile)
             this.landed.push(landPosition);
         })
 
@@ -292,7 +299,7 @@ export default Device
 class FakeArrow {
     constructor(position, yaw, pitch, yawOffset, middleArrow) {
         const velocity = (middleArrow ? 2.5 + 1 - (pitch + 90) / 180 : 3)
-        this.arrow = new CustomArrow(World.getWorld(), Player.getPlayer(), velocity)
+        this.arrow = new EntityArrow(World.getWorld(), Player.getPlayer(), velocity)
 
         const yawRadians = JavaMath.toRadians(yaw + yawOffset)
         const pitchRadians = JavaMath.toRadians(pitch)
@@ -308,35 +315,12 @@ class FakeArrow {
         const x = this.arrow.field_70165_t
         const y = this.arrow.field_70163_u
         const z = this.arrow.field_70161_v
-        Client.scheduleTask(0, () => World.getWorld().func_72838_d(this.arrow))
-        this.eventListener = Tick.Post // Change this if you want to change what event you want this shit to trigger on
+        this.arrow.func_70071_h_()
+        Client.scheduleTask(0, () => {
+            World.getWorld().func_72838_d(this.arrow)
+            Device.activeFakeArrows.push(this.arrow)
+        })
 
-        this.arrowLandListener = this.eventListener.register(() => this.updateArrow())
-    }
-
-    updateArrow() {
-        this.arrow.performArrowTick()
-        // This is probably more performant than using Reflection to retrieve private fields
-        const tagCompound = new MCNBTTagCompound()
-        this.arrow.func_70014_b(tagCompound)
-        const ticksInGround = tagCompound.func_74762_e("life")
-        if (ticksInGround === 0) return
-        const xTile = tagCompound.func_74762_e("xTile")
-        const yTile = tagCompound.func_74762_e("yTile")
-        const zTile = tagCompound.func_74762_e("zTile")
-        const hitPosition = new Vector3(xTile, yTile, zTile)
-        /*
-        const ticksInAirField = this.arrow.class.getDeclaredField("field_70257_an")
-        ticksInAirField.setAccessible(true)
-        const ticksInAir = ticksInAirField.get(this.arrow)
-        for (let block of Device.blocks) {
-            if (hitPosition.equals(block.copy().floor3D())) ChatLib.chat(`Arrow hit ${hitPosition.toString()} in ${ticksInAir} ticks`)
-        }
-        */
-        ArrowLandEvent.trigger({ hitPosition })
-        // this.arrowLandListener.unregister()
-        this.eventListener.scheduleTask(0, () => this.arrowLandListener.unregister())
-        Client.scheduleTask(1, () => World.getWorld().func_72900_e(this.arrow))
     }
 }
 
@@ -351,3 +335,4 @@ function sin(value) {
 function random() {
     return new SecureRandom().nextDouble()
 }
+

@@ -195,12 +195,12 @@ const nodeTypes = {
         const clip = () => {
             releaseMovementKeys()
             setVelocity(0, null, 0)
-            LivingUpdate.scheduleTask(1, () => {
+            LivingUpdate.scheduleTask(0, () => {
                 const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * (43 / 15)
                 const radians = args.yaw * Math.PI / 180
                 setVelocity(-Math.sin(radians) * speed, null, Math.cos(radians) * speed)
             })
-            LivingUpdate.scheduleTask(2, repressMovementKeys)
+            LivingUpdate.scheduleTask(1, repressMovementKeys)
         }
 
         if (Player.getPlayer().field_70122_E && args.jumpOnHClip) {
