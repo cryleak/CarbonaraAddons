@@ -3,7 +3,7 @@ import Vector3 from "../utils/Vector3"
 
 import { registerSubCommand } from "../utils/commands"
 import { chat, fireChannelRead, getEyeHeight, inSingleplayer, playSound, scheduleTask } from "../utils/utils"
-import { EntityArrowLand, UpdateWalkingPlayerPre } from "../events/JavaEvents"
+import { EntityArrowLand } from "../events/JavaEvents"
 
 
 const MathHelper = Java.type("net.minecraft.util.MathHelper")

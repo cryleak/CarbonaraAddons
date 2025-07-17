@@ -58,3 +58,9 @@ export const EntityArrowLand = events.EntityArrowLand
  * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
  */
 export const UpdateWalkingPlayerPre = events.UpdateWalkingPlayerPre
+
+/**
+ * @const
+ * @type {import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdateWalkingPlayerData>>}
+ */
+export const UpdateWalkingPlayerPost = events.UpdateWalkingPlayerPost
