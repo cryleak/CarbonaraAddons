@@ -1,11 +1,11 @@
 import Vector3 from "../../utils/Vector3"
 import ServerTeleport from "../../events/ServerTeleport";
 import manager from "./NodeManager";
-import OnUpdateWalkingPlayerPre from "../../events/OnUpdateWalkingPlayerPre"
 import Rotations from "../../utils/Rotations"
 import execer from "./NodeExecutor"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../utils/utils"
+import { UpdateWalkingPlayerPre } from "../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 
@@ -183,7 +183,7 @@ class TeleportManager {
                 });
             }
             setSneaking(sneaking)
-            const playerUpdateListener = OnUpdateWalkingPlayerPre.register((event) => {
+            const playerUpdateListener = UpdateWalkingPlayerPre.register((event) => {
                 event.cancelled = true
                 event.breakChain = true
                 Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, false))

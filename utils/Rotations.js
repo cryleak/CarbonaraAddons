@@ -1,4 +1,4 @@
-import OnUpdateWalkingPlayerPre from "../events/onUpdateWalkingPlayerPre"
+import { UpdateWalkingPlayerPre } from "../events/JavaEvents"
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 
@@ -8,7 +8,7 @@ export default new class Rotations {
         this.pitch = null
         this.postPacketSend = null
         this.noMove = false
-        OnUpdateWalkingPlayerPre.register(event => {
+        UpdateWalkingPlayerPre.register(event => {
             if (event.cancelled) return
             if (this.yaw === null || this.pitch === null) return
 
@@ -16,7 +16,7 @@ export default new class Rotations {
 
             event.cancelled = true
             let replacementPacket
-            if (data.isMoving && !this.noMove) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(data.x, data.y, data.z, this.yaw, this.pitch, data.onGround)
+            if (!this.noMove) replacementPacket = new C03PacketPlayer.C06PacketPlayerPosLook(data.x, data.y, data.z, this.yaw, this.pitch, data.onGround)
             else replacementPacket = new C03PacketPlayer.C05PacketPlayerLook(this.yaw, this.pitch, data.onGround)
             Client.sendPacket(replacementPacket)
             const postPacketSend = this.postPacketSend

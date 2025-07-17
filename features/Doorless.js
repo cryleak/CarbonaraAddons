@@ -1,6 +1,5 @@
 import Settings from "../config"
 import Vector3 from "../utils/Vector3";
-import OnUpdateWalkingPlayerPre from "../events/onUpdateWalkingPlayerPre";
 import LivingUpdate from "../events/LivingUpdate";
 import Rotations from "../utils/Rotations";
 import Dungeons from "../utils/Dungeons";
@@ -9,6 +8,7 @@ import ServerTeleport from "../events/ServerTeleport"
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
 import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
+import { UpdateWalkingPlayerPre } from "../events/JavaEvents";
 
 const MCBlock = Java.type("net.minecraft.block.Block");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -26,7 +26,7 @@ let debug = true
 
 class Doorless {
     constructor() {
-        this.trigger = OnUpdateWalkingPlayerPre.register(event => {
+        this.trigger = UpdateWalkingPlayerPre.register(event => {
             if (!Settings().doorlessEnabled || !Dungeons.isInDungeons()) {
                 return;
             }
@@ -207,7 +207,7 @@ class Doorless {
             }
 
             if (!done) {
-                const triggered = OnUpdateWalkingPlayerPre.register(event => {
+                const triggered = UpdateWalkingPlayerPre.register(event => {
                     event.cancelled = true;
                     event.breakChain = true;
 
