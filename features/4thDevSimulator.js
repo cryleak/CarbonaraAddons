@@ -312,9 +312,6 @@ class FakeArrow {
         this.arrow.func_70186_c(this.arrow.field_70159_w, this.arrow.field_70181_x, this.arrow.field_70179_y, velocity, 0.5)
 
         this.arrow.field_70251_a = 2
-        const x = this.arrow.field_70165_t
-        const y = this.arrow.field_70163_u
-        const z = this.arrow.field_70161_v
         this.arrow.func_70071_h_()
         Client.scheduleTask(0, () => {
             World.getWorld().func_72838_d(this.arrow)
