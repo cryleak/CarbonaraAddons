@@ -1,92 +1,18 @@
 import Vector3 from "../../utils/Vector3";
 import tpManager from "../AutoRoutes/TeleportManager";
 import FreezeManager from "../AutoRoutes/FreezeManager";
-import Tick from "../../events/Tick";
+import scanner from "./Tiles";
+import ServerTickEvent from "../../events/ServerTick";
 import Dungeons from "../../utils/Dungeons";
 import Settings from "../../config"
+import Tick from "../../events/Tick";
 
 import { PostPacketReceive, UpdateWalkingPlayer } from "../../events/JavaEvents";
-import { registerSubCommand } from "../../utils/commands";
 import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage } from "../../utils/utils";
-import ServerTeleport from "../../events/ServerTeleport";
-import ServerTickEvent from "../../events/ServerTick";
-import Rotations from "../../utils/Rotations";
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
-
-class BloodRoomScanner {
-    constructor() {
-        this.coordinates = [
-            [
-                { x: 2, z: 2 },
-                { x: 8, z: 2 },
-                { x: 2, z: 6 },
-                { x: 8, z: 6 },
-            ],
-            [
-                { x: 2, z: 28 },
-                { x: 6, z: 28 },
-                { x: 2, z: 22 },
-                { x: 6, z: 22 }
-            ],
-            [
-                { x: 28, z: 2 },
-                { x: 24, z: 2 },
-                { x: 28, z: 8 },
-                { x: 24, z: 8 }
-            ],
-            [
-                { x: 28, z: 28 },
-                { x: 22, z: 28 },
-                { x: 28, z: 24 },
-                { x: 22, z: 24 }
-            ]
-        ];
-
-        this.found = null;
-        Tick.Pre.register(() => {
-            this._scan();
-        }, 234999);
-
-        register("worldUnload", () => {
-            this.found = null;
-        });
-    }
-
-    getRoom() {
-        return this.found;
-    }
-
-    _checkFor(room) {
-        return this.coordinates.some(rotation => {
-            return !rotation.some(coord => {
-                const at = room.copy().add(coord.x, 0, coord.z);
-                const block = World.getBlockAt(new BlockPos(at.convertToBlockPos()))
-                return block.type.getID() !== 35 || block.getMetadata() !== 5;
-            });
-        });
-    }
-
-    _scan() {
-        if (this.found) {
-            return;
-        }
-
-        for (let x = -200; x <= -8; x += 32) {
-            for (let z = -200; z <= -8; z += 32) {
-                let foundRoom = this._checkFor(new Vector3(x, 100, z));
-                if (foundRoom) {
-                    this.found = new Vector3(x + 16, 70, z + 16);
-                    return;
-                }
-            }
-        }
-    }
-}
-
-const brScanner = new BloodRoomScanner();
 
 new class BloodRusher {
     constructor() {
@@ -96,8 +22,13 @@ new class BloodRusher {
 
             const onGroundListener = Tick.Pre.register(() => {
                 if (!Player.asPlayerMP().isOnGround()) return
+                const tile = scanner.findTileNotL();
+                if (!tile) {
+                    return;
+                }
+
                 onGroundListener.unregister()
-                this.setup()
+                this.setup(tile)
             })
         })
 
@@ -105,10 +36,12 @@ new class BloodRusher {
             if (this.ticksFromDeathTick !== null) this.ticksFromDeathTick++
         })
     }
-    setup() {
+
+    setup(tile, once = false) {
         tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
             tpManager.sync(Player.yaw, 90, false)
-            this._teleportToTile({ x: 3, z: 3 }, () => {
+
+            this._teleportToTile(tile, () => {
                 tpManager.sync(Player.yaw, -90, true);
                 rotate(Player.yaw, -90);
                 FreezeManager.setFreezing(true);
@@ -120,27 +53,29 @@ new class BloodRusher {
                     registered.unregister();
 
                     FreezeManager.setFreezing(false);
-                    if (brScanner.getRoom()) {
-                        const onGroundListener = Tick.Pre.register(() => {
-                            if (!Player.asPlayerMP().isOnGround()) return
-                            onGroundListener.unregister()
-                            started = Date.now();
-                            const to = this._tileFromCoords(brScanner.getRoom());
-                            tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
-                                tpManager.sync(Player.yaw, 90, false)
-                                this._teleportToTile(to, (pos) => {
-                                    this._teleportRightBelowBlood(pos, () => {
-                                        debugMessage(`Got to blood in: ${Date.now() - started}ms`);
-                                        tpManager.sync(Player.yaw, -90, true);
-                                        this._pearlThrow(-90, () => {
-                                            rotate(Player.yaw, 90)
-                                            sendAirClick();
-                                        });
+                    const onGroundListener = Tick.Pre.register(() => {
+                        if (!Player.asPlayerMP().isOnGround()) return
+                        onGroundListener.unregister()
+                        started = Date.now();
+                        const to = scanner.getRoom();
+                        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
+                            tpManager.sync(Player.yaw, 90, false)
+                            this._teleportToTile(to, (pos) => {
+                                this._teleportRightBelowBlood(pos, () => {
+                                    debugMessage(`Got to blood in: ${Date.now() - started}ms`);
+                                    tpManager.sync(Player.yaw, -90, true);
+                                    this._pearlThrow(-90, () => {
+                                        rotate(Player.yaw, 90)
+                                        sendAirClick();
                                     });
                                 });
-                            })
-                        }).unregister()
-                        if (!Settings().schizoDoorsTacticalInsertion) {
+                            });
+                        })
+                    }).unregister()
+                    ChatLib.chat("Doing stuff");
+                    if (!Settings().schizoDoorsTacticalInsertion) {
+                        if (scanner.getRoom()) {
+                            ChatLib.chat(`Found blood room at tile: ${scanner.getRoom().x}, ${scanner.getRoom().z}`);
                             const soundListener = register("packetReceived", (packet) => {
                                 if (packet.func_149212_c() !== "mob.enderdragon.growl" || packet.func_149208_g() !== 1 || packet.func_149209_h() !== 1) return
                                 soundListener.unregister()
@@ -148,6 +83,13 @@ new class BloodRusher {
                                 if (ticksToNextDeathTick > 15) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
                                 else onGroundListener.register()
                             }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
+                        } else if (!once) {
+                            ChatLib.chat("Could not find blood room tile, trying to find it now...");
+                            // const onGroundListener = Tick.Pre.register(() => {
+                                // if (!Player.asPlayerMP().isOnGround()) return
+                                // onGroundListener.unregister()
+                                // this.setup(tile, true);
+                            // });
                         }
                     }
                 }, 9999);
