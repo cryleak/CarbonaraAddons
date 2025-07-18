@@ -513,5 +513,15 @@ export function inSingleplayer() {
     return ip === "localhost" || ip === "127.0.0.1" || ip === "127.0.0.1:25564"
 }
 
+/**
+ * Block Collision helper.
+ * @type {{
+ *   setCollisions: (state: boolean) => void,
+ *   cancelCollisions: boolean
+ * }}
+ */
+export const BlockCollisions = Java.type("me.cryleak.carbonaraloader.helpers.BlockCollisions").getInstance()
+
+
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy
