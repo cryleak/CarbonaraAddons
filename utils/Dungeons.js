@@ -436,7 +436,7 @@ export default new class Dungeons {
 
     /**
      * (Internal use) rotates a set of real coordinates to face north.
-     * @param {Vector3} coords 
+     * @param {Vector3} coords
      * @returns {Vector3} northFacingCoordinates
      */
     _rotateToNorth(coords) {
@@ -457,7 +457,7 @@ export default new class Dungeons {
 
     /**
      * (Internal use) Rotates a set of relative coordinates from north to the rotation of the room.
-     * @param {Vector3} coords 
+     * @param {Vector3} coords
      * @returns {Vector3} rotatedCoordinates
      */
     _rotateFromNorth(coords) {

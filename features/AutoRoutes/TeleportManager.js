@@ -65,7 +65,7 @@ class TeleportManager {
         }, 10000);
     }
 
-    _teleportAfterSwap(toBlock, yaw, pitch, sneaking, onResult, shouldWait) {
+    _teleportAfterSwap(toBlock, yaw, pitch, onResult, shouldWait) {
         this.counter++;
         if (Date.now() - this.lastTPed >= this.noRotateFor) {
             const exec = () => {
@@ -96,7 +96,6 @@ class TeleportManager {
         }
 
         if (!this.lastBlock || shouldWait) {
-            let rotated = false;
             if (shouldWait) this.sync(yaw, pitch, false);
 
             Rotations.rotate(yaw, pitch, () => {
@@ -135,7 +134,7 @@ class TeleportManager {
             setSneaking(sneaking)
             setVelocity(0, 0, 0);
 
-            this._teleportAfterSwap(toBlock, yaw, pitch, sneaking, onResult, shouldWait);
+            this._teleportAfterSwap(toBlock, yaw, pitch, onResult, shouldWait);
         });
     }
 

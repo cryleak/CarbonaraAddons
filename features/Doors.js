@@ -2,9 +2,12 @@ import Vector3 from "../utils/Vector3";
 import Tick from "../events/Tick";
 import tpManager from "./AutoRoutes/TeleportManager";
 
-import { UpdateWalkingPlayer } from "../events/JavaEvents";
+import { PostPacketReceive, UpdateWalkingPlayer } from "../events/JavaEvents";
 import { registerSubCommand } from "../utils/commands";
-import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate } from "../utils/utils";
+import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage } from "../utils/utils";
+import FreezeManager from "./AutoRoutes/FreezeManager";
+
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
 function checkBlock(x, y, z) {
     const block = World.getBlockAt(x, y, z);
@@ -49,18 +52,50 @@ export function existsWestDoor(x, z) {
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
 
 class Doer {
-    setup() {
-        // I need to be on 64 when throwing pearls up
-        this.pearlItem(90, 62, () => {
-            this.teleportDown(new Vector3(Player), 8, (pos) => {
-                this.teleportRoomLeft(pos, 1, (pos) => {
-                    this.teleportRoomUp(pos, 4, (pos) => {
-                        this.teleportRightBelowBlood(pos, () => {
-                            tpManager.sync(Player.yaw, -90, true);
-                            rotate(Player.yaw, -90);
-                            this.pearlItem(-90, 68, () => { });
+    setup(once = false) {
+        this.teleportToTile({x: 3, z: 3}, () => {
+            tpManager.sync(Player.yaw, -90, true);
+            rotate(Player.yaw, -90);
+            FreezeManager.setFreezing(true);
+            const registered = PostPacketReceive.register(packet => {
+                if (!(packet instanceof S08PacketPlayerPosLook)) {
+                    return;
+                }
+                registered.unregister();
+
+                FreezeManager.setFreezing(false);
+                if (found) {
+                    scheduleTask(10, () => {
+                        started = Date.now();
+                        const to = tileFromCoords(found)
+                        this.teleportToTile(to, (pos) => {
+                            this.teleportRightBelowBlood(pos, () => {
+                                debugMessage(`Got to blood in: ${Date.now() - started}ms`);
+                                tpManager.sync(Player.yaw, -90, true);
+                                this.preparePearl(-90, () => {
+                                    sendAirClick();
+                                    scheduleTask(1, () => {
+                                        sendAirClick();
+                                    });
+                                });
+                            });
                         });
                     });
+                }
+            }, 9999);
+        });
+    }
+
+    teleportToTile(tile, callback) {
+        const currentTile = getCurrentTile();
+        const offset = getOffset(currentTile, tile);
+        if (offset.x === 0 && offset.z === 0) {
+            return;
+        }
+        this.pearlClip(90, 62, () => {
+            this.teleportDown(new Vector3(Player), 8, (pos) => {
+                this.executeOffset(offset, pos, (pos) => {
+                    callback(pos);
                 });
             });
         });
@@ -76,6 +111,26 @@ class Doer {
         tpManager.teleport(new Vector3(to), yaw, pitch, false, "Aspect of the Void", (toBlock) => {
             this.teleport(yaw, pitch, toBlock, modifier, amount, result);
         });
+    }
+
+    executeOffset(offset, pos, result) {
+        if (offset.x > 0) {
+            this.teleportRoomLeft(pos, offset.x, (pos) => this.executeOffset({x: 0, z: offset.z}, pos, result));
+            return;
+        } else if (offset.x < 0) {
+            this.teleportRoomRight(pos, -offset.x, (pos) => this.executeOffset({x: 0, z: offset.z}, pos, result));
+            return;
+        }
+
+        if (offset.z > 0) {
+            this.teleportRoomUp(pos, offset.z, (pos) => this.executeOffset({x: offset.x, z: 0}, pos, result));
+            return;
+        } else if (offset.z < 0) {
+            this.teleportRoomDown(pos, -offset.z, (pos) => this.executeOffset({x: offset.x, z: 0}, pos, result));
+            return;
+        }
+
+        result(pos);
     }
 
     teleportRightBelowBlood(from, result) {
@@ -110,13 +165,55 @@ class Doer {
         this.teleport(Player.yaw, 90, from, modifier, amount, result);
     }
 
-    pearlClip(yPos, callback) {
-        sendAirClick()
+    pearlLand(callback) {
         let listening = true
         const soundListener = register("soundPlay", (_, name, vol) => {
             if (name !== "mob.endermen.portal" || vol !== 1) return
             listening = false
             soundListener.unregister()
+            callback();
+        })
+
+        scheduleTask(60, () => {
+            if (!listening) return
+            chat("Pearlclip timed out.")
+        });
+    }
+
+    pearlThrow(pitch, callback) {
+        this.preparePearl(pitch, () => {
+            sendAirClick();
+            this.pearlLand(callback);
+        });
+    }
+
+    preparePearl(pitch, callback) {
+        swapFromName("Ender Pearl", result => {
+            if (result === itemSwapSuccess.FAIL) return
+            const throwPearl = () => {
+                const registered = UpdateWalkingPlayer.Pre.register(event => {
+                    registered.unregister();
+                    if (event.cancelled) return;
+                    event.cancelled = true;
+                    event.breakChain = true;
+
+                    const data = event.data;
+                    Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, pitch, data.onGround));
+                    callback()
+                }, 23984234);
+            };
+            if (result === itemSwapSuccess.SUCCESS) {
+                UpdateWalkingPlayer.Pre.scheduleTask(1, _ => {
+                    throwPearl();
+                });
+            } else if (result === itemSwapSuccess.ALREADY_HOLDING) {
+                throwPearl();
+            }
+        });
+    }
+
+    pearlClip(pitch, yPos, callback) {
+        this.pearlThrow(pitch, () => {
             const trigger = UpdateWalkingPlayer.Pre.register(event => {
                 trigger.unregister();
                 event.breakChain = true;
@@ -126,30 +223,7 @@ class Doer {
                 setPlayerPosition(Player.x, yPos, Player.z, true)
                 callback();
             }, 293428534);
-        })
-
-        scheduleTask(60, () => {
-            if (!listening) return
-            chat("Pearlclip timed out.")
         });
-    }
-
-    pearlItem(pitch, yPos, callback) {
-        swapFromName("Ender Pearl", result => {
-            if (result === itemSwapSuccess.FAIL) return
-            UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
-                const registered = UpdateWalkingPlayer.Pre.register(event => {
-                    registered.unregister();
-                    if (event.cancelled) return;
-                    event.cancelled = true;
-                    event.breakChain = true;
-
-                    const data = event.data;
-                    Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, pitch, data.onGround));
-                    this.pearlClip(yPos, callback);
-                }, 23984234);
-            });
-        })
     }
 }
 const coordinates = [
@@ -191,6 +265,10 @@ function checkFor(room) {
 
 let found = null;
 Tick.Pre.register(() => {
+    if (found) {
+        return;
+    }
+
     for (let x = -200; x <= -8; x += 32) {
         for (let z = -200; z <= -8; z += 32) {
             let foundRoom = checkFor(new Vector3(x, 100, z));
@@ -200,10 +278,25 @@ Tick.Pre.register(() => {
             }
         }
     }
-
-    found = null;
 }, 234999);
 
-registerSubCommand("do", () => {
+register("worldUnload", () => {
+    found = null;
+});
+
+function tileFromCoords(coords) {
+    return { x: Math.floor((coords.x + 200) / 32), z: Math.floor((coords.z + 200) / 32) };
+}
+
+function getCurrentTile() {
+    return tileFromCoords(new Vector3(Player));
+}
+
+function getOffset(from, to) {
+    return { x: from.x - to.x,
+             z: from.z - to.z }
+}
+
+registerSubCommand("do", (_) => {
     new Doer().setup();
 });

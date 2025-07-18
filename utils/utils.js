@@ -44,7 +44,7 @@ register("chat", event => {
  */
 export function debugMessage(message) {
     // if (!Settings().debugMessages) return
-    // return
+    return
     ChatLib.chat("§0[§4CarbonaraDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 

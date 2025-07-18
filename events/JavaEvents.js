@@ -7,11 +7,18 @@ register("gameUnload", () => {
 });
 
 /**
- * An event that is triggered when a packet is sent to the client.
+ * An event that is triggered when a packet is sent by the client.
  * @const
  * @type {import('./CustomEvents').EventInstance<Packet>}
  */
 export const PostPacketSend = new WrappedJavaEvent(events.PostPacketSend);
+
+/**
+ * An event that is triggered when a packet is received by the client.
+ * @const
+ * @type {import('./CustomEvents').EventInstance<Packet>}
+ */
+export const PostPacketReceive = new WrappedJavaEvent(events.PostPacketReceive);
 
 /**
  * Represents data for an arrow that has landed on a block/tile.
