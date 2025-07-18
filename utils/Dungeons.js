@@ -4,6 +4,7 @@ import Vector3 from "./Vector3.js"
 import { onScoreboardLine } from "../../BloomCore/utils/Events"
 import { removeUnicode } from "../../BloomCore/utils/Utils"
 import { clampYaw, debugMessage } from "./utils.js"
+import { Event } from "../events/CustomEvents.js"
 
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
 const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper").INSTANCE
@@ -11,6 +12,7 @@ const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper").
 
 export default new class Dungeons {
     constructor() {
+        this.EnterDungeonEvent = new Event()
         this.scoreboardClasses = {
             B: "Berserk",
             A: "Archer",
@@ -31,7 +33,10 @@ export default new class Dungeons {
         }
 
         onScoreboardLine((_0, text) => {
-            if (ChatLib.removeFormatting(text).includes("The Catacombs")) this.inDungeon = true
+            if (ChatLib.removeFormatting(text).includes("The Catacombs")) {
+                if (!this.inDungeon) this.EnterDungeonEvent.trigger()
+                this.inDungeon = true
+            }
         })
 
         register("worldUnload", () => {

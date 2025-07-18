@@ -426,6 +426,21 @@ config
         value: "0.925,0.925",
         shouldShow: data => data.doorlessEnabled
     })
+    .addSwitch({
+        configName: "schizoDoorsEnabled",
+        title: "Toggle",
+        description: "Allows you to go blood instantly when the run starts.",
+        category: "Doorless",
+        value: false
+    })
+    .addSwitch({
+        configName: "schizoDoorsTacticalInsertion",
+        title: "Use tactical insertion",
+        description: "this isnt added turn this shit off",
+        category: "Doorless",
+        value: false,
+        shouldShow: data => data.schizoDoorsEnabled
+    })
 
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")

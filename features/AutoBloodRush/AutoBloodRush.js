@@ -2,10 +2,15 @@ import Vector3 from "../../utils/Vector3";
 import tpManager from "../AutoRoutes/TeleportManager";
 import FreezeManager from "../AutoRoutes/FreezeManager";
 import Tick from "../../events/Tick";
+import Dungeons from "../../utils/Dungeons";
+import Settings from "../../config"
 
 import { PostPacketReceive, UpdateWalkingPlayer } from "../../events/JavaEvents";
 import { registerSubCommand } from "../../utils/commands";
 import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage } from "../../utils/utils";
+import ServerTeleport from "../../events/ServerTeleport";
+import ServerTickEvent from "../../events/ServerTick";
+import Rotations from "../../utils/Rotations";
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
@@ -83,39 +88,71 @@ class BloodRoomScanner {
 
 const brScanner = new BloodRoomScanner();
 
-class BloodRusher {
-    setup() {
-        this._teleportToTile({x: 3, z: 3}, () => {
-            tpManager.sync(Player.yaw, -90, true);
-            rotate(Player.yaw, -90);
-            FreezeManager.setFreezing(true);
-            const registered = PostPacketReceive.register(packet => {
-                if (!(packet instanceof S08PacketPlayerPosLook)) {
-                    return;
-                }
-                registered.unregister();
+new class BloodRusher {
+    constructor() {
+        this.ticksFromDeathTick = null
+        Dungeons.EnterDungeonEvent.register(() => {
+            if (!Settings().schizoDoorsEnabled) return
 
-                FreezeManager.setFreezing(false);
-                if (brScanner.getRoom()) {
-                    scheduleTask(10, () => {
-                        started = Date.now();
-                        const to = this._tileFromCoords(brScanner.getRoom());
-                        this._teleportToTile(to, (pos) => {
-                            this._teleportRightBelowBlood(pos, () => {
-                                debugMessage(`Got to blood in: ${Date.now() - started}ms`);
-                                tpManager.sync(Player.yaw, -90, true);
-                                this._preparePearl(-90, () => {
-                                    sendAirClick();
-                                    scheduleTask(2, () => {
-                                        sendAirClick();
+            const onGroundListener = Tick.Pre.register(() => {
+                if (!Player.asPlayerMP().isOnGround()) return
+                onGroundListener.unregister()
+                this.setup()
+            })
+        })
+
+        ServerTickEvent.register(() => {
+            if (this.ticksFromDeathTick !== null) this.ticksFromDeathTick++
+        })
+    }
+    setup() {
+        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
+            tpManager.sync(Player.yaw, 90, false)
+            this._teleportToTile({ x: 3, z: 3 }, () => {
+                tpManager.sync(Player.yaw, -90, true);
+                rotate(Player.yaw, -90);
+                FreezeManager.setFreezing(true);
+                const registered = PostPacketReceive.register(packet => {
+                    if (!(packet instanceof S08PacketPlayerPosLook)) {
+                        return;
+                    }
+                    this.ticksFromDeathTick = 0
+                    registered.unregister();
+
+                    FreezeManager.setFreezing(false);
+                    if (brScanner.getRoom()) {
+                        const onGroundListener = Tick.Pre.register(() => {
+                            if (!Player.asPlayerMP().isOnGround()) return
+                            onGroundListener.unregister()
+                            started = Date.now();
+                            const to = this._tileFromCoords(brScanner.getRoom());
+                            tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
+                                tpManager.sync(Player.yaw, 90, false)
+                                this._teleportToTile(to, (pos) => {
+                                    this._teleportRightBelowBlood(pos, () => {
+                                        debugMessage(`Got to blood in: ${Date.now() - started}ms`);
+                                        tpManager.sync(Player.yaw, -90, true);
+                                        this._pearlThrow(-90, () => {
+                                            rotate(Player.yaw, 90)
+                                            sendAirClick();
+                                        });
                                     });
                                 });
-                            });
-                        });
-                    });
-                }
-            }, 9999);
-        });
+                            })
+                        }).unregister()
+                        if (!Settings().schizoDoorsTacticalInsertion) {
+                            const soundListener = register("packetReceived", (packet) => {
+                                if (packet.func_149212_c() !== "mob.enderdragon.growl" || packet.func_149208_g() !== 1 || packet.func_149209_h() !== 1) return
+                                soundListener.unregister()
+                                const ticksToNextDeathTick = this.ticksFromDeathTick % 40
+                                if (ticksToNextDeathTick > 15) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
+                                else onGroundListener.register()
+                            }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
+                        }
+                    }
+                }, 9999);
+            });
+        })
     }
 
     _teleportToTile(tile, callback) {
@@ -138,7 +175,6 @@ class BloodRusher {
             result(from);
             return;
         }
-
         const to = modifier(from);
         tpManager.teleport(new Vector3(to), yaw, pitch, false, "Aspect of the Void", (toBlock) => {
             this._teleport(yaw, pitch, toBlock, modifier, amount, result);
@@ -147,18 +183,18 @@ class BloodRusher {
 
     _executeOffset(offset, pos, result) {
         if (offset.x > 0) {
-            this._teleportRoomLeft(pos, offset.x, (pos) => this._executeOffset({x: 0, z: offset.z}, pos, result));
+            this._teleportRoomLeft(pos, offset.x, (pos) => this._executeOffset({ x: 0, z: offset.z }, pos, result));
             return;
         } else if (offset.x < 0) {
-            this._teleportRoomRight(pos, -offset.x, (pos) => this._executeOffset({x: 0, z: offset.z}, pos, result));
+            this._teleportRoomRight(pos, -offset.x, (pos) => this._executeOffset({ x: 0, z: offset.z }, pos, result));
             return;
         }
 
         if (offset.z > 0) {
-            this._teleportRoomUp(pos, offset.z, (pos) => this._executeOffset({x: offset.x, z: 0}, pos, result));
+            this._teleportRoomUp(pos, offset.z, (pos) => this._executeOffset({ x: offset.x, z: 0 }, pos, result));
             return;
         } else if (offset.z < 0) {
-            this._teleportRoomDown(pos, -offset.z, (pos) => this._executeOffset({x: offset.x, z: 0}, pos, result));
+            this._teleportRoomDown(pos, -offset.z, (pos) => this._executeOffset({ x: offset.x, z: 0 }, pos, result));
             return;
         }
 
@@ -199,11 +235,13 @@ class BloodRusher {
 
     _pearlLand(callback) {
         let listening = true
-        const soundListener = register("soundPlay", (_, name, vol) => {
-            if (name !== "mob.endermen.portal" || vol !== 1) return
+        const soundListener = PostPacketReceive.register(packet => {
+            if (!(packet instanceof S08PacketPlayerPosLook)) {
+                return;
+            }
             listening = false
             soundListener.unregister()
-            callback();
+            Client.scheduleTask(0, () => callback())
         })
 
         scheduleTask(60, () => {
@@ -223,8 +261,11 @@ class BloodRusher {
         swapFromName("Ender Pearl", result => {
             if (result === itemSwapSuccess.FAIL) return
             const throwPearl = () => {
+                let triggered = false
                 const registered = UpdateWalkingPlayer.Pre.register(event => {
-                    registered.unregister();
+                    registered.unregister()
+                    if (triggered) return
+                    triggered = true
                     if (event.cancelled) return;
                     event.cancelled = true;
                     event.breakChain = true;
@@ -232,10 +273,10 @@ class BloodRusher {
                     const data = event.data;
                     Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, pitch, data.onGround));
                     callback()
-                }, 23984234);
+                }, 23984234)
             };
             if (result === itemSwapSuccess.SUCCESS) {
-                UpdateWalkingPlayer.Pre.scheduleTask(1, _ => {
+                UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
                     throwPearl();
                 });
             } else if (result === itemSwapSuccess.ALREADY_HOLDING) {
@@ -267,11 +308,9 @@ class BloodRusher {
     }
 
     _getOffset(from, to) {
-        return { x: from.x - to.x,
-                 z: from.z - to.z }
+        return {
+            x: from.x - to.x,
+            z: from.z - to.z
+        }
     }
 }
-
-registerSubCommand("do", (_) => {
-    new BloodRusher().setup();
-});
