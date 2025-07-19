@@ -1,14 +1,13 @@
 import Settings from "../config"
 import LeapHelper from "../utils/leapUtils"
 import Dungeons from "../utils/Dungeons"
+import Mouse from "../events/Mouse"
 
 import { getTermPhase, Terminal } from "./AutoP3/autoP3Utils"
 import { getHeldItemID, playerCoords, sendAirClick } from "../utils/utils"
 import { chat } from "../utils/utils"
 import { getDistanceToCoord } from "../../BloomCore/utils/Utils"
 
-const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent")
-const ArmorStand = Java.type("net.minecraft.entity.item.EntityArmorStand")
 const classes = ["Archer", "Berserk", "Mage", "Healer", "Tank"]
 
 
@@ -16,9 +15,8 @@ export default new class FastLeap {
     constructor() {
         this.queuedLeap = false
 
-        register(MouseEvent, (event) => {
-            const button = event.button
-            const state = event.buttonstate
+        Mouse.register((event) => {
+            const { button, state } = event.data
             if (!state || button !== 1) return
 
 
@@ -26,12 +24,11 @@ export default new class FastLeap {
 
             LeapHelper.clearQueue()
             this.queuedLeap = false
-        })
+        }, 0)
 
-        register(MouseEvent, (event) => {
+        Mouse.register((event) => {
             if (!Settings().fastLeap) return
-            const button = event.button
-            const state = event.buttonstate
+            const { button, state } = event.data
             if (!state || button !== 0) return
 
             if (getHeldItemID() !== "INFINITE_SPIRIT_LEAP" && Player?.getHeldItem()?.getName()?.removeFormatting() !== "Spirit Leap") return
@@ -39,7 +36,8 @@ export default new class FastLeap {
             if (Terminal.inTerminal) {
                 if (!Settings().queueFastLeap) return
                 this.queuedLeap = true
-                cancel(event)
+                event.cancelled = true
+                event.breakChain = true
                 return chat("Queued a leap after the terminal closes.")
             }
 
@@ -49,7 +47,8 @@ export default new class FastLeap {
             if (!player || !player.length) return
             sendAirClick()
             LeapHelper.queueLeap(player)
-            cancel(event)
+            event.cancelled = true
+            event.breakChain = true
         })
 
         register("tick", () => {

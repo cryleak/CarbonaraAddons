@@ -1,6 +1,7 @@
 import Settings from "../config"
 import SecretAuraClick from "./SecretAuraClick"
 import BatSpawnEvent from "./BatSpawn"
+import Mouse from "./Mouse"
 
 import { getDistanceToEntity, scheduleTask } from "../utils/utils"
 import { Event } from "./CustomEvents"
@@ -40,17 +41,19 @@ register("tick", () => { // Schizo solution for item pickup listener
     entitiesLastTick = itemEntities
 })
 
-register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger await secret on left click
-    const button = event.button
-    const state = event.buttonstate
+Mouse.register((event) => { // Trigger await secret on left click
+    // ChatLib.chat("Triggered MouseEvent or soemthign 1")
+    const { button, state } = event.data;
     if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return
 
     if (SecretEvent.hasListeners()) {
         SecretEvent.trigger()
-        cancel(event)
+        event.cancelled = true
+        event.breakChain = true
         // todo: implement cleartriggeredodes
     } else if (BatSpawnEvent.hasListeners()) {
         BatSpawnEvent.trigger()
-        cancel(event)
+        event.cancelled = true
+        event.breakChain = true
     }
-})
+}, 100)

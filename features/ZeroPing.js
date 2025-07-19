@@ -1,6 +1,7 @@
 import Settings from "../config"
 import Vector3 from "../../BloomCore/utils/Vector3";
 import ServerTeleport from "../events/ServerTeleport";
+import Mouse from "../events/Mouse";
 
 import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
 import { isWithinTolerence, sendAirClick } from "../utils/utils";
@@ -29,13 +30,13 @@ const ZeroPing = new class {
         this.desyncedTps = [];
         this.lastTPed = 0;
 
-        register(net.minecraftforge.client.event.MouseEvent, (event) => {
+        Mouse.register((event) => {
             if (!Settings().zpewEnabled) {
                 return;
             }
 
             this._handleMouseEvent(event);
-        })
+        }, 99)
 
         ServerTeleport.register(event => {
             this._handleServerTeleport(event);
@@ -59,8 +60,7 @@ const ZeroPing = new class {
     }
 
     _handleMouseEvent(event) {
-        const button = event.button
-        const state = event.buttonstate
+        const { button, state } = event.data;
         if (!state) return
 
         if (button === 0) {
@@ -134,7 +134,8 @@ const ZeroPing = new class {
             return;
         }
 
-        cancel(event);
+        event.cancelled = true;
+        event.breakChain = true;
 
         sendAirClick();
         this.desyncedTps.push(Date.now());
@@ -181,7 +182,8 @@ const ZeroPing = new class {
             return;
         }
 
-        cancel(event);
+        event.cancelled = true;
+        event.breakChain = true;
 
         let prediction;
         if (info.ether) {
