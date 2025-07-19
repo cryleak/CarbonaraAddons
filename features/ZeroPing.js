@@ -147,7 +147,7 @@ const ZeroPing = new class {
 
     doRegularTeleport(event) {
         const info = getTeleportInfo(Player.getHeldItem(), this.playerState);
-        if (!info) {
+        if (!info || info.type !== "etherwarp" || !Settings().etherLeftClick) {
             return;
         }
 

@@ -405,6 +405,13 @@ config
         shouldShow: data => data.zpewEnabled
     })
     .addSwitch({
+        configName: "etherLeftClick",
+        title: "Etherwarp Left Click",
+        description: "This makes left clicking an etherwarp teleport you without 0 ping, useful for starting routes.",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
         configName: "doorlessEnabled",
         title: "Toggle",
         description: "Allows you to go through doors without opening them.",

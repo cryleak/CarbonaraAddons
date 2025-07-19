@@ -55,7 +55,7 @@ new class BloodRusher {
         });
 
         register("renderOverlay", () => {
-            if (this.ticksFromDeathTick !== null) {
+            if (this.ticksFromDeathTick !== null && this.renderTicks) {
                 Renderer.scale(2)
                 Renderer.drawString(this.ticksFromDeathTick % 40, (Renderer.screen.getWidth() / 2) / 2, (Renderer.screen.getHeight() / 2) / 2)
             }
@@ -83,6 +83,7 @@ new class BloodRusher {
                                 return;
                             }
                             this.ticksFromDeathTick = 0
+                            this.renderTicks = true
                             registered.unregister();
 
                             FreezeManager.setFreezing(false);
@@ -116,6 +117,7 @@ new class BloodRusher {
                     tpManager.sync(Player.yaw, -90, true);
                     this._pearlThrow(-90, (releasePacket) => {
                         debugMessage(`DeathStreeks Blixten McQueen blood rush took: ${Date.now() - started}ms`);
+                        this.renderTicks = false;
                         releasePacket(null)
                         rotate(Player.yaw, 90)
                         sendAirClick();
