@@ -53,10 +53,21 @@ new class BloodRusher {
         register("worldUnload", () => {
             this.ticksFromDeathTick = null;
         });
+
+        register("renderOverlay", () => {
+            if (this.ticksFromDeathTick !== null) {
+                Renderer.scale(2)
+                Renderer.drawString(this.ticksFromDeathTick % 40, (Renderer.screen.getWidth() / 2) / 2, (Renderer.screen.getHeight() / 2) / 2)
+            }
+        })
     }
 
     setup(tile, once = false) {
-        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
+        // tpManager.teleport(new Vector3(Player), Player.yaw, 0, false, aotvFinder(0), () => {
+        const yaw = Dungeons.convertToRelativeYaw(270)
+        ChatLib.chat(yaw)
+        const yawRadians = yaw * (Math.PI / 180)
+        this._teleport(yaw, 5, new Vector3(Player), (v) => v.copy().add(-Math.sin(yawRadians) * 8, 0, Math.cos(yawRadians) * 8), 1, () => {
             tpManager.sync(Player.yaw, 90, false)
             this._pearlClip(90, 62, (releaseMethod) => {
                 releaseMethod();
@@ -115,7 +126,11 @@ new class BloodRusher {
             if (!Player.asPlayerMP().isOnGround()) return
             onGroundListener.unregister()
             const to = scanner.getRoom();
-            tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
+            // tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
+            const yaw = Dungeons.convertToRelativeYaw(270)
+            ChatLib.chat(yaw)
+            const yawRadians = yaw * (Math.PI / 180)
+            this._teleport(yaw, 5, new Vector3(Player), (v) => v.copy().add(-Math.sin(yawRadians) * 8, 0, Math.cos(yawRadians) * 8), 1, () => {
                 tpManager.sync(Player.yaw, 90, false)
                 this._pearlClip(90, 62, (releaseMethod) => {
                     if (!waitForMessage) {
@@ -129,7 +144,7 @@ new class BloodRusher {
                         soundListener.unregister()
 
                         if (this.ticksFromDeathTick % 40 > 30) {
-                            ServerTickEvent.scheduleTask(40 - ticksFromDeathTick % 40, () => {
+                            ServerTickEvent.scheduleTask(40 - this.ticksFromDeathTick % 40, () => {
                                 releaseMethod();
                                 this._goToBlood(to);
                             });
