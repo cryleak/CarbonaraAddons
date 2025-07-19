@@ -2,7 +2,7 @@ import Settings from "../config"
 import SecretAuraClick from "./SecretAuraClick"
 import BatSpawnEvent from "./BatSpawn"
 
-import { getDistanceToEntity, scheduleTask, debugMessage } from "../utils/utils"
+import { getDistanceToEntity, scheduleTask } from "../utils/utils"
 import { Event } from "./CustomEvents"
 
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")

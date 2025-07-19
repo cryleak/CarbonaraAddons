@@ -171,7 +171,7 @@ class TeleportRecorder {
 
                 this.awaitingTP = false;
             }).setFilteredClass(C08PacketPlayerBlockPlacement),
-            register(net.minecraftforge.client.event.MouseEvent, (event) => { // Trigger await secret on left click
+            register(net.minecraftforge.client.event.MouseEvent, (event) => {
                 const button = event.button
                 const state = event.buttonstate
                 if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return

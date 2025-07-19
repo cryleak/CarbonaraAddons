@@ -4,7 +4,8 @@ import SecretEvent from "../../events/SecretListener"
 import Tick from "../../events/Tick"
 import Settings from "../../config"
 
-import { checkIntersection, debugMessage, releaseMovementKeys, movementKeys } from "../../utils/utils"
+import { checkIntersection, releaseMovementKeys, movementKeys } from "../../utils/utils"
+import ZeroPing from "../ZeroPing"
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
@@ -14,7 +15,7 @@ class NodeExecutor {
 
         this.consumed = 0;
 
-        register("packetReceived", (packet, event) => { // Avoid checking for intersections when you get teleported by the server.
+        register("packetReceived", (packet, _) => { // Avoid checking for intersections when you get teleported by the server.
             this._updateCoords({
                 x: packet.func_148932_c(),
                 y: packet.func_148928_d(),
@@ -39,11 +40,10 @@ class NodeExecutor {
 
             if (!SecretEvent.hasListeners()) releaseMovementKeys()
         })
-
     }
 
     execute(by = null, intersectionMethod = null) {
-        if (!manager.active) return;
+        if (!manager.active || !ZeroPing.isSynced()) return;
 
         if (by) {
             this.lowerConsumed();

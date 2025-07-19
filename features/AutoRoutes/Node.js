@@ -6,7 +6,7 @@ import Vector3 from "../../utils/Vector3"
 import Editable from "../../utils/ObjectEditor";
 import tpManager from "./TeleportManager"
 
-import { scheduleTask, releaseMovementKeys, rotate, chat, debugMessage, setPlayerPosition, setVelocity, clampYaw, capitalizeFirst } from "../../utils/utils"
+import { scheduleTask, releaseMovementKeys, rotate, debugMessage, setPlayerPosition, setVelocity, clampYaw, capitalizeFirst } from "../../utils/utils"
 import FreezeManager from "./FreezeManager"
 
 export class Node extends Editable {
@@ -42,10 +42,6 @@ export class Node extends Editable {
         this.y = loc.y;
         this.z = loc.z;
         return this;
-    }
-
-    command(args) {
-        constructor();
     }
 
     canRun() {
@@ -129,6 +125,7 @@ export class Node extends Editable {
     }
 
     _preArgumentTrigger(execer) {
+        ChatLib.chat(`Releasing movement keys`);
         releaseMovementKeys();
         setVelocity(0, 0, 0);
         if (this.awaitSecret || this.awaitBat) {

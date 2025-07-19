@@ -362,13 +362,6 @@ config
         category: "Wither King"
     })
     .addSwitch({
-        configName: "zeroPingHype",
-        title: "Zero Ping TP On All Items",
-        description: "Uses ZPH to use zero ping teleport for Instant Transmission and Wither Impact on node-triggered teleports. You must toggle Zero Ping TP in AutoRoutes to make it work. Disable other zpews if you have any.",
-        category: "Zero Ping TP",
-        value: false
-    })
-    .addSwitch({
         configName: "zpewEnabled",
         title: "Toggle",
         description: "",

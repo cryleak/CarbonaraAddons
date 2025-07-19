@@ -3,6 +3,7 @@ import ServerTeleport from "../../events/ServerTeleport";
 import manager from "./NodeManager";
 import Rotations from "../../utils/Rotations"
 import execer from "./NodeExecutor"
+import ZeroPing from "../ZeroPing"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
 import { findSlot } from "../../utils/TeleportItem"
@@ -13,7 +14,6 @@ const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPl
 
 class TeleportManager {
     constructor() {
-        this.lastTPed = 0;
         this.noRotateFor = 500;
 
         this.yaw = Player.getYaw();
@@ -68,7 +68,7 @@ class TeleportManager {
 
     _teleportAfterSwap(toBlock, yaw, pitch, onResult, shouldWait) {
         this.counter++;
-        if (Date.now() - this.lastTPed >= this.noRotateFor) {
+        if (Date.now() - ZeroPing.lastTPed >= this.noRotateFor) {
             const exec = () => {
                 Rotations.rotate(yaw, pitch, () => {
                     setVelocity(0, 0, 0);
@@ -79,7 +79,7 @@ class TeleportManager {
                     this.recentlyPushedC06s.push({ x: toBlock.x, y: toBlock.y, z: toBlock.z, yaw, pitch });
                     setPlayerPosition(toBlock.x, toBlock.y, toBlock.z, true)
 
-                    this.lastTPed = Date.now();
+                    ZeroPing.updateLastTPed();
                     execer._updateCoords(toBlock);
                     onResult(toBlock);
                 }, true);
@@ -103,7 +103,7 @@ class TeleportManager {
                 setVelocity(0, 0, 0);
                 sendAirClick();
                 this.lastBlock = toBlock;
-                this.lastTPed = Date.now();
+                ZeroPing.updateLastTPed();
 
                 execer._updateCoords(toBlock);
                 onResult(toBlock);
@@ -117,7 +117,7 @@ class TeleportManager {
 
         sendAirClick();
 
-        this.lastTPed = Date.now();
+        ZeroPing.updateLastTPed();
         this.lastBlock = toBlock;
         execer._updateCoords(toBlock);
 
@@ -157,7 +157,7 @@ class TeleportManager {
         setPlayerPosition(this.lastBlock.x, this.lastBlock.y, this.lastBlock.z, true)
 
         if (this.final) {
-            this.lastTPed = 0;
+            ZeroPing.lastTPed = 0;
         }
 
         this.lastBlock = null;
@@ -233,7 +233,7 @@ class TeleportManager {
             doTp();
         }
 
-        this.lastTPed = Date.now();
+        ZeroPing.updateLastTPed();
     }
 
     isTeleportItem(item = Player.getHeldItem()) {
@@ -253,4 +253,4 @@ class TeleportManager {
 }
 
 const tpManager = new TeleportManager();
-export default tpManager
+export default tpManager;

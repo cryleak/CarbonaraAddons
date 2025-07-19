@@ -1,73 +1,221 @@
 import Settings from "../config"
 import Vector3 from "../../BloomCore/utils/Vector3";
 import ServerTeleport from "../events/ServerTeleport";
-import Dungeons from "../utils/Dungeons";
 
 import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
+import { isWithinTolerence, sendAirClick } from "../utils/utils";
+import { getTeleportInfo } from "../utils/TeleportItem";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
 
-
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
-const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
-const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
-const recentFails = []
-const playerState = {
-    x: null,
-    y: null,
-    z: null,
-    yaw: null,
-    pitch: null,
-    sneaking: false
-};
-const sent = [];
+const ZeroPing = new class {
+    constructor() {
+        this.recentFails = []
+        this.playerState = {
+            x: null,
+            y: null,
+            z: null,
+            yaw: null,
+            pitch: null,
+            sneaking: false
+        };
 
-let updatePosition = true;
+        this.sent = [];
+        this.updatePosition = true;
+        this.desyncedTps = [];
+        this.lastTPed = 0;
 
-register("packetSent", (packet, event) => {
-    if (packet.func_149568_f() !== 255) return
-    const info = getTeleportInfo(Player.getHeldItem());
-    if (!info) return;
-    while (recentFails.length && Date.now() - recentFails[0] > 20 * 1000) recentFails.shift()
-    if (recentFails.length >= Settings().maxFails && !Settings().singleplayer) return ChatLib.chat(`§c Zero Ping TP cancelled. ${recentFails.length} fails last 20 seconds.`)
-    if (sent.length >= 5 && !Settings().singleplayer) return ChatLib.chat(`§c Zero Ping TP cancelled. ${sent.length} packets queued.`)
+        register(net.minecraftforge.client.event.MouseEvent, (event) => {
+            if (!Settings().zpewEnabled) {
+                return;
+            }
 
-    if (Object.values(playerState).includes(null)) return;
+            this._handleMouseEvent(event);
+        })
 
-    let prediction;
-    if (info.ether) {
-        prediction = raytraceBlocks([playerState.x, playerState.y + 1.5399999618530273, playerState.z], Vector3.fromPitchYaw(playerState.pitch, playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
+        ServerTeleport.register(event => {
+            this._handleServerTeleport(event);
+        }, 100002);
 
-        if (prediction) {
-            prediction[0] += 0.5;
-            prediction[1] += 1.05;
-            prediction[2] += 0.5;
-        }
-    } else {
-        prediction = predictTeleport(info.distance, playerState.x, playerState.y, playerState.z, playerState.yaw, playerState.pitch);
+        register("packetSent", packet => {
+            this._handleClientPlayerPacket(packet);
+        }).setFilteredClass(C03PacketPlayer);
+
+        register("packetSent", packet => {
+            this._handleClientEntityAction(packet);
+        }).setFilteredClass(C0BPacketEntityAction);
     }
-    if (!prediction) return
 
-    const [x, y, z] = prediction;
-    const yaw = info.ether ? (playerState.yaw % 360 + 360) % 360 : playerState.yaw % 360; // wtf hypixel
-    const pitch = playerState.pitch;
+    isSynced() {
+        return this.sent.length === 0 && this.desyncedTps.length === 0;
+    }
 
-    playerState.x = x;
-    playerState.y = y;
-    playerState.z = z;
-    updatePosition = false;
+    updateLastTPed() {
+        this.lastTPed = Date.now();
+    }
 
-    sent.push({ x, y, z, yaw, pitch });
+    _handleMouseEvent(event) {
+        const button = event.button
+        const state = event.buttonstate
+        if (!state) return
 
-    Client.scheduleTask(0, () => {
+        if (button === 0) {
+            this.doRegularTeleport(event);
+        } else if (button === 1 && this.desyncedTps.length === 0) {
+            this.doZeroPing(event);
+        }
+    }
+
+    _handleServerTeleport(event) {
+        if (!this.sent.length) {
+            if (this.desyncedTps.length) {
+                this.desyncedTps.shift();
+            }
+            return;
+        }
+
+        const { pitch, yaw, x, y, z } = this.sent.shift();
+        const { pitch: newPitch, yaw: newYaw, x: newX, y: newY, z: newZ } = event.data;
+
+        const lastPresetPacketComparison = {
+            x: x == newX,
+            y: y == newY,
+            z: z == newZ,
+            yaw: isWithinTolerence(yaw, newYaw) || newYaw == 0,
+            pitch: isWithinTolerence(pitch, newPitch) || newPitch == 0
+        };
+
+        const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
+
+        if (wasPredictionCorrect) {
+            event.cancelled = true;
+            return;
+        }
+        else {
+            this.recentFails.push(Date.now());
+            while (this.recentFails.length && Date.now() - this.recentFails[0] > 20 * 1000) this.recentFails.shift();
+            ChatLib.chat(`§4Zero ping tp failed! ${this.recentFails.length} fails last 20 seconds`);
+        }
+
+        while (this.sent.length) this.sent.shift();
+    }
+
+    _handleClientPlayerPacket(packet) {
+        if (!this.updatePosition) return;
+        const x = packet.func_149464_c();
+        const y = packet.func_149467_d();
+        const z = packet.func_149472_e();
+        const yaw = packet.func_149462_g();
+        const pitch = packet.func_149470_h();
+        if (packet.func_149466_j()) {
+            this.playerState.x = x;
+            this.playerState.y = y;
+            this.playerState.z = z;
+        }
+        if (packet.func_149463_k()) {
+            this.playerState.yaw = yaw;
+            this.playerState.pitch = pitch;
+        }
+    }
+
+    _handleClientEntityAction(packet) {
+        const action = packet.func_180764_b();
+        if (action == C0BPacketEntityAction.Action.START_SNEAKING) this.playerState.sneaking = true;
+        if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) this.playerState.sneaking = false;
+    }
+
+    doRegularTeleport(event) {
+        const info = getTeleportInfo(Player.getHeldItem(), this.playerState);
+        if (!info) {
+            return;
+        }
+
+        cancel(event);
+
+        sendAirClick();
+        this.desyncedTps.push(Date.now());
+        this.updateLastTPed();
+    }
+
+    doZeroPing(event) {
+        const info = getTeleportInfo(Player.getHeldItem(), this.playerState);
+        if (!info) {
+            return;
+        }
+
+        switch (info.type) {
+            case "etherwarp":
+                if (!Settings().ether) {
+                    return;
+                }
+                break;
+            case "aotv":
+                if (!Settings().aotv) {
+                    return;
+                }
+                break;
+            case "hype":
+                if (!Settings().hype) {
+                    return;
+                }
+                break;
+        }
+
+        while (this.recentFails.length && Date.now() - this.recentFails[0] > 20 * 1000) {
+            this.recentFails.shift()
+        }
+
+        if (this.recentFails.length >= Settings().maxFails && !Settings().singleplayer) {
+            return ChatLib.chat(`§c Zero Ping TP cancelled. ${this.recentFails.length} fails last 20 seconds.`)
+        }
+
+        if (this.sent.length >= 5 && !Settings().singleplayer) {
+            return ChatLib.chat(`§c Zero Ping TP cancelled. ${this.sent.length} packets queued.`)
+        }
+
+        if (Object.values(this.playerState).includes(null)) {
+            return;
+        }
+
+        cancel(event);
+
+        let prediction;
+        if (info.ether) {
+            prediction = raytraceBlocks([this.playerState.x, this.playerState.y + 1.5399999618530273, this.playerState.z], Vector3.fromPitchYaw(this.playerState.pitch, this.playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
+
+            if (prediction) {
+                prediction[0] += 0.5;
+                prediction[1] += 1.05;
+                prediction[2] += 0.5;
+            }
+        } else {
+            prediction = predictTeleport(info.distance, this.playerState.x, this.playerState.y, this.playerState.z, this.playerState.yaw, this.playerState.pitch);
+        }
+        if (!prediction) return
+
+        const [x, y, z] = prediction;
+        const yaw = info.ether ? (this.playerState.yaw % 360 + 360) % 360 : this.playerState.yaw % 360; // wtf hypixel
+        const pitch = this.playerState.pitch;
+
+        this.playerState.x = x;
+        this.playerState.y = y;
+        this.playerState.z = z;
+        this.updatePosition = false;
+
+        this.sent.push({ x, y, z, yaw, pitch });
+
+        sendAirClick();
+
         Client.sendPacket(new C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
         Player.getPlayer().func_70107_b(x, y, z)
         Player.getPlayer().func_70016_h(0, 0, 0)
-        updatePosition = true;
+        this.updateLastTPed();
+
+        this.updatePosition = true;
 
         /*
         if (!Settings().fixStairs) return
@@ -81,123 +229,10 @@ register("packetSent", (packet, event) => {
         Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, false))
         setTimeout(() => Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, KeyBoard.isKeyDown(keybind))), 60)
         */
-    })
-}).setFilteredClass(C08PacketPlayerBlockPlacement)
-
-const isWithinTolerence = (n1, n2) => Math.abs(n1 - n2) < 1e-4;
-
-ServerTeleport.register(event => {
-    if (!sent.length) return;
-
-    const { pitch, yaw, x, y, z } = sent.shift();
-
-    const packet = event.data.packet;
-    const newPitch = packet.func_148930_g();
-    const newYaw = packet.func_148931_f();
-    const newX = packet.func_148932_c();
-    const newY = packet.func_148928_d();
-    const newZ = packet.func_148933_e();
-
-    const lastPresetPacketComparison = {
-        x: x == newX,
-        y: y == newY,
-        z: z == newZ,
-        yaw: isWithinTolerence(yaw, newYaw) || newYaw == 0,
-        pitch: isWithinTolerence(pitch, newPitch) || newPitch == 0
-    };
-
-    const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
-
-    if (wasPredictionCorrect) {
-        event.cancelled = true;
-        return;
     }
-    else {
-        recentFails.push(Date.now());
-        while (recentFails.length && Date.now() - recentFails[0] > 20 * 1000) recentFails.shift();
-        ChatLib.chat(`§4Zero ping tp failed! ${recentFails.length} fails last 20 seconds`);
-    }
+};
 
-    while (sent.length) sent.shift();
-}, 100002);
-
-register("packetSent", packet => {
-    if (!updatePosition) return;
-    const x = packet.func_149464_c();
-    const y = packet.func_149467_d();
-    const z = packet.func_149472_e();
-    const yaw = packet.func_149462_g();
-    const pitch = packet.func_149470_h();
-    if (packet.func_149466_j()) {
-        playerState.x = x;
-        playerState.y = y;
-        playerState.z = z;
-    }
-    if (packet.func_149463_k()) {
-        playerState.yaw = yaw;
-        playerState.pitch = pitch;
-    }
-}).setFilteredClass(C03PacketPlayer);
-
-register("packetSent", packet => {
-    const action = packet.func_180764_b();
-    if (action == C0BPacketEntityAction.Action.START_SNEAKING) playerState.sneaking = true;
-    if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) playerState.sneaking = false;
-}).setFilteredClass(C0BPacketEntityAction);
-
-function getTeleportInfo(item) {
-    if (!Settings().zpewEnabled) return;
-    if (Dungeons.isIn7Boss()) return;
-    if (!Settings().singleplayer) {
-        const sbId = item?.getNBT()?.toObject()?.tag?.ExtraAttributes?.id;
-        if (["ASPECT_OF_THE_VOID", "ASPECT_OF_THE_END"].includes(sbId)) {
-            const tuners = item?.getNBT()?.toObject()?.tag?.ExtraAttributes?.tuned_transmission || 0;
-            if (playerState.sneaking) {
-                if (!Settings().ether) return;
-                return {
-                    distance: 56 + tuners,
-                    ether: true
-                };
-            } else {
-                if (!Settings().aotv) return;
-                return {
-                    distance: 8 + tuners,
-                    ether: false
-                };
-            }
-        } else if (["NECRON_BLADE", "HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"].includes(sbId)) {
-            if (!Settings().hype) return;
-            if (!["IMPLOSION_SCROLL", "WITHER_SHIELD_SCROLL", "SHADOW_WARP_SCROLL"].every(value => item?.getNBT()?.toObject()?.tag?.ExtraAttributes?.ability_scroll?.includes(value))) return;
-            return {
-                distance: 10,
-                ether: false
-            };
-        }
-    } else {
-        if (Player?.getHeldItem()?.getID() === 277) {
-            if (playerState.sneaking) {
-                if (!Settings().ether) return;
-                return {
-                    distance: 61,
-                    ether: true
-                };
-            } else {
-                if (!Settings().aotv) return;
-                return {
-                    distance: 12,
-                    ether: false
-                }
-            }
-        } else if (Player?.getHeldItem()?.getID() === 267) {
-            if (!Settings().hype) return;
-            return {
-                distance: 10,
-                ether: false
-            };
-        }
-        return
-    }
-}
+export default ZeroPing;
 
 const IGNORED = [0, 51, 8, 9, 10, 11, 171, 331, 39, 40, 115, 132, 77, 143, 66, 27, 28, 157];
 const IGNORED2 = [44, 182, 126]; // ignored blocks for selbox raycast

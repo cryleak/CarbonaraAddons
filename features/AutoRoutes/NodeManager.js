@@ -7,6 +7,7 @@ import Settings from "../../config"
 
 import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils";
 import { registerSubCommand } from "../../utils/commands";
+import FreezeManager from "./FreezeManager"
 
 class NodeManager {
     constructor() {
@@ -145,6 +146,7 @@ class NodeManager {
             return;
         }
 
+        FreezeManager.setFreezing(false);
         this.active = false;
         scheduleTask(ticks, () => {
             this.currentRoom = Location.getCurrentLocationName();
