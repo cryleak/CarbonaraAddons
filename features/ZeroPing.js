@@ -1,16 +1,16 @@
 import Settings from "../config"
 import Vector3 from "../../BloomCore/utils/Vector3";
 import ServerTeleport from "../events/ServerTeleport";
-import Mouse from "../events/Mouse";
+import MouseEvent from "../events/MouseEvent";
+import { UpdateWalkingPlayer } from "../events/JavaEvents"
 
 import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
-import { isWithinTolerence, sendAirClick } from "../utils/utils";
+import { isWithinTolerence, sendAirClick, setPlayerPosition, setVelocity } from "../utils/utils";
 import { getTeleportInfo } from "../utils/TeleportItem";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-const C06PacketPlayerPosLook = Java.type("net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 
 const ZeroPing = new class {
@@ -30,7 +30,7 @@ const ZeroPing = new class {
         this.desyncedTps = [];
         this.lastTPed = 0;
 
-        Mouse.register((event) => {
+        MouseEvent.register(event => {
             if (!Settings().zpewEnabled) {
                 return;
             }
@@ -211,13 +211,17 @@ const ZeroPing = new class {
         this.sent.push({ x, y, z, yaw, pitch });
 
         sendAirClick();
-
-        Client.sendPacket(new C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
-        Player.getPlayer().func_70107_b(x, y, z)
-        Player.getPlayer().func_70016_h(0, 0, 0)
+        setPlayerPosition(x, y, z, true)
+        Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
+        setVelocity(0, 0, 0)
         this.updateLastTPed();
-
         this.updatePosition = true;
+        const PlayerUpdateListener = UpdateWalkingPlayer.Pre.register(event => {
+            PlayerUpdateListener.unregister()
+            event.cancelled = true
+            event.breakChain = true
+        }, 2147483647)
+
 
         /*
         if (!Settings().fixStairs) return

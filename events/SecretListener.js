@@ -1,7 +1,7 @@
 import Settings from "../config"
 import SecretAuraClick from "./SecretAuraClick"
 import BatSpawnEvent from "./BatSpawn"
-import Mouse from "./Mouse"
+import MouseEvent from "./MouseEvent"
 
 import { getDistanceToEntity, scheduleTask } from "../utils/utils"
 import { Event } from "./CustomEvents"
@@ -41,7 +41,7 @@ register("tick", () => { // Schizo solution for item pickup listener
     entitiesLastTick = itemEntities
 })
 
-Mouse.register((event) => { // Trigger await secret on left click
+MouseEvent.register(event => { // Trigger await secret on left click
     // ChatLib.chat("Triggered MouseEvent or soemthign 1")
     const { button, state } = event.data;
     if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return

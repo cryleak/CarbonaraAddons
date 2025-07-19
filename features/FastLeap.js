@@ -1,7 +1,7 @@
 import Settings from "../config"
 import LeapHelper from "../utils/leapUtils"
 import Dungeons from "../utils/Dungeons"
-import Mouse from "../events/Mouse"
+import MouseEvent from "../events/MouseEvent"
 
 import { getTermPhase, Terminal } from "./AutoP3/autoP3Utils"
 import { getHeldItemID, playerCoords, sendAirClick } from "../utils/utils"
@@ -15,7 +15,7 @@ export default new class FastLeap {
     constructor() {
         this.queuedLeap = false
 
-        Mouse.register((event) => {
+        MouseEvent.register(event => {
             const { button, state } = event.data
             if (!state || button !== 1) return
 
@@ -26,7 +26,7 @@ export default new class FastLeap {
             this.queuedLeap = false
         }, 0)
 
-        Mouse.register((event) => {
+        MouseEvent.register(event => {
             if (!Settings().fastLeap) return
             const { button, state } = event.data
             if (!state || button !== 0) return

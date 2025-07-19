@@ -1,7 +1,7 @@
 import { CancellableEvent } from "./CustomEvents"
 
-const Mouse = new CancellableEvent();
-export default Mouse;
+const MouseEvent = new CancellableEvent();
+export default MouseEvent;
 
 register(net.minecraftforge.client.event.MouseEvent, (event) => {
     const data = {
@@ -9,7 +9,7 @@ register(net.minecraftforge.client.event.MouseEvent, (event) => {
         button: event.button
     };
 
-    if (Mouse.trigger(data).cancelled) {
+    if (MouseEvent.trigger(data).cancelled) {
         cancel(event);
     }
 });

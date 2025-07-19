@@ -77,7 +77,7 @@ class DeviceManager {
             this.tryShootBow(this.lastArrowShoot)
         }).setFilteredClass(C0APacketAnimation)
 
-        MouseEvent.register((event) => {
+        MouseEvent.register(event => {
             const { button, state } = event.data
             if (button !== 1 || !state || !Client.isTabbedIn() || Client.isInGui() || !this.isOnDevice()) return
             if (Player?.getHeldItem()?.getID() === 261) {

@@ -1,5 +1,5 @@
 import RenderLibV2 from "../../RenderLibV2J"
-import Mouse from "../events/Mouse"
+import MouseEvent from "../events/MouseEvent"
 import Vector3 from "../utils/Vector3"
 
 import { registerSubCommand } from "../utils/commands"
@@ -14,7 +14,7 @@ const BonzoSimulator = new class {
         this.pitch = Player.pitch
         this.cancelInteractThisTick = false
 
-        Mouse.register((event) => {
+        MouseEvent.register(event => {
             if (!inSingleplayer()) return
             if (Player?.getHeldItem()?.getID() !== 369) return
             const { button, state } = event.data
