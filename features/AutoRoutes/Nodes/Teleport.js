@@ -6,7 +6,8 @@ import bind from "../../../utils/bind"
 import tpManager from "../TeleportManager";
 import SecretAuraClick from "../../../events/SecretAuraClick"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, sendAirClick, clampYaw, releaseMovementKeys } from "../../../utils/utils"
+import { nameFinder } from "../../../utils/TeleportItem"
 import { Node } from "../Node"
 import { UpdateWalkingPlayer } from "../../../events/JavaEvents";
 
@@ -48,7 +49,7 @@ class TeleportNode extends Node {
             });
         } else {
             const toBlock = manager.currentRoom.type === "dungeons" ? Dungeons.convertFromRelative(this.toBlock) : this.toBlock.copy();
-            tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemName, onResult);
+            tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, nameFinder(this.itemName), onResult);
         }
     }
 
@@ -67,7 +68,7 @@ class TeleportNode extends Node {
         values.push({
             type: "addSwitch",
             configName: "from Ether",
-            registerListener: (obj, prev, next) => {
+            registerListener: (obj, _, next) => {
                 obj.previousEther = next;
             },
             updator: (config, obj) => {
@@ -78,7 +79,7 @@ class TeleportNode extends Node {
         values.push({
             type: "addSwitch",
             configName: "chained",
-            registerListener: (obj, prev, next) => {
+            registerListener: (obj, _, next) => {
                 obj.chained = next;
             },
             updator: (config, obj) => {
@@ -98,7 +99,7 @@ class TeleportNode extends Node {
         return values;
     }
 
-    _preArgumentTrigger(execer) {
+    _preArgumentTrigger(_) {
         releaseMovementKeys();
         setVelocity(0, 0, 0);
         if (this.awaitSecret || this.awaitBat) {
@@ -163,7 +164,7 @@ class TeleportRecorder {
                 setVelocity(0, 0, 0);
                 event.cancelled = true;
             }),
-            register("packetSent", (packet, event) => {
+            register("packetSent", (_, event) => {
                 if (!this.awaitingTP) {
                     cancel(event);
                 }
@@ -204,16 +205,16 @@ class TeleportRecorder {
                 this.end(false);
                 event.breakChain = true;
             }, 1349239233),
-            SecretAuraClick.Post.register((data) => {
+            SecretAuraClick.Post.register((_) => {
                 this.nodes[this.nodes.length - 1].awaitSecret++;
             })
         ).unregister();
 
-        manager.registerAutoRouteCommand(["starttps", "stp"], args => {
+        manager.registerAutoRouteCommand(["starttps", "stp"], _ => {
             this.start();
         });
 
-        manager.registerAutoRouteCommand(["endtps", "etp"], args => {
+        manager.registerAutoRouteCommand(["endtps", "etp"], _ => {
             this.end();
         });
     }
@@ -294,4 +295,4 @@ class TeleportRecorder {
     }
 }
 
-const Teleport = new TeleportRecorder();
+export const Teleport = new TeleportRecorder();

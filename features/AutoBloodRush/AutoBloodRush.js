@@ -8,7 +8,8 @@ import Settings from "../../config"
 import Tick from "../../events/Tick";
 
 import { PostPacketReceive, UpdateWalkingPlayer } from "../../events/JavaEvents";
-import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage } from "../../utils/utils";
+import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage, chat } from "../../utils/utils";
+import { findSlot, aotvFinder, nameFinder } from "../../utils/TeleportItem";
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
@@ -19,6 +20,16 @@ new class BloodRusher {
         this.ticksFromDeathTick = null
         Dungeons.EnterDungeonEvent.register(() => {
             if (!Settings().schizoDoorsEnabled) return
+
+            if (findSlot(aotvFinder(0)) === null) {
+                chat("§cYou need to have an Aspect of the Void with 0 tuners in your hotbar to use this feature.");
+                return;
+            }
+
+            if (findSlot(nameFinder("Ender Pearl")) === null) {
+                chat("§cYou need to have a Ender Pearls in your hotbar to use this feature.");
+                return;
+            }
 
             const onGroundListener = Tick.Pre.register(() => {
                 if (!Player.asPlayerMP().isOnGround()) return
@@ -38,7 +49,7 @@ new class BloodRusher {
     }
 
     setup(tile, once = false) {
-        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
+        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
             tpManager.sync(Player.yaw, 90, false)
 
             this._teleportToTile(tile, () => {
@@ -58,7 +69,7 @@ new class BloodRusher {
                         onGroundListener.unregister()
                         started = Date.now();
                         const to = scanner.getRoom();
-                        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, "Aspect of the Void", () => {
+                        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
                             tpManager.sync(Player.yaw, 90, false)
                             this._teleportToTile(to, (pos) => {
                                 this._teleportRightBelowBlood(pos, () => {
@@ -72,10 +83,8 @@ new class BloodRusher {
                             });
                         })
                     }).unregister()
-                    ChatLib.chat("Doing stuff");
                     if (!Settings().schizoDoorsTacticalInsertion) {
                         if (scanner.getRoom()) {
-                            ChatLib.chat(`Found blood room at tile: ${scanner.getRoom().x}, ${scanner.getRoom().z}`);
                             const soundListener = register("packetReceived", (packet) => {
                                 if (packet.func_149212_c() !== "mob.enderdragon.growl" || packet.func_149208_g() !== 1 || packet.func_149209_h() !== 1) return
                                 soundListener.unregister()
@@ -84,12 +93,11 @@ new class BloodRusher {
                                 else onGroundListener.register()
                             }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
                         } else if (!once) {
-                            ChatLib.chat("Could not find blood room tile, trying to find it now...");
-                            // const onGroundListener = Tick.Pre.register(() => {
-                                // if (!Player.asPlayerMP().isOnGround()) return
-                                // onGroundListener.unregister()
-                                // this.setup(tile, true);
-                            // });
+                            const onGroundListener = Tick.Pre.register(() => {
+                                if (!Player.asPlayerMP().isOnGround()) return
+                                onGroundListener.unregister()
+                                this.setup(tile, true);
+                            });
                         }
                     }
                 }, 9999);
@@ -118,7 +126,7 @@ new class BloodRusher {
             return;
         }
         const to = modifier(from);
-        tpManager.teleport(new Vector3(to), yaw, pitch, false, "Aspect of the Void", (toBlock) => {
+        tpManager.teleport(new Vector3(to), yaw, pitch, false, aotvFinder(0), (toBlock) => {
             this._teleport(yaw, pitch, toBlock, modifier, amount, result);
         });
     }

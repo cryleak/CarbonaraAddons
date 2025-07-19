@@ -4,7 +4,8 @@ import manager from "./NodeManager";
 import Rotations from "../../utils/Rotations"
 import execer from "./NodeExecutor"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, chat, setSneaking, itemSwapSuccess, clampYaw, releaseMovementKeys } from "../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
+import { findSlot } from "../../utils/TeleportItem"
 import { UpdateWalkingPlayer } from "../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -123,8 +124,9 @@ class TeleportManager {
         onResult(toBlock);
     }
 
-    teleport(toBlock, yaw, pitch, sneaking, itemName, onResult) {
-        swapFromName(itemName, result => {
+    teleport(toBlock, yaw, pitch, sneaking, finder, onResult) {
+        const slot = findSlot(finder);
+        swapToSlot(slot, result => {
             if (result === itemSwapSuccess.FAIL) {
                 debugMessage("Teleport failed: Item swap failed");
                 return
@@ -164,7 +166,7 @@ class TeleportManager {
 
     measureTeleport(fromEther = false, yaw, pitch, sneaking, itemName, onResult) {
         if (!this.isTeleportItem()) {
-            swapFromName(itemName, result => {
+            swapFromName(itemName, () => {
                 this.measureTeleport(fromEther, yaw, pitch, sneaking, itemName, onResult);
             });
             return;
@@ -172,7 +174,6 @@ class TeleportManager {
 
         let packetsReceived = 0
         const doTp = () => {
-            let result = itemSwapSuccess.ALREADY_HOLDING
             if (Player.getHeldItem().getName() !== itemName) {
                 swapFromName(itemName, result => {
                     if (result === itemSwapSuccess.FAIL) {

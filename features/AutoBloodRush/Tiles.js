@@ -2,7 +2,6 @@ const info = Java.type("funnymap.features.dungeon.Dungeon$Info");
 const infoInstance = info.INSTANCE;
 
 import Tick from "../../events/Tick";
-import { registerSubCommand } from "../../utils/commands";
 
 
 class Scanner {
