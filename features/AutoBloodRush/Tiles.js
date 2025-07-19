@@ -44,7 +44,7 @@ class Scanner {
             }
 
             const coords = this._getTileCoords(tile);
-            if (coords.x >= 2 && coords.x <= 4 && coords.z >= 2 && coords.z <= 4) {
+            if (coords.x >= 2 && coords.x <= 3 && coords.z >= 2 && coords.z <= 3) {
                 return !this.names.includes(tile.getData().getName());
             }
         });
