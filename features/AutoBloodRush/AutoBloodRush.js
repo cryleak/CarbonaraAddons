@@ -129,7 +129,7 @@ new class BloodRusher {
                         soundListener.unregister()
 
                         if (this.ticksFromDeathTick % 40 > 30) {
-                            ServerTickEvent.scheduleTask(10, () => {
+                            ServerTickEvent.scheduleTask(40 - ticksFromDeathTick % 40, () => {
                                 releaseMethod();
                                 this._goToBlood(to);
                             });
