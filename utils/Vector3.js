@@ -93,6 +93,13 @@ export default class Vector3 extends BumVector3 {
         return this
     }
 
+    /**
+     * Returns the x,y,z of the Vector3 as an array.
+     */
+    getPosition() {
+        return [this.x, this.y, this.z]
+    }
+
     // I need to override all this bullshit so it keeps the methods of the extended Vector3 class.
 
     /**

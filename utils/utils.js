@@ -66,7 +66,7 @@ export function renderBox(pos, width, height, colors) {
 }
 
 import RenderLibV2 from "../../RenderLibV2J"
-import { UpdateWalkingPlayer } from "../events/JavaEvents"
+import { UpdatePlayer, UpdateWalkingPlayer } from "../events/JavaEvents"
 
 /**
  * Draws a box that looks like a scandinavian flag with specified colors.
@@ -461,7 +461,7 @@ export function swapToSlot(slot, callback) {
     }
 
     if (swappedThisTick) {
-        const done = UpdateWalkingPlayer.Pre.register(() => {
+        const done = UpdatePlayer.Pre.register(() => {
             done.unregister()
             swapToSlot(slot, callback)
             debugMessage(`Awaiting before swap`)

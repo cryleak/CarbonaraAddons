@@ -139,7 +139,6 @@ class BonzoProjectile {
             motionVector.multiply(isWithinTolerence(vectorLength, 0) ? 0 : 1 / vectorLength) // Multiply by 0 if the length is 0
             const motionX = motionVector.x * 1.5
             const motionZ = motionVector.z * 1.5
-            ChatLib.chat([motionX, 0.5, motionZ].toString())
             setVelocity(motionX, 0.5, motionZ)
             return
         } else {

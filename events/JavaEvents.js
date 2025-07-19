@@ -81,3 +81,10 @@ export const UpdateWalkingPlayer = { Pre: new WrappedJavaEvent(events.UpdateWalk
  * }}
  */
 export const UpdatePlayer = { Pre: new WrappedJavaEvent(events.UpdatePlayerPre) }
+
+/**
+ * An event that is triggered right after the client sends a UseItem packet.
+ * @const
+ * @type {import('./CustomEvents').EventInstance<>}
+ */
+export const PostUseItem = new WrappedJavaEvent(events.PostUseItem)

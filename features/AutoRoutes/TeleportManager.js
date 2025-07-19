@@ -6,7 +6,7 @@ import execer from "./NodeExecutor"
 import ZeroPing from "../ZeroPing"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
-import { findSlot } from "../../utils/TeleportItem"
+import { etherwarpFinder, findSlot } from "../../utils/TeleportItem"
 import { UpdateWalkingPlayer } from "../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
@@ -164,54 +164,52 @@ class TeleportManager {
         return true
     }
 
-    measureTeleport(fromEther = false, yaw, pitch, sneaking, itemName, onResult) {
-        if (!this.isTeleportItem()) {
-            swapFromName(itemName, () => {
-                this.measureTeleport(fromEther, yaw, pitch, sneaking, itemName, onResult);
-            });
-            return;
+    measureTeleport(fromEther = false, yaw, pitch, sneaking, itemFinder, onResult) {
+        const slot = findSlot(itemFinder)
+        if (slot === null) {
+            onResult(null)
+            return
         }
 
         let packetsReceived = 0
         const doTp = () => {
-            if (Player.getHeldItem().getName() !== itemName) {
-                swapFromName(itemName, result => {
-                    if (result === itemSwapSuccess.FAIL) {
-                        onResult(null)
-                        return
-                    }
-                });
-            }
-            setSneaking(sneaking)
-            const playerUpdateListener = UpdateWalkingPlayer.Pre.register((event) => {
-                event.cancelled = true
-                event.breakChain = true
-                Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, false))
-                playerUpdateListener.unregister()
-                sendAirClick();
-
-                let awaiting = true
-                const listener = ServerTeleport.register((event) => {
-                    if (packetsReceived-- !== 0) return
-                    awaiting = false
-                    event.breakChain = true
-                    listener.unregister()
-
-                    const data = event.data
-                    const block = new Vector3(data.x, data.y, data.z).floor2D()
-                    onResult(block);
-                }, 10001);
-                scheduleTask(100, () => {
-                    if (!awaiting) return
+            swapToSlot(slot, result => {
+                if (result === itemSwapSuccess.FAIL) {
                     onResult(null)
-                    listener.unregister()
-                    awaiting = false
-                });
+                    return
+                }
+                setSneaking(sneaking)
+                const playerUpdateListener = UpdateWalkingPlayer.Pre.register((event) => {
+                    event.cancelled = true
+                    event.breakChain = true
+                    Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(yaw, pitch, false))
+                    playerUpdateListener.unregister()
+                    sendAirClick();
+
+                    let awaiting = true
+                    const listener = ServerTeleport.register((event) => {
+                        if (packetsReceived-- !== 0) return
+                        awaiting = false
+                        event.breakChain = true
+                        listener.unregister()
+
+                        const data = event.data
+                        const block = new Vector3(data.x, data.y, data.z).floor2D()
+                        onResult(block);
+                    }, 10001);
+                    scheduleTask(100, () => {
+                        if (!awaiting) return
+                        onResult(null)
+                        listener.unregister()
+                        awaiting = false
+                    });
+                })
             })
         }
 
         if (fromEther) {
-            swapFromName(itemName, result => {
+            const etherSlot = findSlot(etherwarpFinder(4))
+            swapToSlot(etherSlot, result => {
                 if (result === itemSwapSuccess.FAIL) {
                     onResult(null)
                     return

@@ -428,8 +428,8 @@ export default new class Dungeons {
      * Returns true if in F7/M7 boss, otherwise returns false.
      */
     isIn7Boss() {
-        ChatLib.chat(`${dungeonUtils.floor.floorNumber} ${dungeonUtils.inBoss}`);
-        return dungeonUtils.floor.floorNumber === 7 && dungoenUtils.inBoss;
+        if (!dungeonUtils.floor) return false
+        return dungeonUtils.floor.floorNumber === 7 && dungeonUtils.inBoss;
     }
 
     /**

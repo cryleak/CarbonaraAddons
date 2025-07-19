@@ -7,9 +7,10 @@ import tpManager from "../TeleportManager";
 import SecretAuraClick from "../../../events/SecretAuraClick"
 
 import { setPlayerPosition, setVelocity, debugMessage, sendAirClick, clampYaw, releaseMovementKeys } from "../../../utils/utils"
-import { nameFinder } from "../../../utils/TeleportItem"
+import { aotvFinder, etherwarpFinder, hypeFinder, nameFinder } from "../../../utils/TeleportItem"
 import { Node } from "../Node"
 import { UpdateWalkingPlayer } from "../../../events/JavaEvents";
+import MouseEvent from "../../../events/MouseEvent";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
@@ -42,14 +43,15 @@ class TeleportNode extends Node {
 
         if (!this.toBlock) {
             debugMessage("Measuring");
-            tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemName, (pos) => {
+            tpManager.measureTeleport(this.previousEther, this.realYaw, this.pitch, this.sneaking, this.itemFinder, (pos) => {
+                if (pos === null) return onResult(null)
                 this.toBlock = manager.currentRoom.type === "dungeons" ? Dungeons.convertToRelative(pos) : pos;
                 manager.saveConfig();
                 onResult(pos);
             });
         } else {
             const toBlock = manager.currentRoom.type === "dungeons" ? Dungeons.convertFromRelative(this.toBlock) : this.toBlock.copy();
-            tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, nameFinder(this.itemName), onResult);
+            tpManager.teleport(toBlock.add([0.5, 0, 0.5]), this.realYaw, this.pitch, this.sneaking, this.itemFinder, onResult);
         }
     }
 
@@ -121,7 +123,19 @@ manager.registerNode(class EtherwarpNode extends TeleportNode {
         super(this.constructor.identifier, args)
 
         this.sneaking = true
-        this.itemName = "Aspect of the Void"
+        this.defineTransientProperties(manager.currentRoom)
+    }
+
+    defineTransientProperties(room) {
+        super.defineTransientProperties(room)
+        Object.defineProperties(this, {
+            itemFinder: {
+                value: etherwarpFinder(4),
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+        })
     }
 })
 
@@ -132,7 +146,19 @@ manager.registerNode(class AOTVNode extends TeleportNode {
         super(this.constructor.identifier, args)
 
         this.sneaking = false
-        this.itemName = "Aspect of the Void"
+        this.defineTransientProperties(manager.currentRoom)
+    }
+
+    defineTransientProperties(room) {
+        super.defineTransientProperties(room)
+        Object.defineProperties(this, {
+            itemFinder: {
+                value: aotvFinder(4),
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+        })
     }
 })
 
@@ -143,7 +169,19 @@ manager.registerNode(class HyperionNode extends TeleportNode {
         super(this.constructor.identifier, args)
 
         this.sneaking = false
-        this.itemName = "Astraea"
+        this.defineTransientProperties(manager.currentRoom)
+    }
+
+    defineTransientProperties(room) {
+        super.defineTransientProperties(room)
+        Object.defineProperties(this, {
+            itemFinder: {
+                value: hypeFinder(),
+                enumerable: false,
+                writable: true,
+                configurable: true
+            },
+        })
     }
 })
 
@@ -171,9 +209,9 @@ class TeleportRecorder {
 
                 this.awaitingTP = false;
             }).setFilteredClass(C08PacketPlayerBlockPlacement),
-            register(net.minecraftforge.client.event.MouseEvent, (event) => {
-                const button = event.button
-                const state = event.buttonstate
+            MouseEvent.register(event => {
+                const button = event.data.button
+                const state = event.data.state
                 if (button !== 0 || !state || !Client.isTabbedIn() || Client.isInGui()) return
 
                 const item = Player.getHeldItem()
@@ -183,7 +221,8 @@ class TeleportRecorder {
                 }
 
                 if (this.inTP) {
-                    cancel(event);
+                    event.cancelled = true
+                    event.breakChain = true
                     return;
                 }
 
@@ -199,7 +238,9 @@ class TeleportRecorder {
                 Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, Player.pitch, Player.getPlayer().field_70122_E));
                 sendAirClick();
                 this.tped(type);
-            }),
+                event.cancelled = true
+                event.breakChain = true
+            }, 2147483646),
             ServerTeleport.register((event) => {
                 debugMessage("Server Forced your rotation. This is really bad.");
                 this.end(false);

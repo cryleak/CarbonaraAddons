@@ -197,7 +197,6 @@ const nodeTypes = {
             setVelocity(0, null, 0)
             let start = Date.now()
             UpdateWalkingPlayer.Pre.scheduleTask(0, () => {
-                ChatLib.chat(Date.now() - start)
                 const speed = Player.getPlayer().field_71075_bZ.func_75094_b() * (43 / 15)
                 const radians = args.yaw * Math.PI / 180
                 setVelocity(-Math.sin(radians) * speed, null, Math.cos(radians) * speed)

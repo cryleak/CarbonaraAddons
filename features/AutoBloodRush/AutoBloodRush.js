@@ -83,22 +83,27 @@ new class BloodRusher {
                             });
                         })
                     }).unregister()
-                    if (!Settings().schizoDoorsTacticalInsertion) {
-                        if (scanner.getRoom()) {
+                    if (scanner.getRoom()) {
+                        const exec = () => {
+                            const ticksToNextDeathTick = this.ticksFromDeathTick % 40
+                            if (ticksToNextDeathTick > 15) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
+                            else onGroundListener.register()
+                        }
+                        if (Settings().schizoDoorsTacticalInsertion) {
+                            exec()
+                        } else {
                             const soundListener = register("packetReceived", (packet) => {
                                 if (packet.func_149212_c() !== "mob.enderdragon.growl" || packet.func_149208_g() !== 1 || packet.func_149209_h() !== 1) return
                                 soundListener.unregister()
-                                const ticksToNextDeathTick = this.ticksFromDeathTick % 40
-                                if (ticksToNextDeathTick > 15) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
-                                else onGroundListener.register()
+                                exec()
                             }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
-                        } else if (!once) {
-                            const onGroundListener = Tick.Pre.register(() => {
-                                if (!Player.asPlayerMP().isOnGround()) return
-                                onGroundListener.unregister()
-                                this.setup(tile, true);
-                            });
                         }
+                    } else if (!once) {
+                        const onGroundListener = Tick.Pre.register(() => {
+                            if (!Player.asPlayerMP().isOnGround()) return
+                            onGroundListener.unregister()
+                            this.setup(tile, true);
+                        });
                     }
                 }, 9999);
             });

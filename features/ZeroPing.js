@@ -1,12 +1,13 @@
 import Settings from "../config"
-import Vector3 from "../../BloomCore/utils/Vector3";
+import Vector3 from "../utils/Vector3";
 import ServerTeleport from "../events/ServerTeleport";
 import MouseEvent from "../events/MouseEvent";
-import { UpdateWalkingPlayer } from "../events/JavaEvents"
+import { PostUseItem, UpdateWalkingPlayer } from "../events/JavaEvents"
 
 import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
 import { isWithinTolerence, sendAirClick, setPlayerPosition, setVelocity } from "../utils/utils";
 import { getTeleportInfo } from "../utils/TeleportItem";
+import Dungeons from "../utils/Dungeons";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
 
@@ -29,11 +30,29 @@ const ZeroPing = new class {
         this.updatePosition = true;
         this.desyncedTps = [];
         this.lastTPed = 0;
+        this.disallowedBlockIDS = [ // Block IDs we can't teleport if we are looking at them
+            54,
+            69,
+            118,
+            146,
+            154
+        ]
+
+        PostUseItem.register(() => {
+            const objectMouseOver = Client.getMinecraft().field_71476_x
+            const type = objectMouseOver.field_72313_a.toString()
+            if (type === "ENTITY") return
+            else if (type === "BLOCK") {
+                const position = new Vector3(objectMouseOver.func_178782_a())
+                const blockID = World.getBlockAt(...position.getPosition()).type.getID()
+                if (this.disallowedBlockIDS.includes(blockID)) return
+            }
+            if (Dungeons.isIn7Boss() || !Settings().zpewEnabled) return
+            this.doZeroPing()
+        })
 
         MouseEvent.register(event => {
-            if (!Settings().zpewEnabled) {
-                return;
-            }
+            if (!Settings().zpewEnabled) return;
 
             this._handleMouseEvent(event);
         }, 99)
@@ -65,8 +84,6 @@ const ZeroPing = new class {
 
         if (button === 0) {
             this.doRegularTeleport(event);
-        } else if (button === 1 && this.desyncedTps.length === 0) {
-            this.doZeroPing(event);
         }
     }
 
@@ -126,6 +143,7 @@ const ZeroPing = new class {
         const action = packet.func_180764_b();
         if (action == C0BPacketEntityAction.Action.START_SNEAKING) this.playerState.sneaking = true;
         if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) this.playerState.sneaking = false;
+        ChatLib.chat(this.playerState.sneaking)
     }
 
     doRegularTeleport(event) {
@@ -142,7 +160,7 @@ const ZeroPing = new class {
         this.updateLastTPed();
     }
 
-    doZeroPing(event) {
+    doZeroPing() {
         const info = getTeleportInfo(Player.getHeldItem(), this.playerState);
         if (!info) {
             return;
@@ -182,9 +200,6 @@ const ZeroPing = new class {
             return;
         }
 
-        event.cancelled = true;
-        event.breakChain = true;
-
         let prediction;
         if (info.ether) {
             prediction = raytraceBlocks([this.playerState.x, this.playerState.y + 1.5399999618530273, this.playerState.z], Vector3.fromPitchYaw(this.playerState.pitch, this.playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
@@ -210,7 +225,6 @@ const ZeroPing = new class {
 
         this.sent.push({ x, y, z, yaw, pitch });
 
-        sendAirClick();
         setPlayerPosition(x, y, z, true)
         Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
         setVelocity(0, 0, 0)
