@@ -87,6 +87,12 @@ new class BloodRusher {
                             registered.unregister();
 
                             FreezeManager.setFreezing(false);
+
+                            const x = packet.func_148932_c()
+                            const y = packet.func_148928_d()
+                            const z = packet.func_148933_e()
+                            setPlayerPosition(x, y, z, true)
+
                             if (!scanner.getRoom() && !once) {
                                 const onGroundListener = Tick.Pre.register(() => {
                                     if (!Player.asPlayerMP().isOnGround()) return
