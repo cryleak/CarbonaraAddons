@@ -64,53 +64,62 @@ new class BloodRusher {
 
     setup(tile, once = false) {
         // tpManager.teleport(new Vector3(Player), Player.yaw, 0, false, aotvFinder(0), () => {
-        const yaw = Dungeons.convertToRelativeYaw(270)
-        ChatLib.chat(yaw)
+        const yaw = Dungeons.convertToRealYaw(90)
         const yawRadians = yaw * (Math.PI / 180)
+
+        const oppositeYaw = Dungeons.convertToRealYaw(270)
+        const oppositeYawRadians = oppositeYaw * (Math.PI / 180)
         this._teleport(yaw, 5, new Vector3(Player), (v) => v.copy().add(-Math.sin(yawRadians) * 8, 0, Math.cos(yawRadians) * 8), 1, () => {
             tpManager.sync(Player.yaw, 90, false)
             this._pearlClip(90, 62, (releaseMethod) => {
                 releaseMethod();
-                this._teleportToTile(tile, () => {
-                    tpManager.sync(Player.yaw, -90, true);
-                    rotate(Player.yaw, -90);
-                    FreezeManager.setFreezing(true);
-                    const registered = PostPacketReceive.register(packet => {
-                        if (!(packet instanceof S08PacketPlayerPosLook)) {
-                            return;
-                        }
-                        this.ticksFromDeathTick = 0
-                        registered.unregister();
+                this._teleport(oppositeYaw, 5, new Vector3(Player), (v) => v.copy().add(-Math.sin(oppositeYawRadians) * 8, 0, Math.cos(oppositeYawRadians) * 8), 1, (pos) => {
+                    this._teleportToTile(pos, tile, () => {
+                        tpManager.sync(Player.yaw, -90, true);
+                        rotate(Player.yaw, -90);
+                        FreezeManager.setFreezing(true);
+                        const registered = PostPacketReceive.register(packet => {
+                            if (!(packet instanceof S08PacketPlayerPosLook)) {
+                                return;
+                            }
+                            this.ticksFromDeathTick = 0
+                            registered.unregister();
 
-                        FreezeManager.setFreezing(false);
-                        if (!scanner.getRoom() && !once) {
-                            const onGroundListener = Tick.Pre.register(() => {
-                                if (!Player.asPlayerMP().isOnGround()) return
-                                onGroundListener.unregister()
-                                this.setup(tile, true);
-                            });
-                            return;
-                        }
+                            FreezeManager.setFreezing(false);
+                            if (!scanner.getRoom() && !once) {
+                                const onGroundListener = Tick.Pre.register(() => {
+                                    if (!Player.asPlayerMP().isOnGround()) return
+                                    onGroundListener.unregister()
+                                    this.setup(tile, true);
+                                });
+                                return;
+                            }
 
-                        if (scanner.getRoom()) {
-                            this.doBlood();
-                        }
-                    }, 9999);
+                            if (scanner.getRoom()) {
+                                this.doBlood();
+                            }
+                        }, 9999);
+                    });
                 });
             });
         })
     }
 
     _goToBlood(to) {
+        const yaw = Dungeons.convertToRealYaw(270)
+        const yawRadians = yaw * (Math.PI / 180)
+
         started = Date.now();
-        this._teleportToTile(to, (pos) => {
-            this._teleportRightBelowBlood(pos, () => {
-                tpManager.sync(Player.yaw, -90, true);
-                this._pearlThrow(-90, (releasePacket) => {
-                    debugMessage(`DeathStreeks Blixten McQueen blood rush took: ${Date.now() - started}ms`);
-                    releasePacket(null)
-                    rotate(Player.yaw, 90)
-                    sendAirClick();
+        this._teleport(yaw, 5, new Vector3(Player), (v) => v.copy().add(-Math.sin(yawRadians) * 8, 0, Math.cos(yawRadians) * 8), 1, (pos) => {
+            this._teleportToTile(pos, to, (pos) => {
+                this._teleportRightBelowBlood(pos, () => {
+                    tpManager.sync(Player.yaw, -90, true);
+                    this._pearlThrow(-90, (releasePacket) => {
+                        debugMessage(`DeathStreeks Blixten McQueen blood rush took: ${Date.now() - started}ms`);
+                        releasePacket(null)
+                        rotate(Player.yaw, 90)
+                        sendAirClick();
+                    });
                 });
             });
         });
@@ -126,9 +135,8 @@ new class BloodRusher {
             if (!Player.asPlayerMP().isOnGround()) return
             onGroundListener.unregister()
             const to = scanner.getRoom();
-            // tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
-            const yaw = Dungeons.convertToRelativeYaw(270)
-            ChatLib.chat(yaw)
+
+            const yaw = Dungeons.convertToRealYaw(90)
             const yawRadians = yaw * (Math.PI / 180)
             this._teleport(yaw, 5, new Vector3(Player), (v) => v.copy().add(-Math.sin(yawRadians) * 8, 0, Math.cos(yawRadians) * 8), 1, () => {
                 tpManager.sync(Player.yaw, 90, false)
@@ -170,14 +178,14 @@ new class BloodRusher {
         }
     }
 
-    _teleportToTile(tile, callback) {
+    _teleportToTile(pos, tile, callback) {
         const currentTile = this._getCurrentTile();
         const offset = this._getOffset(currentTile, tile);
         if (offset.x === 0 && offset.z === 0) {
             return;
         }
 
-        this._teleportDown(new Vector3(Player), 8, (pos) => {
+        this._teleportDown(pos, 8, (pos) => {
             this._executeOffset(offset, pos, (pos) => {
                 callback(pos);
             });
