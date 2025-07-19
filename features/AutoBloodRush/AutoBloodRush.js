@@ -8,8 +8,11 @@ import Settings from "../../config"
 import Tick from "../../events/Tick";
 
 import { PostPacketReceive, UpdateWalkingPlayer } from "../../events/JavaEvents";
-import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage, chat } from "../../utils/utils";
+import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage, chat, findAirOpening } from "../../utils/utils";
 import { findSlot, aotvFinder, nameFinder } from "../../utils/TeleportItem";
+import Rotations from "../../utils/Rotations";
+import ServerTeleport from "../../events/ServerTeleport";
+import { onChatPacket } from "../../../BloomCore/utils/Events";
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
@@ -71,32 +74,36 @@ new class BloodRusher {
                         const to = scanner.getRoom();
                         tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
                             tpManager.sync(Player.yaw, 90, false)
-                            this._teleportToTile(to, (pos) => {
-                                this._teleportRightBelowBlood(pos, () => {
-                                    debugMessage(`Got to blood in: ${Date.now() - started}ms`);
-                                    tpManager.sync(Player.yaw, -90, true);
-                                    this._pearlThrow(-90, () => {
-                                        rotate(Player.yaw, 90)
-                                        sendAirClick();
+                            this._pearlClip(90, 62, (releaseMethod) => {
+                                const teleportToBlood = () => {
+                                    this._teleportToTile(to, (pos) => {
+                                        this._teleportRightBelowBlood(pos, () => {
+                                            debugMessage(`Got to blood in: ${Date.now() - started}ms`);
+                                            tpManager.sync(Player.yaw, -90, true);
+                                            this._pearlThrow(-90, (releasePacket) => {
+                                                releasePacket(null)
+                                                rotate(Player.yaw, 90)
+                                                sendAirClick();
+                                            });
+                                        });
                                     });
-                                });
-                            });
+                                }
+                                if (Settings())
+                            })
                         })
                     }).unregister()
                     if (scanner.getRoom()) {
                         const exec = () => {
                             const ticksToNextDeathTick = this.ticksFromDeathTick % 40
-                            if (ticksToNextDeathTick > 15) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
+                            if (ticksToNextDeathTick > 30) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
                             else onGroundListener.register()
                         }
                         if (Settings().schizoDoorsTacticalInsertion) {
-                            exec()
+                            onGroundListener.register()
                         } else {
-                            const soundListener = register("packetReceived", (packet) => {
-                                if (packet.func_149212_c() !== "mob.enderdragon.growl" || packet.func_149208_g() !== 1 || packet.func_149209_h() !== 1) return
-                                soundListener.unregister()
-                                exec()
-                            }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect)
+                            onChatPacket(() => {
+                                onGroundListener.register()
+                            }).setCriteria("Starting in 1 second.")
                         }
                     } else if (!once) {
                         const onGroundListener = Tick.Pre.register(() => {
@@ -116,11 +123,10 @@ new class BloodRusher {
         if (offset.x === 0 && offset.z === 0) {
             return;
         }
-        this._pearlClip(90, 62, () => {
-            this._teleportDown(new Vector3(Player), 8, (pos) => {
-                this._executeOffset(offset, pos, (pos) => {
-                    callback(pos);
-                });
+
+        this._teleportDown(new Vector3(Player), 8, (pos) => {
+            this._executeOffset(offset, pos, (pos) => {
+                callback(pos, releasePacket);
             });
         });
     }
@@ -190,14 +196,20 @@ new class BloodRusher {
 
     _pearlLand(callback) {
         let listening = true
-        const soundListener = PostPacketReceive.register(packet => {
-            if (!(packet instanceof S08PacketPlayerPosLook)) {
-                return;
-            }
+        const teleportListener = ServerTeleport.register(event => {
+            teleportListener.unregister()
             listening = false
-            soundListener.unregister()
-            Client.scheduleTask(0, () => callback())
-        })
+            event.cancelled = true
+            event.breakChain = true
+            callback(yPos => {
+                FreezeManager.setFreezing(false)
+                sendS08Response(event.data.packet)
+                if (yPos !== null) {
+                    Client.sendPacket(new C03PacketPlayer.C04PacketPlayerPosition(Player.x, yPos, Player.z, Player.asPlayerMP().isOnGround()))
+                    setPlayerPosition(Player.x, yPos, Player.z, false)
+                }
+            })
+        }, 0)
 
         scheduleTask(60, () => {
             if (!listening) return
@@ -208,6 +220,7 @@ new class BloodRusher {
     _pearlThrow(pitch, callback) {
         this._preparePearl(pitch, () => {
             sendAirClick();
+            FreezeManager.setFreezing(true)
             this._pearlLand(callback);
         });
     }
@@ -215,33 +228,24 @@ new class BloodRusher {
     _preparePearl(pitch, callback) {
         swapFromName("Ender Pearl", result => {
             if (result === itemSwapSuccess.FAIL) return
-            const throwPearl = () => {
-                let triggered = false
-                const registered = UpdateWalkingPlayer.Pre.register(event => {
-                    registered.unregister()
-                    if (triggered) return
-                    triggered = true
-                    if (event.cancelled) return;
-                    event.cancelled = true;
-                    event.breakChain = true;
+            let triggered = false
+            const registered = UpdateWalkingPlayer.Pre.register(event => {
+                registered.unregister()
+                if (triggered) return
+                triggered = true
+                if (event.cancelled) return;
+                event.cancelled = true;
+                event.breakChain = true;
 
-                    const data = event.data;
-                    Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, pitch, data.onGround));
-                    callback()
-                }, 23984234)
-            };
-            if (result === itemSwapSuccess.SUCCESS) {
-                UpdateWalkingPlayer.Pre.scheduleTask(1, () => {
-                    throwPearl();
-                });
-            } else if (result === itemSwapSuccess.ALREADY_HOLDING) {
-                throwPearl();
-            }
+                const data = event.data;
+                Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(Player.yaw, pitch, data.onGround));
+                callback()
+            }, 23984234)
         });
     }
 
     _pearlClip(pitch, yPos, callback) {
-        this._pearlThrow(pitch, () => {
+        this._pearlThrow(pitch, (releaseMethod) => {
             const trigger = UpdateWalkingPlayer.Pre.register(event => {
                 trigger.unregister();
                 event.breakChain = true;
@@ -249,7 +253,7 @@ new class BloodRusher {
 
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPos, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
                 setPlayerPosition(Player.x, yPos, Player.z, true)
-                callback();
+                callback(releaseMethod);
             }, 293428534);
         });
     }
@@ -268,4 +272,49 @@ new class BloodRusher {
             z: from.z - to.z
         }
     }
+}
+
+
+let exec = null
+
+register("command", () => {
+    if (exec) {
+        exec()
+        exec = null
+    }
+}).setName("releaseshit")
+
+register("command", () => {
+    Rotations.rotate(Player.yaw, 90, () => {
+        sendAirClick()
+        FreezeManager.setFreezing(true)
+        const tpListener = register("packetReceived", (packet, event) => {
+            cancel(event)
+            tpListener.unregister()
+            exec = () => {
+                ChatLib.chat("Sending response")
+                FreezeManager.setFreezing(false)
+                const yPos = findAirOpening()
+                sendS08Response(packet)
+                if (!yPos) return
+                ChatLib.chat(yPos)
+                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPos, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
+                setPlayerPosition(Player.x, yPos, Player.z)
+            }
+            ChatLib.chat("registered")
+        }).setFilteredClass(S08PacketPlayerPosLook)
+    })
+}).setName("testpearlclip")
+
+function sendS08Response(packet) {
+    const enumflags = Object.values(packet.func_179834_f())
+    let [x, y, z, yaw, pitch] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e(), packet.func_148931_f(), packet.func_148930_g()]
+    if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.X)) x += Player.getPlayer().field_70165_t
+    if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.Y)) y += Player.getPlayer().field_70163_u
+    if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.Z)) z += Player.getPlayer().field_70161_v
+    if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) yaw += Player.getYaw()
+    if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.Y_ROT)) pitch += Player.getPitch()
+    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
+    setPlayerPosition(x, y, z, true)
+    rotate(yaw, pitch)
 }

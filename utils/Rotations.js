@@ -30,7 +30,7 @@ export default new class Rotations {
         this.yaw = yaw
         this.pitch = pitch
         this.postPacketSend = postPacketSend
-        this.noMode = noMove
+        this.noMove = noMove
 
         /*
         if (global.carbonara.autop3.missingPackets.length > 0) {
