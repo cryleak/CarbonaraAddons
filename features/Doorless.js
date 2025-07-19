@@ -1,27 +1,18 @@
 import Settings from "../config"
 import Vector3 from "../utils/Vector3";
-import Rotations from "../utils/Rotations";
 import Dungeons from "../utils/Dungeons";
 import FreezeManager from "./AutoRoutes/FreezeManager";
 import ServerTeleport from "../events/ServerTeleport"
+import ZeroPing from "./ZeroPing";
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
 import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
 import { UpdateWalkingPlayer } from "../events/JavaEvents";
 
-const MCBlock = Java.type("net.minecraft.block.Block");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement");
-const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
-const S32PacketConfirmTransaction = Java.type("net.minecraft.network.play.server.S32PacketConfirmTransaction");
-
-const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
 
 const allowed = [73, 72.5, 72, 71];
-
 let cooldown = Date.now()
-
-let debug = true
 
 class Doorless {
     constructor() {
@@ -41,6 +32,7 @@ class Doorless {
         if (y !== 69) return;
         if (!data.onGround) return
         if (Player.isSneaking()) return
+        if (!ZeroPing.isSynced()) return;
 
         let yaw = data.yaw;
         let xOffset = 0, zOffset = 0;
@@ -52,7 +44,6 @@ class Doorless {
         const zNormalized = (pos.z + 201) % 32;
         const zNormalizedX = (pos.x + 185) % 32;
 
-        let direction = 0;
         if (xNormalizedZ < 3) {
             if (xNormalized === 31) {
                 xOffset = 1;

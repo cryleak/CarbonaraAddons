@@ -1,4 +1,5 @@
 import Tick from "../events/Tick"
+import MouseEvent from "../events/Mouse"
 import Vector3 from "../utils/Vector3"
 
 import { registerSubCommand } from "../utils/commands"
@@ -76,13 +77,13 @@ class DeviceManager {
             this.tryShootBow(this.lastArrowShoot)
         }).setFilteredClass(C0APacketAnimation)
 
-        register(net.minecraftforge.client.event.MouseEvent, (event) => {
-            const button = event.button
-            const state = event.buttonstate
+        MouseEvent.register(event => {
+            const { button, state } = event.data
             if (button !== 1 || !state || !Client.isTabbedIn() || Client.isInGui() || !this.isOnDevice()) return
             if (Player?.getHeldItem()?.getID() === 261) {
 
-                cancel(event)
+                event.cancelled = true
+                event.breakChain = true
                 this.tryShootBow(this.lastArrowShoot)
                 if (this.holdingRightClick) return
                 this.holdingRightClick = true

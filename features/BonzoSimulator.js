@@ -1,9 +1,9 @@
 import RenderLibV2 from "../../RenderLibV2J"
-import { registerSubCommand } from "../utils/commands"
-import { chat, getEyeHeight, inSingleplayer, isBlockPassable, isWithinTolerence, scheduleTask, setVelocity } from "../utils/utils"
+import MouseEvent from "../events/MouseEvent"
 import Vector3 from "../utils/Vector3"
 
-const MouseEvent = Java.type("net.minecraftforge.client.event.MouseEvent")
+import { registerSubCommand } from "../utils/commands"
+import { chat, inSingleplayer, isBlockPassable, isWithinTolerence, scheduleTask, setVelocity } from "../utils/utils"
 
 const BonzoSimulator = new class {
     constructor() {
@@ -14,15 +14,14 @@ const BonzoSimulator = new class {
         this.pitch = Player.pitch
         this.cancelInteractThisTick = false
 
-        register(MouseEvent, (event) => {
+        MouseEvent.register(event => {
             if (!inSingleplayer()) return
             if (Player?.getHeldItem()?.getID() !== 369) return
-            const button = event.button
-            const state = event.buttonstate
+            const { button, state } = event.data
             if (!state || button !== 1) return
 
             scheduleTask(Math.round(this.ping / 50), () => new BonzoProjectile(this.playerPosition.copy().add([0, 1, 0]), this.yaw, this.pitch))
-        })
+        }, 0)
 
         registerSubCommand("setbonzoping", (ping) => {
             if (isNaN(ping)) return
