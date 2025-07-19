@@ -1,5 +1,5 @@
 import Tick from "../events/Tick"
-import MouseEvent from "../events/Mouse"
+import MouseEvent from "../events/MouseEvent"
 import Vector3 from "../utils/Vector3"
 
 import { registerSubCommand } from "../utils/commands"
