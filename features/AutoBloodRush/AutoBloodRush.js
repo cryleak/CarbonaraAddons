@@ -49,72 +49,110 @@ new class BloodRusher {
         ServerTickEvent.register(() => {
             if (this.ticksFromDeathTick !== null) this.ticksFromDeathTick++
         })
+
+        register("worldUnload", () => {
+            this.ticksFromDeathTick = null;
+        });
     }
 
     setup(tile, once = false) {
         tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
             tpManager.sync(Player.yaw, 90, false)
-
-            this._teleportToTile(tile, () => {
-                tpManager.sync(Player.yaw, -90, true);
-                rotate(Player.yaw, -90);
-                FreezeManager.setFreezing(true);
-                const registered = PostPacketReceive.register(packet => {
-                    if (!(packet instanceof S08PacketPlayerPosLook)) {
-                        return;
-                    }
-                    this.ticksFromDeathTick = 0
-                    registered.unregister();
-
-                    FreezeManager.setFreezing(false);
-                    const onGroundListener = Tick.Pre.register(() => {
-                        if (!Player.asPlayerMP().isOnGround()) return
-                        onGroundListener.unregister()
-                        started = Date.now();
-                        const to = scanner.getRoom();
-                        tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
-                            tpManager.sync(Player.yaw, 90, false)
-                            this._pearlClip(90, 62, (releaseMethod) => {
-                                const teleportToBlood = () => {
-                                    this._teleportToTile(to, (pos) => {
-                                        this._teleportRightBelowBlood(pos, () => {
-                                            debugMessage(`Got to blood in: ${Date.now() - started}ms`);
-                                            tpManager.sync(Player.yaw, -90, true);
-                                            this._pearlThrow(-90, (releasePacket) => {
-                                                releasePacket(null)
-                                                rotate(Player.yaw, 90)
-                                                sendAirClick();
-                                            });
-                                        });
-                                    });
-                                }
-                                if (Settings())
-                            })
-                        })
-                    }).unregister()
-                    if (scanner.getRoom()) {
-                        const exec = () => {
-                            const ticksToNextDeathTick = this.ticksFromDeathTick % 40
-                            if (ticksToNextDeathTick > 30) ServerTickEvent.scheduleTask(40 - ticksToNextDeathTick, () => onGroundListener.register())
-                            else onGroundListener.register()
+            this._pearlClip(90, 62, (releaseMethod) => {
+                releaseMethod();
+                this._teleportToTile(tile, () => {
+                    tpManager.sync(Player.yaw, -90, true);
+                    rotate(Player.yaw, -90);
+                    FreezeManager.setFreezing(true);
+                    const registered = PostPacketReceive.register(packet => {
+                        if (!(packet instanceof S08PacketPlayerPosLook)) {
+                            return;
                         }
-                        if (Settings().schizoDoorsTacticalInsertion) {
-                            onGroundListener.register()
-                        } else {
-                            onChatPacket(() => {
-                                onGroundListener.register()
-                            }).setCriteria("Starting in 1 second.")
+                        this.ticksFromDeathTick = 0
+                        registered.unregister();
+
+                        FreezeManager.setFreezing(false);
+                        if (!scanner.getRoom() && !once) {
+                            const onGroundListener = Tick.Pre.register(() => {
+                                if (!Player.asPlayerMP().isOnGround()) return
+                                onGroundListener.unregister()
+                                this.setup(tile, true);
+                            });
+                            return;
                         }
-                    } else if (!once) {
-                        const onGroundListener = Tick.Pre.register(() => {
-                            if (!Player.asPlayerMP().isOnGround()) return
-                            onGroundListener.unregister()
-                            this.setup(tile, true);
-                        });
-                    }
-                }, 9999);
+
+                        if (scanner.getRoom()) {
+                            this.doBlood();
+                        }
+                    }, 9999);
+                });
             });
         })
+    }
+
+    _goToBlood(to) {
+        started = Date.now();
+        this._teleportToTile(to, (pos) => {
+            this._teleportRightBelowBlood(pos, () => {
+                tpManager.sync(Player.yaw, -90, true);
+                this._pearlThrow(-90, (releasePacket) => {
+                    debugMessage(`DeathStreeks Blixten McQueen blood rush took: ${Date.now() - started}ms`);
+                    releasePacket(null)
+                    rotate(Player.yaw, 90)
+                    sendAirClick();
+                });
+            });
+        });
+    }
+
+    doBlood() {
+        if (!scanner.getRoom() || this.ticksFromDeathTick === null) {
+            return;
+        }
+
+        let waitForMessage = false;
+        const onGroundListener = Tick.Pre.register(() => {
+            if (!Player.asPlayerMP().isOnGround()) return
+            onGroundListener.unregister()
+            const to = scanner.getRoom();
+            tpManager.teleport(new Vector3(Player), Player.yaw, 90, false, aotvFinder(0), () => {
+                tpManager.sync(Player.yaw, 90, false)
+                this._pearlClip(90, 62, (releaseMethod) => {
+                    if (!waitForMessage) {
+                        releaseMethod()
+                        this._goToBlood(to);
+                        return;
+                    }
+
+                    const soundListener = register("packetReceived", (packet) => {
+                        if (packet.func_149212_c() !== "mob.enderdragon.growl" || packet.func_149208_g() !== 1 || packet.func_149209_h() !== 1) return
+                        soundListener.unregister()
+
+                        if (this.ticksFromDeathTick % 40 > 30) {
+                            ServerTickEvent.scheduleTask(10, () => {
+                                releaseMethod();
+                                this._goToBlood(to);
+                            });
+                            return;
+                        }
+
+                        releaseMethod();
+                        this._goToBlood(to);
+                    }).setFilteredClass(net.minecraft.network.play.server.S29PacketSoundEffect);
+                })
+            })
+        }).unregister()
+
+        if (Settings().schizoDoorsTacticalInsertion) {
+            onGroundListener.register()
+        } else {
+            onChatPacket(() => {
+                ServerTickEvent.scheduleTask(7, () => {
+                    waitForMessage = true;
+                    onGroundListener.register();
+                });
+            }).setCriteria("Starting in 1 second.")
+        }
     }
 
     _teleportToTile(tile, callback) {
@@ -126,7 +164,7 @@ new class BloodRusher {
 
         this._teleportDown(new Vector3(Player), 8, (pos) => {
             this._executeOffset(offset, pos, (pos) => {
-                callback(pos, releasePacket);
+                callback(pos);
             });
         });
     }
@@ -253,7 +291,9 @@ new class BloodRusher {
 
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPos, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
                 setPlayerPosition(Player.x, yPos, Player.z, true)
-                callback(releaseMethod);
+                callback(() => {
+                    releaseMethod(yPos);
+                });
             }, 293428534);
         });
     }
@@ -274,37 +314,6 @@ new class BloodRusher {
     }
 }
 
-
-let exec = null
-
-register("command", () => {
-    if (exec) {
-        exec()
-        exec = null
-    }
-}).setName("releaseshit")
-
-register("command", () => {
-    Rotations.rotate(Player.yaw, 90, () => {
-        sendAirClick()
-        FreezeManager.setFreezing(true)
-        const tpListener = register("packetReceived", (packet, event) => {
-            cancel(event)
-            tpListener.unregister()
-            exec = () => {
-                ChatLib.chat("Sending response")
-                FreezeManager.setFreezing(false)
-                const yPos = findAirOpening()
-                sendS08Response(packet)
-                if (!yPos) return
-                ChatLib.chat(yPos)
-                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPos, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
-                setPlayerPosition(Player.x, yPos, Player.z)
-            }
-            ChatLib.chat("registered")
-        }).setFilteredClass(S08PacketPlayerPosLook)
-    })
-}).setName("testpearlclip")
 
 function sendS08Response(packet) {
     const enumflags = Object.values(packet.func_179834_f())

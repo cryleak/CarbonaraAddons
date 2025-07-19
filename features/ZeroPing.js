@@ -143,7 +143,6 @@ const ZeroPing = new class {
         const action = packet.func_180764_b();
         if (action == C0BPacketEntityAction.Action.START_SNEAKING) this.playerState.sneaking = true;
         if (action == C0BPacketEntityAction.Action.STOP_SNEAKING) this.playerState.sneaking = false;
-        ChatLib.chat(this.playerState.sneaking)
     }
 
     doRegularTeleport(event) {

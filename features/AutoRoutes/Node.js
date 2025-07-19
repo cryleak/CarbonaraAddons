@@ -125,7 +125,6 @@ export class Node extends Editable {
     }
 
     _preArgumentTrigger(execer) {
-        ChatLib.chat(`Releasing movement keys`);
         releaseMovementKeys();
         setVelocity(0, 0, 0);
         if (this.awaitSecret || this.awaitBat) {

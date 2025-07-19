@@ -2,6 +2,7 @@ const info = Java.type("funnymap.features.dungeon.Dungeon$Info");
 const infoInstance = info.INSTANCE;
 
 import Tick from "../../events/Tick";
+import { debugMessage } from "../../utils/utils";
 
 
 class Scanner {
@@ -50,7 +51,7 @@ class Scanner {
         });
 
         if (found) {
-            ChatLib.chat(`The room that's not an L room is: ${found.getData().getName()}`);
+            debugMessage(`The room that's not an L room is: ${found.getData().getName()}`);
             return this._getTileCoords(found);
         }
     }

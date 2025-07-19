@@ -33,7 +33,7 @@ const updateTimer = 10 // how often to check whether we should send a new emeral
 registerSubCommand("setbowping", velo => {
     if (Number.isNaN(velo)) return
     ping = parseFloat(velo)
-    ChatLib.chat(`Set bow ping to ${ping}`)
+    chat(`Set bow ping to ${ping}`)
 })
 
 const invincibilityItems = {
