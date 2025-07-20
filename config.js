@@ -441,6 +441,13 @@ config
         value: false,
         shouldShow: data => data.schizoDoorsEnabled
     })
+    .addSwitch({
+        configName: "autoIcefillEnabled",
+        title: "Auto Icefill",
+        description: "Pingless Auto Icefill",
+        category: "Phoenix",
+        value: false
+    })
 
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")

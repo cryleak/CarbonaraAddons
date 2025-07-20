@@ -15,6 +15,7 @@ const BlockLever = Java.type("net.minecraft.block.BlockLever")
 const BlockSkull = Java.type("net.minecraft.block.BlockSkull")
 const BlockCompressedPowered = Java.type("net.minecraft.block.BlockCompressedPowered") // Redstone block
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+const C07PacketPlayerDigging = Java.type("net.minecraft.network.play.client.C07PacketPlayerDigging")
 const SecretAuraScanner = Java.type("me.cryleak.carbonaraloader.helpers.SecretAuraScanner")
 const HashSet = Java.type("java.util.HashSet")
 const EnumFacing = Java.type("net.minecraft.util.EnumFacing")
@@ -57,6 +58,7 @@ export default new class SecretAura {
 
                 UpdateWalkingPlayer.Pre.scheduleTask(0, () => { // This runs right before the next living update (same tick)
                     this.rightClickBlock(block, blockPos)
+                    // this.leftClickBlock(block, blockPos)
                     if (block instanceof BlockSkull) {
                         const tileEntity = World.getWorld().func_175625_s(javaBlockPos)
                         const skullId = tileEntity?.func_152108_a()?.getId()?.toString()
@@ -133,6 +135,14 @@ export default new class SecretAura {
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer().func_71038_i()
 
         SecretAuraClick.Post.trigger({ block, blockPos, itemStack })
+    }
+
+    leftClickBlock(block, blockPos) {
+        const javaBlockPos = blockPos.convertToBlockPos()
+        const mop = this.getMOPOnBlock(block, javaBlockPos)
+
+        Client.sendPacket(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, javaBlockPos, mop.sideHit))
+        Player.getPlayer().func_71038_i()
     }
 
     /**
