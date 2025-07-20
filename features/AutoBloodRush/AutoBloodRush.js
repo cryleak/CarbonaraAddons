@@ -8,9 +8,8 @@ import Settings from "../../config"
 import Tick from "../../events/Tick";
 
 import { PostPacketReceive, UpdateWalkingPlayer } from "../../events/JavaEvents";
-import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage, chat, findAirOpening } from "../../utils/utils";
+import { swapFromName, sendAirClick, setPlayerPosition, itemSwapSuccess, scheduleTask, rotate, debugMessage, chat } from "../../utils/utils";
 import { findSlot, aotvFinder, nameFinder } from "../../utils/TeleportItem";
-import Rotations from "../../utils/Rotations";
 import ServerTeleport from "../../events/ServerTeleport";
 import { onChatPacket } from "../../../BloomCore/utils/Events";
 

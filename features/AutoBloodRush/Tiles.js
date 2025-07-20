@@ -18,6 +18,7 @@ class Scanner {
             "Melon",
             "Pirate",
             "Spider",
+            "Well",
             "Withermancer"
         ];
 
