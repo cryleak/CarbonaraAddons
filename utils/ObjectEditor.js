@@ -648,11 +648,11 @@ export default class Editable {
                         configName: key,
                         subcategory: "Main",
                         category: "Object Editor",
-                        registerListener: (obj, prev, next) => {
+                        registerListener: (obj, _, next) => {
                             obj[key] = parseFloat(next);
                         },
-                        updator: (config, obj) => {
-                            config.settings.getConfig().setConfigValue("Object Editor", key, obj[key]);
+                        updator: (setter, obj) => {
+                            setter(key, obj[key]);
                         }
                     });
                     break;
@@ -665,11 +665,11 @@ export default class Editable {
                         configName: key,
                         subcategory: "Main",
                         category: "Object Editor",
-                        registerListener: (obj, prev, next) => {
+                        registerListener: (obj, _, next) => {
                             obj[key] = next;
                         },
-                        updator: (config, obj) => {
-                            config.settings.getConfig().setConfigValue("Object Editor", key, obj[key]);
+                        updator: (setter, obj) => {
+                            setter(key, obj[key]);
                         }
                     });
                     break;
@@ -683,11 +683,11 @@ export default class Editable {
                             configName: `xof${key}`,
                             subcategory: key,
                             category: "Object Editor",
-                            registerListener: (obj, prev, next) => {
+                            registerListener: (obj, _, next) => {
                                 obj[key].x = parseFloat(next);
                             },
-                            updator: (config, obj) => {
-                                config.settings.getConfig().setConfigValue("Object Editor", `xof${key}`, obj[key].x);
+                            updator: (setter, obj) => {
+                                setter(`xof${key}`, obj[key].x);
                             }
                         });
                         acc.push({
@@ -698,11 +698,11 @@ export default class Editable {
                             configName: `yof${key}`,
                             subcategory: key,
                             category: "Object Editor",
-                            registerListener: (obj, prev, next) => {
+                            registerListener: (obj, _, next) => {
                                 obj[key].y = parseFloat(next);
                             },
-                            updator: (config, obj) => {
-                                config.settings.getConfig().setConfigValue("Object Editor", `yof${key}`, obj[key].y);
+                            updator: (setter, obj) => {
+                                setter(`yof${key}`, obj[key].y);
                             }
                         });
                         acc.push({
@@ -713,11 +713,11 @@ export default class Editable {
                             configName: `zof${key}`,
                             subcategory: key,
                             category: "Object Editor",
-                            registerListener: (obj, prev, next) => {
+                            registerListener: (obj, _, next) => {
                                 obj[key].z = parseFloat(next);
                             },
-                            updator: (config, obj) => {
-                                config.settings.getConfig().setConfigValue("Object Editor", `zof${key}`, obj[key].z);
+                            updator: (setter, obj) => {
+                                setter(`zof${key}`, obj[key].z);
                             }
                         });
                     }
@@ -763,10 +763,14 @@ export default class Editable {
 
         const settings = new Settings("CarbonaraAddons", config, "ColorScheme.json");
 
+        const setter = (key, value) => {
+            settings.settings.getConfig()?.setConfigValue("Object Editor", key, value);
+        }
+
         return (obj) => {
             object = obj;
             updators.forEach((updator) => {
-                updator(settings, object);
+                updator(setter, object);
             });
             settings.settings.getConfig().openGui();
         };

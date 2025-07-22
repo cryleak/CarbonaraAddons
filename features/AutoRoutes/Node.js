@@ -168,7 +168,7 @@ export class Node extends Editable {
             {
                 type: "addTextInput",
                 configName: "position",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const newPos = next.split(",").map((v) => parseFloat(v.trim()));
                     if (newPos.length !== 3) {
                         return;
@@ -181,15 +181,15 @@ export class Node extends Editable {
                     obj.position = new Vector3(newPos);
                     obj.realPosition = Dungeons.convertFromRelative(obj.position).add([0.5, 0, 0.5]);
                 },
-                updator: (config, obj) => {
+                updator: (setter, obj) => {
                     const value = `${obj.position.x},${obj.position.y},${obj.position.z}`;
-                    config.settings.getConfig().setConfigValue("Object Editor", "position", value);
+                    setter("position", value);
                 }
             },
             {
                 type: "addTextInput",
                 configName: "yaw",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const yaw = parseFloat(next);
                     if (isNaN(yaw)) {
                         return;
@@ -199,14 +199,14 @@ export class Node extends Editable {
                     obj.realYaw = yaw;
                     rotate(yaw, Player.pitch);
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "yaw", obj.realYaw.toString());
+                updator: (setter, obj) => {
+                    setter("yaw", obj.realYaw.toString());
                 }
             },
             {
                 type: "addTextInput",
                 configName: "pitch",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const pitch = parseFloat(next);
                     if (isNaN(pitch)) {
                         return;
@@ -215,14 +215,14 @@ export class Node extends Editable {
                     obj.pitch = pitch;
                     rotate(Player.yaw, obj.pitch);
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "pitch", obj.pitch.toString());
+                updator: (setter, obj) => {
+                    setter("pitch", obj.pitch.toString());
                 }
             },
             {
                 type: "addTextInput",
                 configName: "radius",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const radius = parseFloat(next);
                     if (isNaN(radius) || radius < 0) {
                         return;
@@ -230,14 +230,14 @@ export class Node extends Editable {
 
                     obj.radius = radius;
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "radius", obj.radius.toString());
+                updator: (setter, obj) => {
+                    setter("radius", obj.radius.toString());
                 }
             },
             {
                 type: "addTextInput",
                 configName: "height",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const height = parseFloat(next);
                     if (isNaN(height) || height < 0) {
                         return;
@@ -245,14 +245,14 @@ export class Node extends Editable {
 
                     obj.height = height;
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "height", obj.height.toString());
+                updator: (setter, obj) => {
+                    setter("height", obj.height.toString());
                 }
             },
             {
                 type: "addTextInput",
                 configName: "delay",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const amount = parseInt(next);
                     if (isNaN(amount) || amount < 0) {
                         return;
@@ -260,24 +260,24 @@ export class Node extends Editable {
 
                     obj.delay = amount;
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "delay", obj.delay.toString() || "0");
+                updator: (setter, obj) => {
+                    setter("delay", obj.delay.toString() || "0");
                 }
             },
             {
                 type: "addSwitch",
                 configName: "await Bat",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     obj.awaitBat = next;
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "await Bat", obj.awaitBat);
+                updator: (setter, obj) => {
+                    setter("await Bat", obj.awaitBat);
                 }
             },
             {
                 type: "addTextInput",
                 configName: "await Secrets",
-                registerListener: (obj, prev, next) => {
+                registerListener: (obj, _, next) => {
                     const amount = parseInt(next);
                     if (amount < 0) {
                         obj.awaitSecret = 0;
@@ -286,8 +286,8 @@ export class Node extends Editable {
 
                     obj.awaitSecret = amount;
                 },
-                updator: (config, obj) => {
-                    config.settings.getConfig().setConfigValue("Object Editor", "await Secrets", obj.awaitSecret?.toString() || "0");
+                updator: (setter, obj) => {
+                    setter("await Secrets", obj.awaitSecret?.toString() || "0");
                 }
             }
         ];
