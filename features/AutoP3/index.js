@@ -385,8 +385,7 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     cancel(event)
     blinkingVelo = true
     for (let i = 0; i < blinkVeloTicks; i++) {
-        Player.getPlayer().func_70636_d()
-        Player.getPlayer().func_175161_p()
+        Player.getPlayer().func_70071_h_()
         executeNodes(playerCoords().player)
     }
     setPlayerPosition(Player.getX(), Player.getY(), Player.getZ(), true)

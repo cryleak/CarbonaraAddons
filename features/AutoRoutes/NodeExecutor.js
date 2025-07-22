@@ -43,11 +43,10 @@ class NodeExecutor {
     }
 
     execute(by = null, intersectionMethod = null) {
+        if (by) this.lowerConsumed();
+
         if (!manager.active || !ZeroPing.isSynced()) return;
 
-        if (by) {
-            this.lowerConsumed();
-        }
 
         if (this.consumed > 0) {
             return;

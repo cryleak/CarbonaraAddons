@@ -85,7 +85,7 @@ class TeleportManager {
                 }, true);
             };
 
-            if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(clampYaw(Player.pitch), pitch) || shouldWait) {
+            if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(Player.pitch, pitch) || shouldWait) {
                 Rotations.rotate(yaw, pitch, () => {
                     setVelocity(0, 0, 0);
                     exec();
@@ -129,7 +129,7 @@ class TeleportManager {
         swapToSlot(slot, result => {
             if (result === itemSwapSuccess.FAIL) {
                 debugMessage("Teleport failed: Item swap failed");
-                return
+                return onResult(null)
             }
 
             const shouldWait = result !== itemSwapSuccess.ALREADY_HOLDING || sneaking !== Player.isSneaking()

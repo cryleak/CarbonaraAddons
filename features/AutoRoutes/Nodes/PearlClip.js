@@ -4,9 +4,10 @@ import tpManager from "../TeleportManager";
 
 import { chat, findAirOpening, itemSwapSuccess, scheduleTask, sendAirClick, setPlayerPosition, swapFromName } from "../../../utils/utils"
 import { Node } from "../Node"
-import { UpdateWalkingPlayer } from "../../../events/JavaEvents";
+import { PostPacketReceive, UpdateWalkingPlayer } from "../../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer")
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
 export default class PearlClipNode extends Node {
     static identifier = "pearlclip"
@@ -21,10 +22,10 @@ export default class PearlClipNode extends Node {
         let listening = true
         let yPosition = this.distance === 0 ? findAirOpening() : Player.getY() - this.distance
         const originalY = Player.y
-        const soundListener = register("soundPlay", (_, name, vol) => {
-            if (name !== "mob.endermen.portal" || vol !== 1) return
+        const pearlListener = PostPacketReceive.register(packet => {
+            if (!(packet instanceof S08PacketPlayerPosLook)) return
             listening = false
-            soundListener.unregister()
+            pearlListener.unregister()
             if (!yPosition) {
                 chat("Couldn't find an air opening!")
                 execer.execute(this)
@@ -38,9 +39,11 @@ export default class PearlClipNode extends Node {
 
                 Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(Player.x, yPosition, Player.z, Player.yaw, Player.pitch, Player.asPlayerMP().isOnGround()));
                 setPlayerPosition(Player.x, yPosition, Player.z, true)
+
+
                 execer.execute(this)
             }, 2934285);
-        })
+        }, 0)
 
         scheduleTask(60, () => {
             if (!listening) return

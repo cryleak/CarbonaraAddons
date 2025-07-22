@@ -32,7 +32,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
             const eyePosition = new Vector3(player.x, player.y + Player.getPlayer().func_70047_e(), player.z);
 
             // debugMessage(`${Player.x} ${Player.y} ${Player.z}`);
-            // tpManager.sync(this.realYaw, this.pitch, false);
+            tpManager.sync(this.realYaw, this.pitch, false);
             if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
                 const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
@@ -40,9 +40,7 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                 if (!(block instanceof BlockAir)) {
                     UpdateWalkingPlayer.Pre.scheduleTask(0, () => {
                         SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
-                        Tick.Pre.scheduleTask(0, () => {
-                            execer.execute(this)
-                        });
+                        execer.execute(this)
                     });
                 } else {
                     chat("Can't superboom on a block that doesn't exist.")
