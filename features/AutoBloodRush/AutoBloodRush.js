@@ -176,7 +176,8 @@ new class BloodRusher {
         if (Settings().schizoDoorsTacticalInsertion) {
             onGroundListener.register()
         } else {
-            onChatPacket(() => {
+            const startListener = onChatPacket(() => {
+                startListener.unregister()
                 ServerTickEvent.scheduleTask(7, () => {
                     waitForMessage = true;
                     onGroundListener.register();
