@@ -45,7 +45,7 @@ export default new class Freecam {
             const isInSurvival = currentGamemode === "ADVENTURE" || currentGamemode === "SURVIVAL"
             Player.getPlayer().field_71075_bZ.field_75101_c = isInSurvival ? false : true
             if (isInSurvival) Player.getPlayer().field_71075_bZ.field_75100_b = false
-            setPlayerPosition(...this.realPlayerPosition, true)
+            setPlayerPosition(this.realPlayerPosition.x, this.realPlayerPosition.y, this.realPlayerPosition.z, true)
             setVelocity(0, 0, 0)
             this.eventCancellers.forEach(register => register.unregister())
         } else {

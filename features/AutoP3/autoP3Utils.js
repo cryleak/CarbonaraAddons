@@ -33,7 +33,7 @@ export function jump() {
 
 /**
  * Checks if the coordinates is inside of a terminal phase.
- * @param {Number[]} coords 
+ * @param {Vector3} coords 
  * @returns What terminals set a set of coordinates is in, or 0 if it isn't in any.
  */
 export function getTermPhase(coords) {
@@ -45,9 +45,9 @@ export function getTermPhase(coords) {
 }
 
 function isCoordsWithinBox(coords, corner1, corner2) {
-    return (coords[0] >= Math.min(corner1[0], corner2[0]) && coords[0] <= Math.max(corner1[0], corner2[0]) &&
-        coords[1] >= Math.min(corner1[1], corner2[1]) && coords[1] <= Math.max(corner1[1], corner2[1]) &&
-        coords[2] >= Math.min(corner1[2], corner2[2]) && coords[2] <= Math.max(corner1[2], corner2[2]))
+    return (coords.x >= Math.min(corner1[0], corner2[0]) && coords.x <= Math.max(corner1[0], corner2[0]) &&
+        coords.y >= Math.min(corner1[1], corner2[1]) && coords.y <= Math.max(corner1[1], corner2[1]) &&
+        coords.z >= Math.min(corner1[2], corner2[2]) && coords.z <= Math.max(corner1[2], corner2[2]))
 }
 
 export const termNames = [

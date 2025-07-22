@@ -4,15 +4,12 @@ import nodeCreation, { availableArgs, nodeTypes } from "./nodeCreation"
 import { registerSubCommand } from "../../utils/commands"
 import { chat, playerCoords } from "../../utils/utils"
 import { getDistance3DSq } from "../../utils/utils"
+import Vector3 from "../../utils/Vector3"
 class AutoP3Config {
     constructor() {
-        try {
-            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName.toLowerCase() + ".json"))
-            if (!Array.isArray(this.config)) throw new Error("boom")
-        } catch (e) {
-            this.config = []
-        }
+        this._loadConfig(Settings().configName)
         this.defineTransientProperties()
+        this._sortNodes()
         this.nodeCoords = null
         this.editingNodeIndex = null
         this.subcommands = []
@@ -176,7 +173,7 @@ class AutoP3Config {
     }
 
     addNode(args, pos) {
-        if (Settings().centerNodes) pos[0] = Math.floor(pos[0]) + 0.5, pos[2] = Math.floor(pos[2]) + 0.5
+        if (Settings().centerNodes) pos.floor2D().add(0.5, 0, 0.5)
         const nodeType = nodeTypes[parseInt(args.type)]?.toLowerCase()
         if (!nodeType) return chat("what the fuck is your nodetype")
 
@@ -201,11 +198,12 @@ class AutoP3Config {
     }
 
     getNearestNodeIndex() {
-        return this.config.map((node, i) => ({ distance: getDistance3DSq(...node.position, ...playerCoords().camera), i })).sort((a, b) => a.distance - b.distance)[0].i
+        return this.config.map((node, i) => ({ distance: node.position.distance3D(playerCoords().camera), i })).sort((a, b) => a.distance - b.distance)[0].i
     }
 
     saveConfig() {
         this.defineTransientProperties()
+        this._sortNodes()
         try {
             FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + Settings().configName.toLowerCase() + ".json", JSON.stringify(this.config, null, "\t"), true)
         } catch (e) {
@@ -215,15 +213,10 @@ class AutoP3Config {
     }
 
     onConfigNameUpdate(newName) {
-        try {
-            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + newName.toLowerCase() + ".json"))
-            if (!Array.isArray(this.config)) throw new Error("boom")
-            chat(`Swapped to config ${newName}.`)
-        } catch (e) {
-            this.config = []
-        }
-        this.defineTransientProperties()
+        this._loadConfig(newName.toLowerCase())
+        chat(`Swapped to config ${newName}.`)
     }
+
 
     defineTransientProperties() {
         this.config.forEach(node => Object.defineProperties(node, {
@@ -256,6 +249,32 @@ class AutoP3Config {
         const subCommand = { args, listener }
         if (tabCompletions) subCommand.tabCompletions = tabCompletions
         this.subcommands.push(subCommand)
+    }
+
+    _loadConfig(configName) {
+        try {
+            this.config = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/configs/" + configName.toLowerCase() + ".json"), (key, value) => {
+                if (key === "position" && value && Array.isArray(value)) return new Vector3(...value)
+                if (value && typeof value.x === "number" && typeof value.y === "number" && typeof value.z === "number") return new Vector3(value.x, value.y, value.z);
+                return value
+            })
+            if (!Array.isArray(this.config)) throw new Error("boom")
+        } catch (e) {
+            console.log(e)
+            this.config = []
+        }
+        this.defineTransientProperties()
+        this._sortNodes()
+    }
+
+    _sortNodes() {
+        const getPriority = (type) => {
+            if (type === "awaitterminal" || type === "awaitleap") return 0
+            if (type === "blinkvelo") return 2
+            return 1
+        }
+
+        this.sortedNodes = [...this.config].sort((a, b) => getPriority(a.type) - getPriority(b.type))
     }
 }
 

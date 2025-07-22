@@ -34,12 +34,12 @@ register("renderWorld", () => {
         let node = AutoP3Config.config[i]
         let position = node.position
         let color
-        if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, ...position, 16777215, true, 0.02, false)
+        if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.type}`, position.x, position.y, position.z, 16777215, true, 0.02, false)
 
 
         if (node.triggered || Date.now() - node.lastTriggered < 1000 || awaitingTerminal || awaitingLeap) color = [1, 0, 0, 1]
         else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
-        RenderLibV2.drawCyl(position[0], position[1] + 0.01, position[2], node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, true, true)
+        RenderLibV2.drawCyl(position.x, position.y + 0.01, position.z, node.radius, node.radius, 0, slices, 1, 90, 45, 0, ...color, true, true)
         if (node.type === "blink") activeBlinkRoutes.add(node.blinkRoute)
     }
     if (settings.renderBlinkRoutes) {
@@ -52,7 +52,6 @@ register("renderWorld", () => {
                 let packet1 = packets[i]
                 let packet2 = packets[i + 1]
                 if (!packet1 || !packet2) continue
-                //     drawLine(double x1, double y1, double z1, double x2, double y2, double z2, float red, float green, float blue, float alpha, boolean phase) {
                 RenderLibV2.drawLine(packet1[0], packet1[1], packet1[2], packet2[0], packet2[1], packet2[2], 1, 1, 1, 1, false, 2)
             }
             let packet1 = packets[0]
@@ -71,36 +70,34 @@ register("renderWorld", () => {
 register("tick", () => {
     const settings = Settings()
     if (!settings.autoP3Enabled || !World.isLoaded() || settings.onlyP3 && !inP3 || !AutoP3Config.config || settings.editMode) return
-    executeNodes(playerCoords().player)
+    executeNodes()
 })
 
 register("packetReceived", (packet, event) => { // Avoid checking for intersections when you get teleported by the server.
     previousCoords = new Vector3(packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e())
 }).setFilteredClass(S08PacketPlayerPosLook)
 
-function executeNodes(playerPosition) {
+function executeNodes() {
     if (!awaitingTerminal && !awaitingLeap) {
-        // Sort this shit because I need to trigger await nodes first and I no longer care about performance
-        const nodes = [...AutoP3Config.config].sort((a, b) => (a.type === "awaitterminal" || a.type === "awaitleap" ? -1 : (b.type === "awaitterminal" || b.type === "awaitleap" ? 1 : 0)))
-        for (let i = 0; i < nodes.length; i++) { // Did you know for loops in Rhino are technically faster than forEach?
+        const nodes = AutoP3Config.sortedNodes
+        const triggerFromBelow = Settings().triggerFromBelow
+        for (let i = 0; i < nodes.length; i++) {
             let node = nodes[i]
             let nodePosition = node.position
-            let hasPassedThroughRing = checkIntersection(previousCoords, new Vector3(...playerPosition), new Vector3(...nodePosition), node.radius, node.height)
-            if (hasPassedThroughRing) {
+            if (checkIntersection(previousCoords, new Vector3(Player), nodePosition, node.radius, node.height, triggerFromBelow)) {
                 if (node.triggered) continue
                 if (Date.now() - node.lastTriggered < 1000) continue
                 if (blinkingVelo && node.delay) continue
                 if (blinkingVelo && ["blink", "blinkvelo", "superboom", "useitem", "awaitterminal", "awaitleap"].includes(node.type)) continue
                 node.triggered = true
                 if (node.center) {
-                    // debugMessage(`Distance to center: ${getDistanceToCoord(...nodePosition, false)}`)
-                    Player.getPlayer().func_70107_b(nodePosition[0], nodePosition[1], nodePosition[2])
-                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                    setPlayerPosition(nodePosition.x, null, nodePosition.z)
+                    setVelocity(0, null, 0)
                 }
                 if (node.stop) {
                     Motion.running = false
                     releaseMovementKeys()
-                    Player.getPlayer().func_70016_h(0, Player.getPlayer().field_70181_x, 0)
+                    setVelocity(0, null, 0)
                 }
                 let performNode = () => {
                     if (awaitingTerminal || awaitingLeap) {
@@ -111,13 +108,21 @@ function executeNodes(playerPosition) {
                     if (node.look) rotate(node.yaw, node.pitch)
                     nodeTypes[node.type](node)
                 }
-                if (node.delay) scheduleTask(Math.round(parseInt(node.delay) / 50), performNode)
+                if (node.delay) scheduleTask(Math.round(node.delay / 50), performNode)
                 else performNode()
             } else if (!node.once) node.triggered = false
         }
     }
     previousCoords = new Vector3(Player)
 }
+
+register("command", () => {
+    const start = System.nanoTime()
+    for (let i = 0; i < 30; i++) {
+        executeNodes()
+    }
+    ChatLib.chat(`took ${(System.nanoTime() - start) / 1000000}ms`)
+}).setName("blinkvelo")
 
 const nodeTypes = {
     look: args => {
@@ -386,9 +391,8 @@ register(net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent, (
     blinkingVelo = true
     for (let i = 0; i < blinkVeloTicks; i++) {
         Player.getPlayer().func_70071_h_()
-        executeNodes(playerCoords().player)
+        executeNodes()
     }
-    setPlayerPosition(Player.getX(), Player.getY(), Player.getZ(), true)
     const end = System.nanoTime()
     chat(`Blinked ${blinkVeloTicks} physics ticks. (Took ${(end - start) / 1000000}ms to calculate physics)`)
     global.carbonara.autop3.lastBlink = Date.now()

@@ -213,7 +213,7 @@ class NodeManager {
             type,
             // etherCoordMode: 1,
             // etherBlock: Dungeons.rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
-            position: new Vector3(Math.floor(ringCoords[0]), ringCoords[1], Math.floor(ringCoords[2])),
+            position: ringCoords.floor2D(),
             yaw: Player.getYaw().toFixed(3),
             pitch: Player.getPitch().toFixed(3),
             radius: 0,

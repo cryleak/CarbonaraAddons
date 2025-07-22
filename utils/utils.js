@@ -4,7 +4,7 @@ import Tick from "../events/Tick"
 
 const renderManager = Client.getMinecraft().func_175598_ae()
 const KeyBinding = Java.type("net.minecraft.client.settings.KeyBinding")
-
+const AutoP3Helper = Java.type("me.cryleak.carbonaraloader.helpers.AutoP3")
 
 const defaultColor = "§f"
 
@@ -179,38 +179,41 @@ export function clampYaw(yaw) {
  * @param {Number} verticalTolerance 
  * @returns {Boolean} Whether it intersected or not
  */
-export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance) {
-    horizontalTolerance *= horizontalTolerance
-
-    const isPointInBounds = (point) => {
-        const intersectedHorizontally = getDistance2DSq(point.x, point.z, target.x, target.z) <= horizontalTolerance
-        const verticalDist = Settings().triggerFromBelow ? Math.abs(point.y - target.y) : point.y - target.y
-        let intersectedVertically = verticalDist <= verticalTolerance && verticalDist >= 0
-        if (!intersectedVertically) {
-            const minY = Settings().triggerFromBelow ? Math.min(start.y, end.y) : start.y
-            const maxY = Settings().triggerFromBelow ? Math.max(start.y, end.y) : end.y
-            if (target.y >= minY && target.y <= maxY) intersectedVertically = true
-        }
-        return intersectedHorizontally && intersectedVertically
-    }
-
-    if (isPointInBounds(start) || isPointInBounds(end)) return true
-
-    const direction = end.subtract(start)
-    const directionLength = direction.getLength()
-    direction.normalize(directionLength)
-    const dotProduct = target.subtract(start).dotProduct(direction)
-
-    if (dotProduct < 0 || dotProduct > directionLength) return false
-
-    const closestPoint = new Vector3(start.x + dotProduct * direction.x, start.y + dotProduct * direction.y, start.z + dotProduct * direction.z)
-
-    return isPointInBounds(closestPoint)
+export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance, triggerFromBelow) {
+    return AutoP3Helper.checkIntersection(start.convertToVec3(), end.convertToVec3(), target.convertToVec3(), horizontalTolerance, verticalTolerance, triggerFromBelow)
+    /*
+       horizontalTolerance *= horizontalTolerance
+   
+       const isPointInBounds = (point) => {
+           const intersectedHorizontally = point.distance2D(target) <= horizontalTolerance
+           const verticalDist = triggerFromBelow ? Math.abs(point.y - target.y) : point.y - target.y
+           let intersectedVertically = verticalDist <= verticalTolerance && verticalDist >= 0
+           if (!intersectedVertically) {
+               const minY = triggerFromBelow ? Math.min(start.y, end.y) : start.y
+               const maxY = triggerFromBelow ? Math.max(start.y, end.y) : end.y
+               if (target.y >= minY && target.y <= maxY) intersectedVertically = true
+           }
+           return intersectedHorizontally && intersectedVertically
+       }
+   
+       if (isPointInBounds(start) || isPointInBounds(end)) return true
+   
+       const direction = end.subtract(start)
+       const directionLength = direction.getLength()
+       direction.normalize(directionLength)
+       const dotProduct = target.subtract(start).dotProduct(direction)
+   
+       if (dotProduct < 0 || dotProduct > directionLength) return false
+   
+       const closestPoint = new Vector3(start.x + dotProduct * direction.x, start.y + dotProduct * direction.y, start.z + dotProduct * direction.z)
+   
+       return isPointInBounds(closestPoint)
+       */
 }
 
 export function setPlayerPosition(x, y, z, removeInterpolation = false) {
     const player = Player.getPlayer()
-    player.func_70107_b(x, y, z)
+    player.func_70107_b(typeof x === "number" ? x : Player.x, typeof y === "number" ? y : Player.y, typeof z === "number" ? z : Player.z)
     if (removeInterpolation) {
         player.field_70169_q = x
         player.field_70142_S = x
@@ -258,9 +261,10 @@ export function isBlockPassable(block) {
 }
 
 export function setVelocity(x, y, z) {
-    if (typeof x === "number") Player.getPlayer().field_70159_w = x
-    if (typeof y === "number") Player.getPlayer().field_70181_x = y
-    if (typeof z === "number") Player.getPlayer().field_70179_y = z
+    const player = Player.getPlayer()
+    if (typeof x === "number") player.field_70159_w = x
+    if (typeof y === "number") player.field_70181_x = y
+    if (typeof z === "number") player.field_70179_y = z
 }
 
 export function leftClick() {
@@ -381,8 +385,8 @@ export function calcYawPitch(x1, y1, z1, x2, y2, z2) {
  */
 export function playerCoords() {
     return {
-        camera: [renderManager.field_78730_l, renderManager.field_78731_m, renderManager.field_78728_n],
-        player: [Player.getX(), Player.getY(), Player.getZ()]
+        camera: new Vector3(renderManager.field_78730_l, renderManager.field_78731_m, renderManager.field_78728_n),
+        player: new Vector3(Player.getX(), Player.getY(), Player.getZ())
     }
 }
 
