@@ -179,8 +179,8 @@ export function clampYaw(yaw) {
  * @param {Number} verticalTolerance 
  * @returns {Boolean} Whether it intersected or not
  */
-export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance, triggerFromBelow) {
-    return AutoP3Helper.checkIntersection(start.convertToVec3(), end.convertToVec3(), target.convertToVec3(), horizontalTolerance, verticalTolerance, triggerFromBelow)
+export function checkIntersection(start, end, target, horizontalTolerance, verticalTolerance) {
+    return AutoP3Helper.checkIntersection(start.convertToVec3(), end.convertToVec3(), target.convertToVec3(), horizontalTolerance, verticalTolerance, Settings().triggerFromBelow)
     /*
        horizontalTolerance *= horizontalTolerance
    
