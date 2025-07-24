@@ -13,6 +13,8 @@ currentPatternsField.setAccessible(true)
 registerModule(class PhoenixIcefill extends Module {
     constructor(phoenix) {
         super("AutoIcefill", phoenix)
+        this._tryLoadConfig();
+
         this.currentPatterns = false
 
         register("tick", () => {
@@ -71,9 +73,11 @@ registerModule(class PhoenixIcefill extends Module {
         let zOffset = 0
         for (let i = this.currentPatterns.length - 1; i >= 0; i--) { // Fix the solution so we can actually use it
             let previousBlock = this.currentPatterns[i + 1]
-            if (!previousBlock) continue
+            if (!previousBlock) {
+                continue
+            }
             let currentBlock = this.currentPatterns[i]
-            if (previousBlock[1] === currentBlock[1]) {
+            if (previousBlock.y === currentBlock.y) {
                 continue
             }
             xOffset = currentBlock.x - previousBlock.x
@@ -83,11 +87,9 @@ registerModule(class PhoenixIcefill extends Module {
             this.currentPatterns.splice(i + 1, 0, stair2)
             this.currentPatterns.splice(i + 1, 0, stair)
         }
-        this.currentPatterns.splice(0, 0, [this.currentPatterns[0].x + (xOffset * 0.5), this.currentPatterns[0].y, this.currentPatterns[0].z + (zOffset * 0.5)])
+        this.currentPatterns.splice(0, 0, new Vector3(this.currentPatterns[0].x + (xOffset * 0.5), this.currentPatterns[0].y, this.currentPatterns[0].z + (zOffset * 0.5)))
         this.scanned = true
-        const buffer = new PacketBuffer(Unpooled.buffer())
-        buffer.func_180714_a(JSON.stringify(this.currentPatterns))
-        Client.sendPacket(new C17PacketCustomPayload("serenity-autoicefill", buffer))
+        this._phoenix.customPayload("serenity-autoicefill", this.currentPatterns)
         chat("Sent Icefill solution to the proxy.")
     }
 });

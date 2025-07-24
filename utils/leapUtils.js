@@ -1,4 +1,9 @@
 import { chat } from "../utils/utils"
+import Dungeons from "../utils/Dungeons"
+
+import { chat } from "../utils/utils"
+
+const classes = ["Archer", "Berserk", "Mage", "Healer", "Tank"]
 
 const sendWindowClick = (windowId, slot, clickType, actionNumber = 0) => Client.sendPacket(new C0EPacketClickWindow(windowId ?? Player.getContainer().getWindowId(), slot, clickType ?? 0, 0, null, actionNumber))
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
@@ -56,8 +61,21 @@ export default new class LeapHelper {
             this.inProgress = false
             this.leapQueue.pop()
         }).setChatCriteria(/^This ability is on cooldown for (\d+)s\.$/)
+    }
 
+    getPlayerToLeapTo(target) {
+        if (classes.includes(target)) {
+            const party = Dungeons.teamMembers
+            player = Object.keys(party).find(teamMember => party[teamMember]["dungeonClass"] === target)
+            if (!player) {
+                chat(`§cCan't find a player with the class "${target}"!`)
+                return null
+            }
 
+            return player;
+        }
+
+        return target;
     }
 
     _inQueue() {

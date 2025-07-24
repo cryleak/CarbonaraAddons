@@ -3,6 +3,7 @@ import PhoenixAuthEvent from "../events/PhoenixAuthEvent";
 import { modules } from "./PhoenixModule";
 import { registerSubCommand } from "../utils/commands";
 import { chat } from "../utils/utils";
+import { Collection } from "../utils/ObjectEditor";
 
 // import Settings from "../config";
 const S3FPacketCustomPayload = Java.type("net.minecraft.network.play.server.S3FPacketCustomPayload");
@@ -20,15 +21,9 @@ const allowed = [
 class Phoenix {
     constructor() {
         this._inPhoenix = false;
-        modules.forEach(m => {
-            chat(`Found Phoenix module: ${m.name}`);
-        });
         this._modules = modules.map(m => new m(this));
+        this._collection = new Collection(this._modules);
         this._subcommands = []
-
-        this._modules.forEach(module => {
-            chat(`Registered Phoenix module: ${module.getName()}`);
-        });
 
         this.authTrigger = register("chat", () => {
             this._handleAuthenticationRequest();
@@ -48,26 +43,29 @@ class Phoenix {
             this._inPhoenix = false;
         });
 
-        registerSubCommand(["phoenix", "ph"], args => {
-            const action = args.shift();
-            for (let listener of this._subcommands) {
-                if (listener.args.some(arg => arg === action)) return listener.listener(args)
-            }
-            chat("Unknown subcommand!");
-        });
-
-        for (let module of this._modules) {
-            this.registerSubCommand(module.getName(), () => {
-                module.openEditor();
+        Client.scheduleTask(40, () => {
+            registerSubCommand(["phoenix", "ph"], args => {
+                const action = args.shift();
+                if (!action) {
+                    this._collection.openGui();
+                    return;
+                }
+                for (let listener of this._subcommands) {
+                    if (listener.args.some(arg => arg === action)) return listener.listener(args)
+                }
+                chat("Unknown subcommand!");
             });
-        }
 
-        this.registerSubCommand("reload", () => {
-            if (!this.isInPhoenix()) {
-                chat("You are not in Phoenix!");
-                return;
-            }
-            this._hotReload();
+            this.registerSubCommand("config", () => {
+                this._collection.openGui();
+            });
+            this.registerSubCommand("reload", () => {
+                if (!this.isInPhoenix()) {
+                    chat("You are not in Phoenix!");
+                    return;
+                }
+                this._hotReload();
+            });
         });
     }
 

@@ -625,7 +625,88 @@ class NoSaveConfig {
     }
 }
 
-export default class Editable {
+export class Collection {
+    constructor(configs) {
+        this.configs = configs;
+
+        this.configValues = this.configs.map(config => {
+            return { config, values: config.createConfigValues() };
+        });
+
+        this.values = this.configValues.reduce((acc, values) => {
+            return acc.concat(values.values);
+        }, []);
+
+        this.config = new NoSaveConfig("CarbonaraAddons")._init();
+
+        this.values.forEach((value) => {
+            this.config[value.type](value);
+        });
+
+        this.settings = new Settings("CarbonaraAddons", this.config, "ColorScheme.json");
+
+        this.setter = (category, key, value) => {
+            this.settings.settings.getConfig()?.setConfigValue(category, key, value);
+        }
+    }
+
+    openGui() {
+        this.configValues.forEach(values => {
+            values.values.forEach(v => {
+                if (v.updator) {
+                    v.updator(this.setter, values.config)
+                }
+            });
+        });
+
+        this.settings.settings.getConfig()?.openGui();
+    }
+};
+
+export class Config {
+    constructor(category) {
+        this.category = category || "Object Editor";
+    }
+
+    createConfigValues() {
+        const values = this._createConfigValues();
+        values.forEach(value => {
+            if (value.registerListener) {
+                const re = value.registerListener;
+                value.registerListener = (prev, next) => {
+                    re(this, prev, next);
+                };
+            }
+
+            if (value.onClick) {
+                const oldOnClick = value.onClick;
+                value.onClick = () => {
+                    oldOnClick(object);
+                }
+            }
+            value.title = value.title || capitalizeFirst(value.configName);
+            value.description = value.description || "";
+            value.category = this.category;
+            value.subcategory = value.subcategory || "Main";
+            if (value.updator) {
+                const otherUpdator = value.updator;
+                value.updator = (setter, config) => {
+                    const boundSetter = (key, value) => {
+                        return setter(this.category, key, value);
+                    }
+                    return otherUpdator(boundSetter, config);
+                };
+            }
+        });
+        return values;
+    }
+
+    _createConfigValues() {
+        return [];
+    }
+};
+
+export class Editable {
     static configs = {};
 
     constructor() {}
@@ -634,103 +715,12 @@ export default class Editable {
         this.constructor._getEditor(this);
     }
 
-    createConfigValues() {
-        return Object.keys(this).reduce((acc, key) => {
-            const v = this[key];
-            if (v === null || v === undefined || Array.isArray(v)) return acc;
-
-            switch (typeof v) {
-                case "number":
-                    acc.push({
-                        type: "addTextInput",
-                        description: key,
-                        value: v,
-                        configName: key,
-                        subcategory: "Main",
-                        category: "Object Editor",
-                        registerListener: (obj, _, next) => {
-                            obj[key] = parseFloat(next);
-                        },
-                        updator: (setter, obj) => {
-                            setter(key, obj[key]);
-                        }
-                    });
-                    break;
-                case "string":
-                    acc.push({
-                        type: "addTextInput",
-                        title: key,
-                        description: key,
-                        value: v,
-                        configName: key,
-                        subcategory: "Main",
-                        category: "Object Editor",
-                        registerListener: (obj, _, next) => {
-                            obj[key] = next;
-                        },
-                        updator: (setter, obj) => {
-                            setter(key, obj[key]);
-                        }
-                    });
-                    break;
-                default:
-                    if (v.x && v.y && v.z) {
-                        acc.push({
-                            type: "addTextInput",
-                            title: `x of ${key}`,
-                            description: `x of ${key}`,
-                            value: v.x,
-                            configName: `xof${key}`,
-                            subcategory: key,
-                            category: "Object Editor",
-                            registerListener: (obj, _, next) => {
-                                obj[key].x = parseFloat(next);
-                            },
-                            updator: (setter, obj) => {
-                                setter(`xof${key}`, obj[key].x);
-                            }
-                        });
-                        acc.push({
-                            type: "addTextInput",
-                            title: `y of ${key}`,
-                            description: `y of ${key}`,
-                            value: v.y,
-                            configName: `yof${key}`,
-                            subcategory: key,
-                            category: "Object Editor",
-                            registerListener: (obj, _, next) => {
-                                obj[key].y = parseFloat(next);
-                            },
-                            updator: (setter, obj) => {
-                                setter(`yof${key}`, obj[key].y);
-                            }
-                        });
-                        acc.push({
-                            type: "addTextInput",
-                            title: `z of ${key}`,
-                            description: `z of ${key}`,
-                            value: v.z,
-                            configName: `zof${key}`,
-                            subcategory: key,
-                            category: "Object Editor",
-                            registerListener: (obj, _, next) => {
-                                obj[key].z = parseFloat(next);
-                            },
-                            updator: (setter, obj) => {
-                                setter(`zof${key}`, obj[key].z);
-                            }
-                        });
-                    }
-                    break;
-            }
-            return acc;
-        }, []);
-    }
+    createConfigValues() { }
 
     _onUpdatedInConfig() {}
 
     newConfig() {
-        config = new NoSaveConfig("CarbonaraAddons")._init();
+        const config = new NoSaveConfig("CarbonaraAddons")._init();
 
         let object = null;
         let updators = [];

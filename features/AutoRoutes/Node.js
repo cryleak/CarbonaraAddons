@@ -3,7 +3,7 @@ import manager from "./NodeManager"
 import SecretEvent from "../../events/SecretListener"
 import BatSpawnEvent from "../../events/BatSpawn"
 import Vector3 from "../../utils/Vector3"
-import Editable from "../../utils/ObjectEditor";
+import { Editable } from "../../utils/ObjectEditor";
 import tpManager from "./TeleportManager"
 
 import { scheduleTask, releaseMovementKeys, rotate, debugMessage, setPlayerPosition, setVelocity, clampYaw, capitalizeFirst } from "../../utils/utils"

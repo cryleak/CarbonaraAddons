@@ -1,4 +1,4 @@
-import Editable from "../utils/ObjectEditor";
+import { Config } from "../utils/ObjectEditor";
 import { chat, capitalizeFirst } from "../utils/utils";
 
 export const modules = [];
@@ -7,12 +7,14 @@ export function registerModule(module) {
     modules.push(module);
 }
 
-export default class Module extends Editable {
+export default class Module extends Config {
     constructor(name, phoenix) {
+        super(name);
         this._name = name;
         this._phoenix = phoenix;
+    }
 
-
+    _tryLoadConfig() {
         try {
             this._config = JSON.parse(FileLib.read("CarbonaraAddons/data/modules", `${this._name}.json`));
             if (this._config === null) {
@@ -36,7 +38,6 @@ export default class Module extends Editable {
         };
         this._toggled = true;
 
-        chat(JSON.stringify(buffer));
         this._phoenix.customPayload("phoenixclient-toggle", buffer);
     }
 
@@ -53,7 +54,7 @@ export default class Module extends Editable {
         return this._config;
     }
 
-    createConfigValues() {
+    _createConfigValues() {
         const config = [
             {
                 type: "addTextParagraph",
@@ -79,15 +80,19 @@ export default class Module extends Editable {
             }
         ];
 
-        for (const key in this._config) {
-            const value = this._config[key];
-            const type = typeof value;
+        Object.keys(this._config).forEach(key => {
+            let value = this._config[key];
+            let type = typeof value;
             switch (type) {
                 case "boolean":
                     config.push({
                         type: "addSwitch",
                         configName: key,
                         registerListener: (obj, _, next) => {
+                            if (obj._config[key] === next) {
+                                return;
+                            }
+
                             obj._config[key] = next;
                             obj.syncConfig();
                         },
@@ -101,6 +106,10 @@ export default class Module extends Editable {
                         type: "addTextInput",
                         configName: key,
                         registerListener: (obj, _, next) => {
+                            if (obj._config[key] === next) {
+                                return;
+                            }
+
                             obj._config[key] = next;
                             obj.syncConfig();
                         },
@@ -114,25 +123,30 @@ export default class Module extends Editable {
                         type: "addTextInput",
                         configName: key,
                         registerListener: (obj, _, next) => {
-                            const num = parseFloat(next);
-                            if (!isNaN(num)) {
+                            let num = parseFloat(next);
+                            if (!isNaN(num) && obj._config[key] !== num) {
                                 obj._config[key] = num;
                                 obj.syncConfig();
                             }
                         },
+                        updator: (setter, obj) => {
+                            setter(key, obj._config[key].toString());
+                        }
                     });
                     break;
                 default:
                     throw new Error(`Unsupported config type: ${type} for key: ${key}`);
             }
-        }
+        });
 
         return config;
     }
 
     syncConfig() {
         FileLib.write("CarbonaraAddons/data/modules", `${this._name}.json`, JSON.stringify(this._config, null, 4));
-        this._phoenix.customPayload("phoenixclient-config", { "config": this._config });
+        if (this._toggled) {
+            this._phoenix.customPayload("phoenixclient-config", { "module": this._name, "config": this._config });
+        }
     }
 
     _defaultConfig() {

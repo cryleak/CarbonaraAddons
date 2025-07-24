@@ -3,5 +3,6 @@ config.toml
 posData.json
 blinkroutes/*
 configs/*
+data/*
 NonexistentConfig.json
 AutoRoutesConfig.json

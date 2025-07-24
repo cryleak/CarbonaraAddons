@@ -220,54 +220,30 @@ config
         shouldShow: data => data.fastLeap
     })
     .addTextInput({
-        configName: "fastLeapS1",
-        title: "Player to leap to in S1",
-        description: "You can either input the name of a class or a player name.",
         category: "Leap",
-        value: "Archer",
-        subcategory: "Fast Leap",
-        shouldShow: data => data.fastLeap
-    })
-    .addTextInput({
-        configName: "fastLeapS2",
-        title: "Player to leap to in S2",
-        description: "You can either input the name of a class or a player name.",
-        category: "Leap",
-        value: "Healer",
-        subcategory: "Fast Leap",
-        shouldShow: data => data.fastLeap
-    }).addTextInput({
-        configName: "fastLeapS3",
-        title: "Player to leap to in S3",
-        description: "You can either input the name of a class or a player name.",
-        category: "Leap",
-        value: "Mage",
-        subcategory: "Fast Leap",
-        shouldShow: data => data.fastLeap
-    }).addTextInput({
-        configName: "fastLeapS4",
-        title: "Player to leap to in S4",
-        description: "You can either input the name of a class or a player name.",
-        category: "Leap",
-        value: "Mage",
+        configName: "defaultPlayerLeap",
+        title: "Leap Name",
+        description: "Name or class to default to.",
+        value: "",
+        placeHolder: "",
         subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
     })
     .addSwitch({
-        configName: "pyFastLeap",
-        title: "Fast Leap On Purple Pad",
-        description: "",
         category: "Leap",
+        configName: "positionalLeap",
+        title: "Toggle",
+        description: "Whether to use custom boxes for leaps or not.",
         subcategory: "Fast Leap",
         shouldShow: data => data.fastLeap
-    }).addTextInput({
-        configName: "fastLeapPP",
-        title: "Player to leap to on Purple Pad",
-        description: "You can either input the name of a class or a player name.",
+    })
+    .addSwitch({
         category: "Leap",
+        configName: "drawPositionalLeap",
+        title: "Draw",
+        description: "Whether to draw positional leaps or not.",
         subcategory: "Fast Leap",
-        value: "Mage",
-        shouldShow: data => data.fastLeap && data.pyFastLeap
+        shouldShow: data => data.positionalLeap && data.fastLeap
     })
     .addSwitch({
         configName: "secretAuraEnabled",
@@ -440,13 +416,6 @@ config
         category: "Doorless",
         value: false,
         shouldShow: data => data.schizoDoorsEnabled
-    })
-    .addSwitch({
-        configName: "autoIcefillEnabled",
-        title: "Auto Icefill",
-        description: "Pingless Auto Icefill",
-        category: "Phoenix",
-        value: false
     })
 
 
