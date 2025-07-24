@@ -1,8 +1,6 @@
 import { chat } from "../utils/utils"
 import Dungeons from "../utils/Dungeons"
 
-import { chat } from "../utils/utils"
-
 const classes = ["Archer", "Berserk", "Mage", "Healer", "Tank"]
 
 const sendWindowClick = (windowId, slot, clickType, actionNumber = 0) => Client.sendPacket(new C0EPacketClickWindow(windowId ?? Player.getContainer().getWindowId(), slot, clickType ?? 0, 0, null, actionNumber))
