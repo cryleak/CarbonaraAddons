@@ -83,7 +83,6 @@ export default class Module extends Config {
                     }
                 },
                 updator: (setter, obj) => {
-                    ChatLib.chat(`Toggled ${obj._name} module to ${obj._config.toggle}`);
                     setter("toggle", obj._config.toggle);
                 }
             }
