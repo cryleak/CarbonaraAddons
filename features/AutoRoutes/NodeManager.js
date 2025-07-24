@@ -211,11 +211,9 @@ class NodeManager {
         const ringCoords = playerCoords().camera
         const argsObject = {
             type,
-            // etherCoordMode: 1,
-            // etherBlock: Dungeons.rayTraceEtherBlock([Player.getX(), Player.getY(), Player.getZ()], Player.getYaw(), Player.getPitch())?.toString() ?? "0,0,0",
             position: ringCoords.floor2D(),
-            yaw: Player.getYaw().toFixed(3),
-            pitch: Player.getPitch().toFixed(3),
+            yaw: Player.getYaw(),
+            pitch: Player.getPitch(),
             radius: 0,
             height: 0,
             awaitSecret: 0,

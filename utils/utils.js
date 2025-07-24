@@ -43,8 +43,7 @@ register("chat", event => {
  * @param {String} message
  */
 export function debugMessage(message) {
-    // if (!Settings().debugMessages) return
-    return;
+    if (!Settings().debugMessages) return
     ChatLib.chat("§0[§4CarbonaraDebug§0] " + defaultColor + message.toString().replaceAll("&r", defaultColor))
 }
 
@@ -460,6 +459,10 @@ export function swapFromItemID(targetItemID, callback) {
 
 let lastSwap = Date.now()
 export function swapToSlot(slot, callback) {
+    if (slot === null) {
+        callback(itemSwapSuccess.FAIL)
+        return itemSwapSuccess.FAIL
+    }
     if (Player.getHeldItemIndex() === slot) {
         if (callback) callback(itemSwapSuccess.ALREADY_HOLDING)
         return itemSwapSuccess.ALREADY_HOLDING

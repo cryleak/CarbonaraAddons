@@ -298,6 +298,13 @@ config
         value: true
     })
     .addSwitch({
+        configName: "debugMessages",
+        title: "Debug Messages",
+        description: "Prints debug messages in chat",
+        category: "Mod",
+        value: false
+    })
+    .addSwitch({
         configName: "relicPickupAura",
         title: "Relic Pickup Aura",
         description: "Aura to pick up the relic",

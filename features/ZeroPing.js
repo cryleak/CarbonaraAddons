@@ -71,6 +71,7 @@ const ZeroPing = new class {
     }
 
     isSynced() {
+        while (this.desyncedTps.length && Date.now() - this.desyncedTps[0] > 1000) this.desyncedTps.shift()
         return this.sent.length === 0 && this.desyncedTps.length === 0;
     }
 

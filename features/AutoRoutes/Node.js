@@ -17,8 +17,6 @@ export class Node extends Editable {
 
         this.nodeName = name;
 
-        this.lastTriggered = 0;
-
         this.position = args.position;
         this.radius = args.radius;
         this.height = args.height;
