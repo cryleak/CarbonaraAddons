@@ -169,7 +169,7 @@ class Phoenix {
 
         const ip = host.toString().split("/")[1].split(":")[0];
         if (!allowed.includes(ip)) {
-            ChatLib.chat("[PhoenixAuth] IP not in the phoenix whitelist.");
+            chat("[PhoenixAuth] IP not in the phoenix whitelist.");
             return;
         }
 

@@ -39,7 +39,7 @@ export default class Module extends Config {
             "config": this._config
         };
         this._toggled = true;
-        this._config["toggle"] = true;
+        this._config.toggle = true;
 
         this._phoenix.customPayload("phoenixclient-toggle", buffer);
     }
@@ -53,7 +53,7 @@ export default class Module extends Config {
             "module": this._name
         }
         this._toggled = false;
-        this._config["toggle"] = false;
+        this._config.toggle = false;
 
         this._phoenix.customPayload("phoenixclient-disable", buffer);
     }
@@ -83,7 +83,8 @@ export default class Module extends Config {
                     }
                 },
                 updator: (setter, obj) => {
-                    setter("toggle", obj.config["toggle"]);
+                    ChatLib.chat(`Toggled ${obj._name} module to ${obj._config.toggle}`);
+                    setter("toggle", obj._config.toggle);
                 }
             }
         ];
