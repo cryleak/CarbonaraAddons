@@ -312,7 +312,7 @@ registerModule(class FastLeap extends Module {
 	}
 
     queueLeap(player) {
-        if (this._toggled) {
+        if (this.isToggled()) {
             this._phoenix.customPayload("mi0-leap", player);
         } else {
             LeapHelper.queueLeap(player)

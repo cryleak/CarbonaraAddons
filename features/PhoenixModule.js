@@ -19,10 +19,12 @@ export default class Module extends Config {
             this._config = JSON.parse(FileLib.read("CarbonaraAddons/data/modules", `${this._name}.json`));
             if (this._config === null) {
                 this._config = this._defaultConfig();
+                this._config["toggle"] = false;
                 this.syncConfig();
             }
         } catch (e) {
             this._config = this._defaultConfig();
+            this._config["toggle"] = false;
             this.syncConfig();
         }
     }
@@ -37,8 +39,13 @@ export default class Module extends Config {
             "config": this._config
         };
         this._toggled = true;
+        this._config["toggle"] = true;
 
         this._phoenix.customPayload("phoenixclient-toggle", buffer);
+    }
+
+    isToggled() {
+        return this._toggled && this._phoenix.isInPhoenix();
     }
 
     disable() {
@@ -46,6 +53,7 @@ export default class Module extends Config {
             "module": this._name
         }
         this._toggled = false;
+        this._config["toggle"] = false;
 
         this._phoenix.customPayload("phoenixclient-disable", buffer);
     }
@@ -75,12 +83,16 @@ export default class Module extends Config {
                     }
                 },
                 updator: (setter, obj) => {
-                    setter("toggle", obj._toggled);
+                    setter("toggle", obj.config["toggle"]);
                 }
             }
         ];
 
         Object.keys(this._config).forEach(key => {
+            if (key === "toggle") { // handled seperately
+                return;
+            }
+
             let value = this._config[key];
             let type = typeof value;
             switch (type) {
@@ -144,7 +156,7 @@ export default class Module extends Config {
 
     syncConfig() {
         FileLib.write("CarbonaraAddons/data/modules", `${this._name}.json`, JSON.stringify(this._config, null, 4));
-        if (this._toggled) {
+        if (this.isToggled()) {
             this._phoenix.customPayload("phoenixclient-config", { "module": this._name, "config": this._config });
         }
     }

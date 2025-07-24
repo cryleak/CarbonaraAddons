@@ -47,6 +47,10 @@ class Phoenix {
             registerSubCommand(["phoenix", "ph"], args => {
                 const action = args.shift();
                 if (!action) {
+                    if (!this.isInPhoenix()) {
+                        chat("Chilly attempt from a crippled man.");
+                        return;
+                    }
                     this._collection.openGui();
                     return;
                 }
@@ -57,6 +61,10 @@ class Phoenix {
             });
 
             this.registerSubCommand("config", () => {
+                if (!this.isInPhoenix()) {
+                    chat("Chilly attempt from a crippled man.");
+                    return;
+                }
                 this._collection.openGui();
             });
             this.registerSubCommand("reload", () => {
@@ -146,7 +154,7 @@ class Phoenix {
             this.authDoneTrigger.unregister();
 
             this._modules.forEach(module => {
-                if (module._toggled) {
+                if (module._config["toggle"]) {
                     module.toggle();
                 }
             });

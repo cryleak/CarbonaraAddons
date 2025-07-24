@@ -18,19 +18,19 @@ registerModule(class PhoenixIcefill extends Module {
         this.currentPatterns = false
 
         register("tick", () => {
-            if (this._toggled) {
+            if (this.isToggled()) {
                 this._scan();
             }
         })
 
         register("renderWorld", () => {
-            if (this._toggled) {
+            if (this.isToggled()) {
                 this._render();
             }
         })
 
         register("packetReceived", (packet, event) => {
-            if (this._toggled) {
+            if (this.isToggled()) {
                 this._handleChatPacket(packet, event);
             }
         }).setFilteredClass(S02PacketChat)
