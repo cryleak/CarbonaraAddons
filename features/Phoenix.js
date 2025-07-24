@@ -33,17 +33,10 @@ class Phoenix {
             this._handleModuleSync(packet, event);
         }).setFilteredClass(S3FPacketCustomPayload).unregister();
 
-        this._checkInPhoenix();
+        const onGameLoad = register("gameLoad", () => {
+            onGameLoad.unregister();
+            this._checkInPhoenix();
 
-        register(net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent, (e) => {
-            this._handleConnect(e);
-        });
-
-        register(net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientDisconnectionFromServerEvent, () => {
-            this._inPhoenix = false;
-        });
-
-        Client.scheduleTask(40, () => {
             registerSubCommand(["phoenix", "ph"], args => {
                 const action = args.shift();
                 if (!action) {
@@ -74,6 +67,14 @@ class Phoenix {
                 }
                 this._hotReload();
             });
+        });
+
+        register(net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent, (e) => {
+            this._handleConnect(e);
+        });
+
+        register(net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientDisconnectionFromServerEvent, () => {
+            this._inPhoenix = false;
         });
     }
 
