@@ -1,5 +1,4 @@
 import Settings from "../config"
-import FastLeap from "./FastLeap"
 import LeapHelper from "../utils/leapUtils"
 import SecretAura from "./SecretAura"
 import Blink from "./AutoP3/Blink"
@@ -48,7 +47,7 @@ export default new class Relic {
                 return
             }
 
-            const player = FastLeap.getPlayerToLeapTo(true)
+            const player = LeapHelper.getPlayerToLeapTo(Settings().autoLeapOnRelicName)
             if (player === null) return
             if (!player || !player.length) return
             const clickDelay = parseInt(Settings().autoLeapOnRelicDelay)

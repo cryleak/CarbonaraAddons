@@ -40,7 +40,6 @@ const ZeroPing = new class {
 
         PostUseItem.register(() => {
             const objectMouseOver = Client.getMinecraft().field_71476_x
-            if (!objectMouseOver || !objectMouseOver.field_72313_a) return
             const type = objectMouseOver.field_72313_a.toString()
             if (type === "ENTITY") return
             else if (type === "BLOCK") {

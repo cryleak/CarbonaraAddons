@@ -268,7 +268,6 @@ class DeviceManager {
             new FakeArrow(playerVec, yaw, pitch, -5, false)
             new FakeArrow(playerVec, yaw, pitch, 0, true)
             new FakeArrow(playerVec, yaw, pitch, 5, false)
-            World.playSound("random.bow", 1, 1)
         })
         this.lastArrowShoot = Date.now()
     }
@@ -303,7 +302,11 @@ class FakeArrow {
 
         const yawRadians = JavaMath.toRadians(yaw + yawOffset)
         const pitchRadians = JavaMath.toRadians(pitch)
-        this.arrow.func_70012_b(position.x, position.y + getEyeHeight() - 0.1, position.z, yaw + yawOffset, pitch)
+        let ySpawn = position.y + getEyeHeight() - 0.1
+        if (!middleArrow) {
+            ySpawn -= 0.2
+        }
+        this.arrow.func_70012_b(position.x, ySpawn, position.z, yaw + yawOffset, pitch)
 
         this.arrow.field_70159_w = -sin(yawRadians) * cos(pitchRadians)
         this.arrow.field_70181_x = -sin(pitchRadians)
@@ -313,8 +316,9 @@ class FakeArrow {
 
         this.arrow.field_70251_a = 2
         this.arrow.func_70071_h_()
-        Client.scheduleTask(0, () => {
+        Client.scheduleTask(1, () => {
             World.getWorld().func_72838_d(this.arrow)
+            playSound("random.bow", 1, 1)
             Device.activeFakeArrows.push(this.arrow)
         })
 

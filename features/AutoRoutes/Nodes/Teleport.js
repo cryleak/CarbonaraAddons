@@ -7,7 +7,7 @@ import tpManager from "../TeleportManager";
 import SecretAuraClick from "../../../events/SecretAuraClick"
 
 import { setPlayerPosition, setVelocity, debugMessage, sendAirClick, clampYaw, releaseMovementKeys } from "../../../utils/utils"
-import { aotvFinder, etherwarpFinder, hypeFinder, nameFinder } from "../../../utils/TeleportItem"
+import { aotvFinder, etherwarpFinder, hypeFinder } from "../../../utils/TeleportItem"
 import { Node } from "../Node"
 import { UpdateWalkingPlayer } from "../../../events/JavaEvents";
 import MouseEvent from "../../../events/MouseEvent";
@@ -25,7 +25,7 @@ class TeleportNode extends Node {
         this.chained = args.chained;
     }
 
-    customInNodeCheck(node) {
+    customInNodeCheck() {
         return (Player.x === this.realPosition?.x && Player.y === this.realPosition?.y && Player.z === this.realPosition?.z);
     }
 
@@ -73,8 +73,8 @@ class TeleportNode extends Node {
             registerListener: (obj, _, next) => {
                 obj.previousEther = next;
             },
-            updator: (config, obj) => {
-                config.settings.getConfig().setConfigValue("Object Editor", "from Ether", obj.previousEther);
+            updator: (setter, obj) => {
+                setter("from Ether", obj.previousEther);
             }
         });
 
@@ -84,8 +84,8 @@ class TeleportNode extends Node {
             registerListener: (obj, _, next) => {
                 obj.chained = next;
             },
-            updator: (config, obj) => {
-                config.settings.getConfig().setConfigValue("Object Editor", "chained", obj.chained);
+            updator: (setter, obj) => {
+                setter("chained", obj.chained);
             }
         });
 

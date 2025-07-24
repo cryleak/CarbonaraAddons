@@ -68,7 +68,7 @@ export default class PearlClipNode extends Node {
         })
     }
 
-    _preArgumentTrigger(execer) {
+    _preArgumentTrigger(_) {
         tpManager.sync(this.realYaw, this.pitch, true);
         return true;
     }
@@ -79,17 +79,17 @@ export default class PearlClipNode extends Node {
         values.push({
             type: "addTextInput",
             configName: "pearl Clip Distance",
-            registerListener: (obj, prev, next) => {
+            registerListener: (obj, _, next) => {
                 const newDistance = parseFloat(next);
                 if (isNaN(newDistance) || newDistance < 0) {
                     chat("Invalid distance! Please enter a valid number greater than or equal to 0.");
                     return;
                 }
 
-                this.distance = newDistance;
+                obj.distance = newDistance;
             },
-            updator: (config, obj) => {
-                config.settings.getConfig().setConfigValue("Object Editor", "pearl Clip Distance", obj.distance);
+            updator: (setter, obj) => {
+                setter("pearl Clip Distance", obj.distance);
             }
         });
         return values;
