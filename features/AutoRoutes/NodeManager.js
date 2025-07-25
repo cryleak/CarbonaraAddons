@@ -126,6 +126,7 @@ class NodeManager {
         let rgbColor
         if (settings.nodeRGB) rgbColor = this._getRainbowColor(Date.now() / (1000 / settings.nodeRGBSpeed))
         const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices;
+        drawPlayer(new Vector3(10000, 10000, 10000), 0, 0, 0, false, null) // transparency """"""""""""""""fix"""""""""""""""""
         for (let i = 0; i < this.activeNodes.length; i++) {
             let node = this.activeNodes[i]
             let pos = node.realPosition
