@@ -161,11 +161,9 @@ class NodeManager {
                 let { yaw, pitch } = calcYawPitch(pos.x, pos.y, pos.z, toBlock.x, toBlock.y, toBlock.z);
                 drawPlayer(pos, yaw, pitch, 0.5, node.constructor.sneaking, node.constructor.renderItem)
             } else if (node.realSuperBoomBlock) {
-                let toBlock = Dungeons.convertFromRelative(node.realSuperBoomBlock).copy().add(0.5, 0.01, 0.5);
-                let dx = toBlock.x - pos.x;
-                let dz = toBlock.z - pos.z;
-                let radians = Math.atan2(dz, dx);
-                drawPlayer(pos, radians * (180 / Math.PI), 0, 0.5, node.constructor.sneaking, node.constructor.renderItem)
+                let toBlock = node.realSuperBoomBlock.copy().add(0.5, 0.01, 0.5);
+                let { yaw, pitch } = calcYawPitch(pos.x, pos.y, pos.z, toBlock.x, toBlock.y, toBlock.z);
+                drawPlayer(pos, yaw, pitch, 0.5, node.constructor.sneaking, node.constructor.renderItem)
             }
 
             // let dxbl = (pos.x + toBlock.x) / 2
