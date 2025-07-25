@@ -5,7 +5,7 @@ import Rotations from "../../utils/Rotations"
 import execer from "./NodeExecutor"
 import ZeroPing from "../ZeroPing"
 
-import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
+import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
 import { etherwarpFinder, findSlot } from "../../utils/TeleportItem"
 import { SyncHeldItem, UpdateWalkingPlayer } from "../../events/JavaEvents";
 

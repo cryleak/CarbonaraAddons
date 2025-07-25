@@ -19,17 +19,16 @@ export default new class BarPhase {
         const block = blockState.func_177230_c();
         const state = block.func_176221_a(blockState, World.getWorld(), ironBarBlock.convertToBlockPos())
         const boundingBox = this._getBlockBounds(block, ironBarBlock)
-        ChatLib.chat(JSON.stringify(boundingBox))
         const properties = {}
         state.func_177228_b().forEach(property => properties[property.func_177701_a()] = state.func_177229_b(property))
 
         if ((properties.east || properties.west) && !properties.north && !properties.south) {
-            boundingBox.min.add(playerVec);
-            ChatLib.chat("You can phase through the bar on north south")
+            // boundingBox.min.add(playerVec);
+            // ChatLib.chat("You can phase through the bar on north south")
         }
 
         if ((properties.north || properties.south) && !properties.east && !properties.west) {
-            ChatLib.chat("You can phase through the bar on east west")
+            // ChatLib.chat("You can phase through the bar on east west")
         }
 
         ChatLib.chat(JSON.stringify(properties))

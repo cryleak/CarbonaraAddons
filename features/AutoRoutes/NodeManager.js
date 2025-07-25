@@ -143,20 +143,21 @@ class NodeManager {
 
             if (node.toBlock) {
                 let toBlock = Dungeons.convertFromRelative(node.toBlock).copy().add(0.5, 0.01, 0.5);
-                let dx = toBlock.x - pos.x;
-                let dz = toBlock.z - pos.z;
-                let radians = Math.atan2(dz, dx);
-                let one = radians + 0.38726646;
-                let two = radians - 0.38726646;
-                let dxOne = Math.cos(one);
-                let dzOne = Math.sin(one);
-                let newPosOne = new Vector3(toBlock.x - dxOne * 0.4, toBlock.y, toBlock.z - dzOne * 0.4);
-                let dxTwo = Math.cos(two);
-                let dzTwo = Math.sin(two);
-                let newPosTwo = new Vector3(toBlock.x - dxTwo * 0.4, toBlock.y, toBlock.z - dzTwo * 0.4);
-                RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, 6)
-                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosOne.x, newPosOne.y, newPosOne.z, ...color, false, 6)
-                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosTwo.x, newPosTwo.y, newPosTwo.z, ...color, false, 6)
+                // let dx = toBlock.x - pos.x;
+                // let dy = toBlock.y - pos.y;
+                // let dz = toBlock.z - pos.z;
+                // let radians = Math.atan2(dz, dx);
+                // let one = radians + 0.38726646;
+                // let two = radians - 0.38726646;
+                // let dxOne = Math.cos(one);
+                // let dzOne = Math.sin(one);
+                // let newPosOne = new Vector3(toBlock.x - dxOne * 0.4, py, toBlock.z - dzOne * 0.4);
+                // let dxTwo = Math.cos(two);
+                // let dzTwo = Math.sin(two);
+                // let newPosTwo = new Vector3(toBlock.x - dxTwo * 0.4, py, toBlock.z - dzTwo * 0.4);
+                RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, 10)
+                // RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosOne.x, newPosOne.y, newPosOne.z, ...color, false, 10)
+                // RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosTwo.x, newPosTwo.y, newPosTwo.z, ...color, false, 10)
 
                 let { yaw, pitch } = calcYawPitch(pos.x, pos.y, pos.z, toBlock.x, toBlock.y, toBlock.z);
                 drawPlayer(pos, yaw, pitch, 0.5, node.constructor.sneaking, node.constructor.renderItem)
