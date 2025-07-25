@@ -2,7 +2,6 @@ import Tick from "../events/Tick";
 import Vector3 from "../utils/Vector3";
 
 const Blocks = Java.type("net.minecraft.init.Blocks");
-const MathHelper = Java.type("net.minecraft.util.MathHelper");
 const IronBars = Blocks.field_150411_aY;
 
 export default new class BarPhase {
@@ -24,6 +23,17 @@ export default new class BarPhase {
         ChatLib.chat(JSON.stringify(boundingBox))
         const properties = {}
         state.func_177228_b().forEach(property => properties[property.func_177701_a()] = state.func_177229_b(property))
+
+        if ((properties.east || properties.west) && !properties.north && !properties.south) {
+            boundingBox.min.add(playerVec);
+            ChatLib.chat("You can phase through the bar on north south")
+        }
+
+        if ((properties.north || properties.south) && !properties.east && !properties.west) {
+            ChatLib.chat("You can phase through the bar on east west")
+        }
+
+        ChatLib.chat(JSON.stringify(properties))
         //  if ((properties.east || properties.west) && Player.)
 
     }

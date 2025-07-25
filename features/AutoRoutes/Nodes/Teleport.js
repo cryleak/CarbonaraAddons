@@ -117,6 +117,9 @@ class TeleportNode extends Node {
 }
 
 manager.registerNode(class EtherwarpNode extends TeleportNode {
+    static renderItem = new Item(277).itemStack;
+    static sneaking = true;
+
     static identifier = "etherwarp"
     static priority = 0
     constructor(args) {
@@ -140,6 +143,8 @@ manager.registerNode(class EtherwarpNode extends TeleportNode {
 })
 
 manager.registerNode(class AOTVNode extends TeleportNode {
+    static renderItem = new Item(277).itemStack;
+
     static identifier = "aotv"
     static priority = 0
     constructor(args) {
@@ -163,6 +168,8 @@ manager.registerNode(class AOTVNode extends TeleportNode {
 })
 
 manager.registerNode(class HyperionNode extends TeleportNode {
+    static renderItem = new Item(267).itemStack;
+
     static identifier = "hype"
     static priority = 0
     constructor(args) {

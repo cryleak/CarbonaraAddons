@@ -8,6 +8,7 @@ import Settings from "../../config"
 import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils";
 import { registerSubCommand } from "../../utils/commands";
 import FreezeManager from "./FreezeManager"
+import { drawPlayer } from "../../utils/Render"
 
 class NodeManager {
     constructor() {
@@ -136,7 +137,37 @@ class NodeManager {
             else if (node.radius === 0) color = [settings.smallNodeColor[0] / 255, settings.smallNodeColor[1] / 255, settings.smallNodeColor[2] / 255, settings.smallNodeColor[3] / 255];
             else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
 
-            RenderLibV2.drawCyl(pos.x, pos.y + 0.01, pos.z, node.radius, radius, 0, slices, 1, 90, 45, 0, ...color, true, true);
+            if (node.toBlock) {
+                let toBlock = Dungeons.convertFromRelative(node.toBlock).copy().add(0.5, 0.01, 0.5);
+                let dx = toBlock.x - pos.x;
+                let dz = toBlock.z - pos.z;
+                let radians = Math.atan2(dz, dx);
+                let one = radians + 0.38726646;
+                let two = radians - 0.38726646;
+                let dxOne = Math.cos(one);
+                let dzOne = Math.sin(one);
+                let newPosOne = new Vector3(toBlock.x - dxOne * 0.4, toBlock.y, toBlock.z - dzOne * 0.4);
+                let dxTwo = Math.cos(two);
+                let dzTwo = Math.sin(two);
+                let newPosTwo = new Vector3(toBlock.x - dxTwo * 0.4, toBlock.y, toBlock.z - dzTwo * 0.4);
+                RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, 10)
+                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosOne.x, newPosOne.y, newPosOne.z, ...color, false, 10)
+                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosTwo.x, newPosTwo.y, newPosTwo.z, ...color, false, 10)
+
+                drawPlayer(pos, radians * (180 / Math.PI) - 90, 0, 0.5, node.constructor.sneaking, node.constructor.renderItem)
+            } else if (node.realSuperBoomBlock) {
+                let toBlock = Dungeons.convertFromRelative(node.realSuperBoomBlock).copy().add(0.5, 0.01, 0.5);
+                let dx = toBlock.x - pos.x;
+                let dz = toBlock.z - pos.z;
+                let radians = Math.atan2(dz, dx);
+                drawPlayer(pos, radians * (180 / Math.PI), 0, 0.5, node.constructor.sneaking, node.constructor.renderItem)
+            }
+
+            // let dxbl = (pos.x + toBlock.x) / 2
+            // let dybl = (pos.y + toBlock.y) / 2
+            // let dzbl = (pos.z + toBlock.z) / 2
+            // Tessellator.drawString(`I think it goes there`, dxbl, dybl + 0.21, dzbl, 16777215, true, 0.02, false);
+
             if (settings.displayIndex) Tessellator.drawString(`index: ${i}, type: ${node.nodeName}`, pos.x, pos.y + 0.01, pos.z, 16777215, true, 0.02, false)
         }
     }

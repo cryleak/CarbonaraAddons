@@ -14,6 +14,8 @@ const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const BlockAir = Java.type("net.minecraft.block.BlockAir")
 
 NodeManager.registerNode(class SuperboomNode extends Node {
+    static renderItem = new Item(46).itemStack;
+
     static identifier = "superboom"
     static priority = 100
     constructor(args) {

@@ -297,7 +297,7 @@ export class Node extends Editable {
             console.log(JSON.stringify(this.position, null, 2));
             return;
         }
-        console.log(`Defining for room: ${JSON.stringify(room)}`);
+        console.log(`Defining for room: ${JSON.stringify(room)} node: ${this.nodeName}`);
 
         const pos = room.type === "dungeons" ? Dungeons.convertFromRelative(this.position) : this.position;
         Object.defineProperties(this, {
