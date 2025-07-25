@@ -336,4 +336,3 @@ function sin(value) {
 function random() {
     return new SecureRandom().nextDouble()
 }
-

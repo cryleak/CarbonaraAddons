@@ -5,7 +5,7 @@ import Dungeons from "../../utils/Dungeons"
 import Location from "../../utils/Location"
 import Settings from "../../config"
 
-import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq } from "../../utils/utils";
+import { scheduleTask, debugMessage, chat, playerCoords, getDistance3DSq, calcYawPitch } from "../../utils/utils";
 import { registerSubCommand } from "../../utils/commands";
 import FreezeManager from "./FreezeManager"
 import { drawPlayer } from "../../utils/Render"
@@ -123,6 +123,8 @@ class NodeManager {
 
     _render() {
         const settings = Settings();
+        let rgbColor
+        if (settings.nodeRGB) rgbColor = this._getRainbowColor(Date.now() / (1000 / settings.nodeRGBSpeed))
         const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices;
         for (let i = 0; i < this.activeNodes.length; i++) {
             let node = this.activeNodes[i]
@@ -134,6 +136,7 @@ class NodeManager {
             }
 
             if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
+            else if (settings.nodeRGB) color = rgbColor
             else if (node.radius === 0) color = [settings.smallNodeColor[0] / 255, settings.smallNodeColor[1] / 255, settings.smallNodeColor[2] / 255, settings.smallNodeColor[3] / 255];
             else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
 
@@ -150,11 +153,12 @@ class NodeManager {
                 let dxTwo = Math.cos(two);
                 let dzTwo = Math.sin(two);
                 let newPosTwo = new Vector3(toBlock.x - dxTwo * 0.4, toBlock.y, toBlock.z - dzTwo * 0.4);
-                RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, 10)
-                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosOne.x, newPosOne.y, newPosOne.z, ...color, false, 10)
-                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosTwo.x, newPosTwo.y, newPosTwo.z, ...color, false, 10)
+                RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, 6)
+                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosOne.x, newPosOne.y, newPosOne.z, ...color, false, 6)
+                RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosTwo.x, newPosTwo.y, newPosTwo.z, ...color, false, 6)
 
-                drawPlayer(pos, radians * (180 / Math.PI) - 90, 0, 0.5, node.constructor.sneaking, node.constructor.renderItem)
+                let { yaw, pitch } = calcYawPitch(pos.x, pos.y, pos.z, toBlock.x, toBlock.y, toBlock.z);
+                drawPlayer(pos, yaw, pitch, 0.5, node.constructor.sneaking, node.constructor.renderItem)
             } else if (node.realSuperBoomBlock) {
                 let toBlock = Dungeons.convertFromRelative(node.realSuperBoomBlock).copy().add(0.5, 0.01, 0.5);
                 let dx = toBlock.x - pos.x;
@@ -381,6 +385,14 @@ class NodeManager {
         const subCommand = { args, listener }
         if (tabCompletions) subCommand.tabCompletions = tabCompletions
         this.subcommands.push(subCommand)
+    }
+
+    _getRainbowColor(t) { // chatgpt
+        // t is a float that changes over time, like a timer
+        const r = 0.5 + 0.5 * Math.sin(t);
+        const g = 0.5 + 0.5 * Math.sin(t + (2 * Math.PI / 3)); // +120 degrees
+        const b = 0.5 + 0.5 * Math.sin(t + (4 * Math.PI / 3)); // +240 degrees
+        return [r, g, b, 1];
     }
 }
 

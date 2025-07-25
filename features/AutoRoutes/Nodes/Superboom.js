@@ -7,8 +7,8 @@ import manager from "../NodeManager"
 import tpManager from "../TeleportManager"
 
 import { Node } from "../Node"
-import { chat, itemSwapSuccess, swapFromItemID, syncCurrentPlayItem, debugMessage } from "../../../utils/utils"
-import { UpdateWalkingPlayer } from "../../../events/JavaEvents"
+import { chat, itemSwapSuccess, swapFromItemID, syncCurrentPlayItem, debugMessage, sendAirClick } from "../../../utils/utils"
+import { SyncHeldItem, UpdatePlayer, UpdateWalkingPlayer } from "../../../events/JavaEvents"
 
 const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const BlockAir = Java.type("net.minecraft.block.BlockAir")
@@ -40,9 +40,10 @@ NodeManager.registerNode(class SuperboomNode extends Node {
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
                 if (!(block instanceof BlockAir)) {
-                    UpdateWalkingPlayer.Pre.scheduleTask(0, () => {
-                        SecretAura.rightClickBlock(block, this.realSuperBoomBlock)
+                    SyncHeldItem.Post.scheduleTask(0, () => {
+                        SecretAura.rightClickBlock(block, this.realSuperBoomBlock, false)
                         execer.execute(this)
+                        // execer.execute(this)
                     });
                 } else {
                     chat("Can't superboom on a block that doesn't exist.")

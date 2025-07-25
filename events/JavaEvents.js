@@ -80,7 +80,7 @@ export const UpdateWalkingPlayer = { Pre: new WrappedJavaEvent(events.UpdateWalk
  *   Pre: import('./CustomEvents').EventInstance<import('./CustomEvents').Data<UpdatePlayerData>>,
  * }}
  */
-export const UpdatePlayer = { Pre: new WrappedJavaEvent(events.UpdatePlayerPre) }
+export const UpdatePlayer = { Pre: new WrappedJavaEvent(events.UpdatePlayerPre), Post: new WrappedJavaEvent(events.UpdatePlayerPost) }
 
 /**
  * An event that is triggered right after the client sends a UseItem packet.
@@ -88,3 +88,12 @@ export const UpdatePlayer = { Pre: new WrappedJavaEvent(events.UpdatePlayerPre) 
  * @type {import('./CustomEvents').EventInstance<>}
  */
 export const PostUseItem = new WrappedJavaEvent(events.PostUseItem)
+
+
+/** An event that is triggered after the client syncs the held item.
+ * @const
+ * @type {{
+ *   Post: import('./CustomEvents').EventInstance<>
+ * }}
+ */
+export const SyncHeldItem = { Post: new WrappedJavaEvent(events.PostSyncHeldItem) }

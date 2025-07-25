@@ -6,7 +6,6 @@ const IronBars = Blocks.field_150411_aY;
 
 export default new class BarPhase {
     constructor() {
-        ChatLib.chat("a")
         Tick.Pre.register(() => {
             this._onTick()
         })

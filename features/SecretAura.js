@@ -123,18 +123,18 @@ export default new class SecretAura {
      * @param {*} eyePosition 
      * @returns 
      */
-    rightClickBlock(block, blockPos) {
+    rightClickBlock(block, blockPos, triggerEvent = true) {
         const javaBlockPos = blockPos.convertToBlockPos()
         const mop = this.getMOPOnBlock(block, javaBlockPos)
         const itemStack = Player.getHeldItem()?.getItemStack() ?? null
 
-        if (SecretAuraClick.Pre.trigger({ block, blockPos, itemStack }).cancelled) return
+        if (triggerEvent && SecretAuraClick.Pre.trigger({ block, blockPos, itemStack }).cancelled) return
 
 
         Client.sendPacket(new C08PacketPlayerBlockPlacement(javaBlockPos, mop.sideHit.func_176745_a(), itemStack, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z))
         if (!Player.isSneaking() && !(block instanceof BlockCompressedPowered || block instanceof BlockSkull)) Player.getPlayer().func_71038_i()
 
-        SecretAuraClick.Post.trigger({ block, blockPos, itemStack })
+        if (triggerEvent) SecretAuraClick.Post.trigger({ block, blockPos, itemStack })
     }
 
     leftClickBlock(block, blockPos) {

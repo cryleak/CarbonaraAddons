@@ -7,7 +7,7 @@ import ZeroPing from "../ZeroPing"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, swapFromName, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
 import { etherwarpFinder, findSlot } from "../../utils/TeleportItem"
-import { UpdateWalkingPlayer } from "../../events/JavaEvents";
+import { SyncHeldItem, UpdateWalkingPlayer } from "../../events/JavaEvents";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 
@@ -136,7 +136,8 @@ class TeleportManager {
             setSneaking(sneaking)
             setVelocity(0, 0, 0);
 
-            this._teleportAfterSwap(toBlock, yaw, pitch, onResult, shouldWait);
+            if (shouldWait) SyncHeldItem.Post.scheduleTask(0, () => this._teleportAfterSwap(toBlock, yaw, pitch, onResult, shouldWait))
+            else this._teleportAfterSwap(toBlock, yaw, pitch, onResult, shouldWait)
         });
     }
 

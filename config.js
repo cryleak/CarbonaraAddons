@@ -12,6 +12,22 @@ config
         category: "Node Rendering",
         value: false
     })
+    .addSwitch({
+        configName: "nodeRGB",
+        title: "RGB Nodes",
+        description: "Professional RGB nodes that change color.",
+        category: "Node Rendering",
+        value: false
+    })
+    .addSlider({
+        configName: "nodeRGBSpeed",
+        title: "RGB Speed",
+        description: "",
+        category: "Node Rendering",
+        options: [1.001, 10],
+        value: 1.0,
+        shouldShow: data => data.nodeRGB
+    })
     .addColorPicker({
         configName: "nodeColor",
         title: "Node Colors",
