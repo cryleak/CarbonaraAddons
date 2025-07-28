@@ -25,3 +25,11 @@ export function drawPlayer(position, yaw, pitch, scale, sneaking = false, item =
 
     RenderShit.drawPlayer(player, position.convertToVec3(), yaw, pitch, scale, sneaking, item)
 }
+
+/**
+ * Rainbow Line renderer.
+ * @type {{
+ *   drawRainbowLine: (x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, phase: boolean, lineWidth: number, speed: number) => void,
+ * }}
+ */
+export const RainbowLine = Java.type("me.cryleak.carbonaraloader.RainbowLine")
