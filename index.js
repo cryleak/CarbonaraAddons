@@ -18,3 +18,11 @@ import "./features/PhoenixTerminalAura"
 import "./features/PhoenixIcefill"
 import "./features/AutoWaterboard"
 import "./features/Phoenix"
+import { registerSubCommand } from "./utils/commands"
+import { chat, setPlayerPosition, setVelocity } from "./utils/utils"
+
+registerSubCommand("center", () => {
+    setPlayerPosition(Math.floor(Player.getX()) + 0.5, Player.getY(), Math.floor(Player.getZ()) + 0.5, true)
+    setVelocity(0, null, 0)
+    chat("Centered the player.")
+})

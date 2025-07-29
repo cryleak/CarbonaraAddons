@@ -82,7 +82,7 @@ class TeleportManager {
                     ZeroPing.updateLastTPed();
                     execer._updateCoords(toBlock);
                     onResult(toBlock);
-                }, true);
+                }, true, true);
             };
 
             if (!isWithinTolerence(clampYaw(Player.yaw), yaw) || !isWithinTolerence(Player.pitch, pitch) || shouldWait) {
