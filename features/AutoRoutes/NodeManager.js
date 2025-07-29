@@ -13,7 +13,7 @@ import { drawPlayer } from "../../utils/Render"
 class NodeManager {
     constructor() {
         try {
-            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json"), (_, value) => {
+            this.data = JSON.parse(FileLib.read("./config/ChatTriggers/modules/carbonaraaddons/data/AutoRoutes.json"), (_, value) => {
                 if (value && typeof (value.x) === "number" && typeof (value.y) === "number" && typeof (value.z) === "number") {
                     return new Vector3(value.x, value.y, value.z);
                 }
@@ -81,7 +81,7 @@ class NodeManager {
 
     saveConfig() {
         try {
-            FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/AutoRoutesConfig.json", JSON.stringify(this.data, null, "\t"), true)
+            FileLib.write("./config/ChatTriggers/modules/CarbonaraAddons/data/AutoRoutes.json", JSON.stringify(this.data, null, "\t"), true)
         } catch (e) {
             chat("Error saving config!")
             console.log(e)
@@ -126,20 +126,21 @@ class NodeManager {
         let rgbColor
         if (settings.nodeRGB) rgbColor = this._getRainbowColor(Date.now() / (1000 / settings.nodeRGBSpeed))
         const slices = isNaN(settings.nodeSlices) ? 2 : settings.nodeSlices;
-        drawPlayer(new Vector3(10000, 10000, 10000), 0, 0, 0, false, null) // transparency """"""""""""""""fix"""""""""""""""""
+        const width = isNaN(settings.lineWidth) ? 1 : settings.lineWidth;
         for (let i = 0; i < this.activeNodes.length; i++) {
             let node = this.activeNodes[i]
             let pos = node.realPosition
             let color
-            let radius = node.radius
-            if (node.radius === 0) {
-                radius = settings.smallNodeRadius;
-            }
 
             if (node.triggered || Date.now() - node.lastTriggered < 1000) color = [1, 0, 0, 1]
             else if (settings.nodeRGB) color = rgbColor
             else if (node.radius === 0) color = [settings.smallNodeColor[0] / 255, settings.smallNodeColor[1] / 255, settings.smallNodeColor[2] / 255, settings.smallNodeColor[3] / 255];
             else color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
+
+            if (node.radius > 0) {
+                const height = 0.01 + width * 0.01;
+                RenderLibV2.drawCyl(pos.x, pos.y + height, pos.z, node.radius, node.radius, height, slices, 1, 90, 45, 0, ...color, true, false);
+            }
 
             if (node.toBlock) {
                 let toBlock = Dungeons.convertFromRelative(node.toBlock).copy().add(0.5, 0.01, 0.5);
@@ -155,9 +156,9 @@ class NodeManager {
                 // let dxTwo = Math.cos(two);
                 // let dzTwo = Math.sin(two);
                 // let newPosTwo = new Vector3(toBlock.x - dxTwo * 0.4, py, toBlock.z - dzTwo * 0.4);
-                RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, 10)
-                // RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosOne.x, newPosOne.y, newPosOne.z, ...color, false, 10)
-                // RenderLibV2.drawLine(toBlock.x, toBlock.y, toBlock.z, newPosTwo.x, newPosTwo.y, newPosTwo.z, ...color, false, 10)
+                if (width > 0) {
+                    RenderLibV2.drawLine(pos.x, pos.y + 0.01, pos.z, toBlock.x, toBlock.y, toBlock.z, ...color, false, width)
+                }
 
                 let { yaw, pitch } = calcYawPitch(pos.x, pos.y, pos.z, toBlock.x, toBlock.y, toBlock.z);
                 drawPlayer(pos, yaw, pitch, 0.5, node.constructor.sneaking, node.constructor.renderItem)
@@ -165,8 +166,9 @@ class NodeManager {
                 let toBlock = node.realSuperBoomBlock.copy().add(0.5, 0.01, 0.5);
                 let { yaw, pitch } = calcYawPitch(pos.x, pos.y, pos.z, toBlock.x, toBlock.y, toBlock.z);
                 drawPlayer(pos, yaw, pitch, 0.5, node.constructor.sneaking, node.constructor.renderItem)
+            } else {
+                drawPlayer(pos, node.realYaw, node.pitch, 0.5, node.constructor.sneaking, null)
             }
-
             // let dxbl = (pos.x + toBlock.x) / 2
             // let dybl = (pos.y + toBlock.y) / 2
             // let dzbl = (pos.z + toBlock.z) / 2

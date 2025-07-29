@@ -1,10 +1,10 @@
 
-import Vector3 from "./Vector3.js"
+import Vector3 from "./Vector3"
 
 import { onScoreboardLine } from "../../BloomCore/utils/Events"
 import { removeUnicode } from "../../BloomCore/utils/Utils"
-import { clampYaw, debugMessage } from "./utils.js"
-import { Event } from "../events/CustomEvents.js"
+import { clampYaw } from "./utils"
+import { Event } from "../events/CustomEvents"
 
 const dungeonUtils = Java.type("me.odinmain.utils.skyblock.dungeon.DungeonUtils").INSTANCE
 const EtherWarpHelper = Java.type("me.odinmain.utils.skyblock.EtherWarpHelper").INSTANCE

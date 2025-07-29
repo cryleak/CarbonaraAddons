@@ -59,7 +59,7 @@ const ZeroPing = new class {
 
         ServerTeleport.register(event => {
             this._handleServerTeleport(event);
-        }, 100002);
+        }, 9999);
 
         register("packetSent", packet => {
             this._handleClientPlayerPacket(packet);

@@ -1,4 +1,6 @@
 import Vector3 from "../../../utils/Vector3"
+import RenderLibV2 from "../../../../RenderLibV2J"
+import Settings from "../../../config"
 import ServerTeleport from "../../../events/ServerTeleport";
 import manager from "../NodeManager";
 import Dungeons from "../../../utils/Dungeons"
@@ -202,6 +204,12 @@ class TeleportRecorder {
         this.lastPacket = null;
 
         this.trigger = bind(
+            register("renderWorld", () => {
+                this._render();
+            }),
+            register("renderOverlay", () => {
+                this._renderOverlay();
+            }),
             UpdateWalkingPlayer.Pre.register((event) => {
                 // Client.sendPacket(replacementPacket);
                 const { x, y, z } = this.nodes[this.nodes.length - 1].position;
@@ -268,7 +276,7 @@ class TeleportRecorder {
     }
 
     start() {
-        this.nodes = [{ position: new Vector3(Player) }];
+        this.nodes = [this._nodeFromVec()];
         this.trigger.register();
         this.lastPacket = new Vector3(Player);
         this.lastYaw = Player.yaw;
@@ -299,24 +307,7 @@ class TeleportRecorder {
 
             const coords = [data.x, data.y, data.z];
 
-            this.nodes.push({
-                type,
-                position: new Vector3(coords),
-                yaw: this.lastYaw,
-                pitch: this.lastPitch,
-                radius: 0.0,
-                height: 0.0,
-                awaitSecret: 0,
-                awaitBatSpawn: false,
-                delay: 0,
-                stop: false,
-                center: false,
-                pearlClipDistance: 0,
-                chained: false,
-                itemName: Player?.getHeldItem()?.getName()?.removeFormatting(),
-                block: false,
-                prevEther: false
-            });
+            this.nodes.push(this._nodeFromVec(type, new Vector3(coords)));
 
             this.lastTP = true;
             this.lastPacket = new Vector3(coords);
@@ -326,7 +317,61 @@ class TeleportRecorder {
         }, 1349239234);
     }
 
+    _renderOverlay() {
+        Renderer.scale(1);
+        Renderer.drawString("Teleport Recorder", Renderer.screen.getWidth() / 4, Renderer.screen.getHeight() / 2);
+        Renderer.drawString(`Location: &a${manager.currentRoom.name}`, Renderer.screen.getWidth() / 4, Renderer.screen.getHeight() / 2 + 10);
+        Renderer.drawString(`Count: &a${this.nodes.length - 1}`, Renderer.screen.getWidth() / 4, Renderer.screen.getHeight() / 2 + 20);
+    }
+
+    _render() {
+        const settings = Settings();
+        for (let i = 0; i < this.nodes.length - 1; i++) {
+            let curr = this.nodes[i];
+            let next = this.nodes[i + 1];
+            let color = [settings.nodeColor[0] / 255, settings.nodeColor[1] / 255, settings.nodeColor[2] / 255, settings.nodeColor[3] / 255]
+            RenderLibV2.drawLine(curr.position.x, curr.position.y + 0.01, curr.position.z, next.position.x, next.position.y, next.position.z, ...color, false, settings.lineWidth)
+        }
+    }
+
+    _nodeFromVec(type, coords = new Vector3(Player)) {
+        return {
+            type,
+            position: new Vector3(coords),
+            yaw: this.lastYaw,
+            pitch: this.lastPitch,
+            awaitSecret: 0,
+            awaitBatSpawn: false,
+            delay: 0,
+            stop: false,
+            center: false,
+            pearlClipDistance: 0,
+            chained: false,
+            itemName: Player?.getHeldItem()?.getName()?.removeFormatting(),
+            block: false,
+            prevEther: type === "etherwarp",
+        };
+    }
+
     flushNodes() {
+        for (let i = 0; i < this.nodes.length - 1; i++) {
+            let curr = this.nodes[i];
+            let next = this.nodes[i + 1];
+            curr.type = next.type;
+            curr.position.floor2D();
+            curr.yaw = next.yaw;
+            curr.pitch = next.pitch;
+            curr.radius = 0.0;
+            curr.height = 0.0;
+            let afterAdd = next.position.copy().floor2D();
+            let toBlock = Dungeons.convertToRelative(afterAdd);
+            // curr.chained = i !== 1;
+            let node = manager.createNodeFromArgs(curr);
+            node.toBlock = toBlock;
+        }
+
+        this.nodes = [];
+        /*
         for (let i = this.nodes.length - 1; i > 0; i--) {
             let curr = this.nodes[i];
             let old = this.nodes[i - 1];
@@ -340,6 +385,7 @@ class TeleportRecorder {
             node.toBlock = toBlock;
         }
         this.nodes = [];
+        */
     }
 }
 

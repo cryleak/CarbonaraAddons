@@ -390,10 +390,36 @@ export function playerCoords() {
 }
 
 /**
+ * Represents a cuboid object with low and high corners.
+ * @typedef {Object} Cuboid
+ * @property {Vector3} low - The low corner of the cuboid
+ * @property {Vector3} high - The high corner of the cuboid
+ */
+
+/**
+ * Makes a cuboid object out of 2 points having low be the low corner and high
+ * be the high corner.
+ * @returns {Cuboid}
+ */
+export function cuboidFromPoints(p1, p2) {
+    return {
+        low: new Vector3(
+            Math.min(p1.x, p2.x),
+            Math.min(p1.y, p2.y),
+            Math.min(p1.z, p2.z)
+        ),
+        high: new Vector3(
+            Math.max(p1.x, p2.x),
+            Math.max(p1.y, p2.y),
+            Math.max(p1.z, p2.z)
+        )
+    }
+}
+
+/**
  * Rotates the camera clientside to a specified yaw and pitch. Will also update serverside rotation on the next tick if nothing else is affecting it.
- * @param {Number} origYaw - Yaw 
+ * @param {Number} origYaw - Yaw
  * @param {Number} origPitch - Pitch
- * @returns 
  */
 export function rotate(origYaw, origPitch) {
     const player = Player.getPlayer()

@@ -70,7 +70,7 @@ export default class PearlClipNode extends Node {
         })
     }
 
-    _preArgumentTrigger(_) {
+    _handleRotate(_) {
         tpManager.sync(this.realYaw, this.pitch, true);
         return true;
     }

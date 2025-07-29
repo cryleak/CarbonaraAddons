@@ -1,14 +1,13 @@
 import Vector3 from "../../utils/Vector3"
-import manager from "./NodeManager"
-import SecretEvent from "../../events/SecretListener"
 import Tick from "../../events/Tick"
 import Settings from "../../config"
+import manager from "./NodeManager"
 
-import { checkIntersection, releaseMovementKeys, movementKeys } from "../../utils/utils"
-import ZeroPing from "../ZeroPing"
+import { releaseMovementKeys, movementKeys } from "../../utils/utils"
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
+// This one is for autop3 it's somewhat copied over from the autoroutes.
 class NodeExecutor {
     constructor() {
         this._updateCoords(); // just so we have an initial value although it might be wrong...
@@ -24,11 +23,9 @@ class NodeExecutor {
         }).setFilteredClass(S08PacketPlayerPosLook);
 
         Tick.Pre.register(() => {
-            if (!Settings().autoRoutesEnabled) return
-            if (this.consumed === 0) {
-                this.execute();
-                this._updateCoords();
-            }
+            if (!Settings().autoP3Enabled) return
+            this.execute();
+            this._updateCoords();
         }, 0);
 
         register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () => {
@@ -40,27 +37,26 @@ class NodeExecutor {
 
             if (!movementKeys.includes(keyCode)) return
 
-            releaseMovementKeys()
+            releaseMovementKeys();
         })
     }
 
-    execute(by = null, intersectionMethod = null) {
+    execute(by = null) {
         if (by) this.lowerConsumed();
 
-        if (!manager.active || !ZeroPing.isSynced()) return;
+        if (!manager.active) return;
 
 
         if (this.consumed > 0) {
             return;
         }
 
-
-        const toExec = manager.activeNodes.filter(node => {
+        const toExec = manager.getActiveNodes().filter(node => {
             if (node.chained && !by) {
                 return false;
             }
 
-            if ((intersectionMethod && !intersectionMethod(node)) || (!intersectionMethod && !this._defaultIntersectionMethod(node))) {
+            if (false/* TODO: intersection checks */) {
                 if (!by) {
                     node.triggered = false;
                 }
@@ -76,10 +72,6 @@ class NodeExecutor {
             return (b.constructor.priority || 0) - (a.constructor.priority || 0);
         });
 
-        if (by && by.constructor && by.constructor.identifier === "superboom") {
-            ChatLib.chat(`After boom: ${toExec.length} previous pos: ${this.previousCoords} player pos: ${new Vector3(Player)}`);
-        }
-
         if (toExec.length === 0) {
             return true;
         }
@@ -94,14 +86,6 @@ class NodeExecutor {
         if (this.consumed < 0) {
             this.consumed = 0;
         }
-    }
-
-    _defaultIntersectionMethod(node) {
-        if (node.customInNodeCheck) {
-            return node.customInNodeCheck();
-        }
-        const playerVec = new Vector3(Player);
-        return checkIntersection(this.previousCoords, playerVec, node.realPosition, node.radius, node.height);
     }
 
     _updateCoords(updated = Player) {

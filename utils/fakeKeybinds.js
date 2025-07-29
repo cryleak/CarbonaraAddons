@@ -21,7 +21,7 @@ register(net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent, () =>
     pressedKeybinds.forEach(keybind => keybind.exec()) // Execute the code associated with the pressed keybinds. There can be multiple on the same key.
 })
 
-register("clicked", (_, _, btn, state) => {
+register("clicked", (_a, _b, btn, state) => {
     if (!World.isLoaded() || !state || Client.isInGui()) return
 
     const button = btn - 100

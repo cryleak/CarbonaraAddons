@@ -3,9 +3,9 @@ import LeapHelper from "../utils/leapUtils";
 import Vector3 from "../utils/Vector3";
 import MouseEvent from "../events/MouseEvent";
 import RenderLibV2 from "RenderLibV2J";
+import Terminal from "./Terminal";
 
 import Module, { registerModule } from "./PhoenixModule";
-import { Terminal } from "./AutoP3/autoP3Utils";
 import { getHeldItemID, sendAirClick } from "../utils/utils";
 import { chat } from "../utils/utils";
 

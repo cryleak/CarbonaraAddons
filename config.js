@@ -1,8 +1,11 @@
 import DefaultConfig from "../Amaterasu/core/DefaultConfig"
 import Settings from "../Amaterasu/core/Settings"
+import migration from "./settingMigration";
+
+migration.execute();
 
 export const packetCounterGui = new Gui()
-const config = new DefaultConfig("CarbonaraAddons", "settings.json")
+const config = new DefaultConfig("CarbonaraAddons", "data/settings.json")
 
 config
     .addSwitch({
@@ -56,6 +59,13 @@ config
         description: "The amount of triangles that makes up one ring. It becomes more circular with a higher value but will have worse performance.",
         category: "Node Rendering",
         value: "3",
+    })
+    .addTextInput({
+        configName: "lineWidth",
+        title: "Line Width",
+        description: "The width of the lines that connect nodes.",
+        category: "Node Rendering",
+        value: "6"
     })
     .addKeybind({
         configName: "hClipKeybind",
@@ -440,7 +450,6 @@ config
         value: false,
         shouldShow: data => data.schizoDoorsEnabled
     })
-
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")
 

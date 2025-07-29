@@ -1,4 +1,4 @@
-import { BowItemRightClick } from "../events/JavaEvents.js";
+import { BowItemRightClick } from "../events/JavaEvents";
 
 BowItemRightClick.register((event) => {
     const itemStack = event.data.itemStack;

@@ -7,7 +7,7 @@ const IronBars = Blocks.field_150411_aY;
 export default new class BarPhase {
     constructor() {
         Tick.Pre.register(() => {
-            this._onTick()
+            // this._onTick()
         })
     }
 
@@ -18,7 +18,7 @@ export default new class BarPhase {
         const blockState = World.getWorld().func_180495_p(ironBarBlock.convertToBlockPos());
         const block = blockState.func_177230_c();
         const state = block.func_176221_a(blockState, World.getWorld(), ironBarBlock.convertToBlockPos())
-        const boundingBox = this._getBlockBounds(block, ironBarBlock)
+        // const boundingBox = this._getBlockBounds(block, ironBarBlock)
         const properties = {}
         state.func_177228_b().forEach(property => properties[property.func_177701_a()] = state.func_177229_b(property))
 
@@ -31,7 +31,7 @@ export default new class BarPhase {
             // ChatLib.chat("You can phase through the bar on east west")
         }
 
-        ChatLib.chat(JSON.stringify(properties))
+        // ChatLib.chat(JSON.stringify(properties))
         //  if ((properties.east || properties.west) && Player.)
 
     }

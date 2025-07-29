@@ -2,15 +2,15 @@ import Dungeons from "../../../utils/Dungeons"
 import Vector3 from "../../../utils/Vector3"
 import NodeManager from "../NodeManager"
 import SecretAura from "../../SecretAura"
-import Tick from "../../../events/Tick"
 import manager from "../NodeManager"
 import tpManager from "../TeleportManager"
 
 import { Node } from "../Node"
-import { chat, itemSwapSuccess, swapFromItemID, syncCurrentPlayItem, debugMessage, sendAirClick } from "../../../utils/utils"
-import { SyncHeldItem, UpdatePlayer, UpdateWalkingPlayer } from "../../../events/JavaEvents"
+import { chat, itemSwapSuccess, swapFromItemID } from "../../../utils/utils"
+import { SyncHeldItem } from "../../../events/JavaEvents"
+import FreezeManager from "../FreezeManager"
+import Tick from "../../../events/Tick"
 
-const MCBlockPos = Java.type("net.minecraft.util.BlockPos")
 const BlockAir = Java.type("net.minecraft.block.BlockAir")
 
 NodeManager.registerNode(class SuperboomNode extends Node {
@@ -33,17 +33,16 @@ NodeManager.registerNode(class SuperboomNode extends Node {
             let player = tpManager.lastBlock ?? Player;
             const eyePosition = new Vector3(player.x, player.y + Player.getPlayer().func_70047_e(), player.z);
 
-            // debugMessage(`${Player.x} ${Player.y} ${Player.z}`);
-            tpManager.sync(this.realYaw, this.pitch, false);
             if (eyePosition.distance3D(this.realSuperBoomBlock) <= 36) {
                 const javaBlockPos = this.realSuperBoomBlock.convertToBlockPos()
+                ChatLib.chat(`${this.realSuperBoomBlock}`);
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
                 if (!(block instanceof BlockAir)) {
                     SyncHeldItem.Post.scheduleTask(0, () => {
+                        FreezeManager.setFreezing(false);
                         SecretAura.rightClickBlock(block, this.realSuperBoomBlock, false)
                         execer.execute(this)
-                        // execer.execute(this)
                     });
                 } else {
                     chat("Can't superboom on a block that doesn't exist.")
@@ -57,6 +56,8 @@ NodeManager.registerNode(class SuperboomNode extends Node {
     }
 
     _handleRotate() {
+        tpManager.sync(this.realYaw, this.pitch, false);
+        FreezeManager.setFreezing(true);
         return
     }
 

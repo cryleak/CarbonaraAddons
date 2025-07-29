@@ -1,4 +1,4 @@
-import { UpdateWalkingPlayer} from "../../events/JavaEvents"
+import { SyncHeldItem, UpdatePlayer, UpdateWalkingPlayer} from "../../events/JavaEvents"
 import Vector3 from "../../utils/Vector3"
 import { setVelocity, setPlayerPosition } from "../../utils/utils"
 

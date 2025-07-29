@@ -168,7 +168,12 @@ class Phoenix {
             return;
         }
 
-        const ip = host.toString().split("/")[1].split(":")[0];
+        const ipPort = host.toString().split("/")[1];
+        if (!ipPort) {
+            return;
+        }
+
+        const ip = ipPort.split(":")[0];
         if (!allowed.includes(ip)) {
             chat("[PhoenixAuth] IP not in the phoenix whitelist.");
             return;
@@ -213,6 +218,5 @@ class Phoenix {
     }
 }
 
-console.log("importing this file");
 const phoenix = new Phoenix();
 export default phoenix;

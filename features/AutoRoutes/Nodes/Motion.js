@@ -5,6 +5,7 @@ import NodeManager from "../NodeManager"
 import { releaseMovementKeys, setVelocity } from "../../../utils/utils"
 import { Node } from "../Node"
 import { UpdateWalkingPlayer } from "../../../events/JavaEvents"
+import tpManager from "../TeleportManager"
 NodeManager.registerNode(class MotionNode extends Node {
     static identifier = "motion"
     static priority = 0
@@ -13,6 +14,8 @@ NodeManager.registerNode(class MotionNode extends Node {
     }
 
     _trigger(execer) {
+        ChatLib.chat(`&aExecuting motion node &e${this.nodeName}&a!`)
+        tpManager.sync(this.realYaw, this.pitch, false);
         releaseMovementKeys()
         Motion.running = true
         Motion.yaw = this.realYaw

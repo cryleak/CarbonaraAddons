@@ -98,7 +98,6 @@ class TeleportManager {
 
         if (!this.lastBlock || shouldWait) {
             if (shouldWait) this.sync(yaw, pitch, false);
-
             Rotations.rotate(yaw, pitch, () => {
                 setVelocity(0, 0, 0);
                 sendAirClick();

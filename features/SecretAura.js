@@ -42,7 +42,7 @@ export default new class SecretAura {
                 const blockState = World.getWorld().func_180495_p(javaBlockPos)
                 const block = blockState.func_177230_c()
 
-                if (Settings().secretAuraSwapOn === 1 && block instanceof BlockSkull || Settings().secretAuraSwapOn === 2) {
+                if (Settings().secretAuraSwapOn === 1 && (block instanceof BlockSkull || block instanceof BlockCompressedPowered) || Settings().secretAuraSwapOn === 2) {
                     const heldItemIndex = Player.getHeldItemIndex()
                     let secretAuraItemIndex
                     if (!isNaN(Settings().secretAuraItem)) secretAuraItemIndex = parseInt(Settings().secretAuraItem)

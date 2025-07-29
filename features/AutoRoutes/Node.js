@@ -68,17 +68,6 @@ export class Node extends Editable {
             return;
         }
 
-        if (this.awaitBat && !metadata.awaitBat) {
-            FreezeManager.setFreezing(true)
-            BatSpawnEvent.scheduleTask(0, () => {
-                FreezeManager.setFreezing(false)
-                metadata.awaitBat = true;
-                this._argumentTrigger(execer, metadata);
-            });
-
-            return;
-        }
-
         if (this.awaitSecret && !metadata.awaitSecret) {
             const amount = parseInt(this.awaitSecret) - 1 || 0
 
@@ -86,6 +75,17 @@ export class Node extends Editable {
             SecretEvent.scheduleTask(amount, () => {
                 FreezeManager.setFreezing(false)
                 metadata.awaitSecret = true;
+                this._argumentTrigger(execer, metadata);
+            });
+
+            return;
+        }
+
+        if (this.awaitBat && !metadata.awaitBat) {
+            FreezeManager.setFreezing(true)
+            BatSpawnEvent.scheduleTask(0, () => {
+                FreezeManager.setFreezing(false)
+                metadata.awaitBat = true;
                 this._argumentTrigger(execer, metadata);
             });
 
@@ -138,7 +138,7 @@ export class Node extends Editable {
     }
 
     _debugChat() {
-        // debugMessage(`&7You stepped on &a${this.nodeName}&7${this.toString()}`);
+        debugMessage(`&7You stepped on &a${this.nodeName}&7${this.toString()}`);
     }
 
     validate() {
@@ -297,7 +297,6 @@ export class Node extends Editable {
             console.log(JSON.stringify(this.position, null, 2));
             return;
         }
-        console.log(`Defining for room: ${JSON.stringify(room)} node: ${this.nodeName}`);
 
         const pos = room.type === "dungeons" ? Dungeons.convertFromRelative(this.position) : this.position;
         Object.defineProperties(this, {
