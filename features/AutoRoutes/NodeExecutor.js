@@ -46,6 +46,7 @@ class NodeExecutor {
 
     execute(by = null, intersectionMethod = null) {
         if (by) this.lowerConsumed();
+        if (manager.editMode) return
 
         if (!manager.active || !ZeroPing.isSynced()) return;
 

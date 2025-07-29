@@ -29,6 +29,7 @@ class NodeManager {
         this.nodeType = {};
         this.activeNodes = [];
         this.active = false;
+        this.editMode = false
         this.subcommands = []
 
         scheduleTask(1, () => {
@@ -64,6 +65,8 @@ class NodeManager {
         this.registerAutoRouteCommand(["edit", "e"], (args) => {
             this._handleEdit(args);
         });
+
+        this.registerAutoRouteCommand(["editmode", "em"], () => this._toggleEditMode())
 
         register("renderWorld", () => {
             if (!Settings().autoRoutesEnabled) return
@@ -395,6 +398,11 @@ class NodeManager {
         const g = 0.5 + 0.5 * Math.sin(t + (2 * Math.PI / 3)); // +120 degrees
         const b = 0.5 + 0.5 * Math.sin(t + (4 * Math.PI / 3)); // +240 degrees
         return [r, g, b, 1];
+    }
+
+    _toggleEditMode() {
+        this.editMode = !this.editMode
+        chat(`AutoRoutes Edit Mode ${this.editMode ? "enabled" : "disabled"}.`)
     }
 }
 
