@@ -10,7 +10,6 @@ export default new class Rotations {
         this.noMove = false
         UpdateWalkingPlayer.Pre.register(event => {
             if (event.cancelled) {
-                ChatLib.chat(`§acancelled ${this.yaw}, ${this.pitch}`);
                 return
             }
             if (this.yaw === null || this.pitch === null) return
@@ -28,11 +27,10 @@ export default new class Rotations {
         }, 0)
     }
 
-    rotate(yaw, pitch, postPacketSend = null, noMove = false, debugInfo = false) {
+    rotate(yaw, pitch, postPacketSend = null, noMove = false) {
         if (isNaN(yaw) || isNaN(pitch)) throw new TypeError("Nigga it needs to be a number")
         this.yaw = yaw
         this.pitch = pitch
-        this.debugInfo = debugInfo
         this.postPacketSend = postPacketSend
         this.noMove = noMove
 
