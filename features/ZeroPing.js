@@ -4,7 +4,7 @@ import ServerTeleport from "../events/ServerTeleport";
 import MouseEvent from "../events/MouseEvent";
 import { PostUseItem, UpdateWalkingPlayer } from "../events/JavaEvents"
 
-import { isValidEtherwarpBlock, raytraceBlocks } from "../../BloomCore/utils/Utils"
+import { getEtherwarpBlock } from "../../BloomCore/utils/Utils"
 import { isWithinTolerence, sendAirClick, setPlayerPosition, setVelocity } from "../utils/utils";
 import { getTeleportInfo } from "../utils/TeleportItem";
 import Dungeons from "../utils/Dungeons";
@@ -202,7 +202,8 @@ const ZeroPing = new class {
 
         let prediction;
         if (info.ether) {
-            prediction = raytraceBlocks([this.playerState.x, this.playerState.y + 1.5399999618530273, this.playerState.z], Vector3.fromPitchYaw(this.playerState.pitch, this.playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
+            // prediction = raytraceBlocks([this.playerState.x, this.playerState.y + 1.5399999618530273, this.playerState.z], Vector3.fromPitchYaw(this.playerState.pitch, this.playerState.yaw), info.distance, isValidEtherwarpBlock, true, true);
+            prediction = getEtherwarpBlock(true, info.distance)
 
             if (prediction) {
                 prediction[0] += 0.5;
