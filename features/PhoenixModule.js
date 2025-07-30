@@ -81,6 +81,7 @@ export default class Module extends Config {
                     } else {
                         obj.disable();
                     }
+                    obj.syncConfig();
                 },
                 updator: (setter, obj) => {
                     setter("toggle", obj._config.toggle);
