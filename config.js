@@ -450,6 +450,45 @@ config
         value: false,
         shouldShow: data => data.schizoDoorsEnabled
     })
+    .addKeybind({
+        configName: "mosquitoShortbowSwapKeybind",
+        title: "Mosquito Shortbow Swap Keybind",
+        description: "Swaps to Mosquito Shortbow, then to a Fabled End Sword",
+        category: "Swaps"
+    })
+    .addSwitch({
+        configName: "armorSetToggle",
+        title: "Toggle between 2 armor sets",
+        description: "",
+        category: "Swaps",
+        value: false
+    })
+    .addKeybind({
+        configName: "armorSetToggleKeybind",
+        title: "Armor Set Toggle Keybind",
+        description: "DO NOT USE THIS IF YOUR ARMOR IS ON THE SECOND PAGE OF THE WARDROBE PROBABLY",
+        category: "Swaps",
+        shouldShow: data => data.armorSetToggle
+    })
+    .addSlider({
+        configName: "armorSetToggleSlot1",
+        title: "First Wardrobe slot for toggling",
+        description: "",
+        category: "Swaps",
+        options: [0, 8],
+        value: 0,
+        shouldShow: data => data.armorSetToggle
+    })
+    .addSlider({
+        configName: "armorSetToggleSlot2",
+        title: "Second Wardrobe slot for toggling",
+        description: "",
+        category: "Swaps",
+        options: [0, 8],
+        value: 0,
+        shouldShow: data => data.armorSetToggle
+    })
+
 
 const mySettings = new Settings("CarbonaraAddons", config, "ColorScheme.json")
 
