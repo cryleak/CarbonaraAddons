@@ -433,6 +433,15 @@ export default new class Dungeons {
     }
 
     /**
+     * Get the current phase of the F7/M7 boss.
+     * @returns {String} The current phase of the F7/M7 boss (format: P<number>), or "Unknown" if not in F7/M7 boss.
+     */
+    get7Phase() {
+        if (!this.isIn7Boss()) return "Unknown"
+        return dungeonUtils.getF7Phase().toString()
+    }
+
+    /**
      * Returns true if in dungeons and false if not
      */
     isInDungeons() {

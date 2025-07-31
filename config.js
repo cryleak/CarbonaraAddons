@@ -453,8 +453,16 @@ config
     .addKeybind({
         configName: "mosquitoShortbowSwapKeybind",
         title: "Mosquito Shortbow Swap Keybind",
-        description: "Swaps to Mosquito Shortbow, then to a Fabled End Sword",
+        description: "Swaps to Mosquito Shortbow, and then swaps to Warden Helmet (if not in P2), and then to a Fabled End Sword",
         category: "Swaps"
+    })
+    .addSwitch({
+        configName: "mosquitoSwapToHype",
+        title: "Swap to Hyperion for P2 and P3",
+        description: "Does this work? Yes. -1mi0",
+        category: "Swaps",
+        value: false,
+        shouldShow: data => data.mosquitoShortbowSwapKeybind
     })
     .addSwitch({
         configName: "armorSetToggle",

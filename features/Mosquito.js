@@ -1,7 +1,9 @@
 import { SyncHeldItem } from "../events/JavaEvents"
 import fakeKeybinds from "../utils/fakeKeybinds"
-import { chat, hasSwappedThisTick, itemSwapSuccess, swapFromName, swapHelmets } from "../utils/utils"
+import { chat, hasSwappedThisTick, itemSwapSuccess, swapFromName, swapHelmets, swapToSlot } from "../utils/utils"
 import ServerTick from "../events/ServerTick"
+import Dungeons from "../utils/Dungeons"
+import Settings from "../config"
 
 
 const S2DPacketOpenWindow = Java.type("net.minecraft.network.play.server.S2DPacketOpenWindow")
@@ -21,7 +23,7 @@ export default new class MosquitoShooter {
 
         register("packetReceived", () => this.inGUI = false).setFilteredClass(S2EPacketCloseWindow)
         register("packetSent", () => this.inGUI = false).setFilteredClass(C0DPacketCloseWindow)
-        register("worldLoad", () => this.inGUI = false)
+        register("worldUnload", () => this.inGUI = false)
     }
 
     _doSwap() {
@@ -31,15 +33,13 @@ export default new class MosquitoShooter {
         if (Player.getInventory().getItems()[39]?.getName()?.removeFormatting()?.includes("Warden Helmet")) return chat(`You have the wrong helmet on!`)
         swapFromName("Mosquito Shortbow", result => {
             if (result === itemSwapSuccess.FAIL) return chat(`Couldn't find Mosquito Shortbow!`)
-            let start = Date.now()
             SyncHeldItem.Post.scheduleTask(1, () => {
-                ChatLib.chat(Date.now() - start)
                 for (let i = 0; i < 140; i++) {
                     Client.sendPacket(packet)
                 }
-                Client.scheduleTask(0, () => swapFromName("Fabled End Sword"))
+                Client.scheduleTask(0, () => swapFromName(Settings().mosquitoSwapToHype && ["P2", "P3"].includes(Dungeons.get7Phase()) ? "Hyperion" : "Fabled End Sword")) // chill ternary
                 const wardenSlot = Player.getInventory().getItems().findIndex((item, index) => index < 36 && index >= 0 && item?.getName()?.removeFormatting()?.includes("Warden Helmet"))
-                if (wardenSlot === -1) return
+                if (wardenSlot === -1 || this.inGUI || Dungeons.get7Phase() === "P2") return // don't swap to warden for p2 because we do enough damage anyways and its really annoying
                 swapHelmets(wardenSlot)
                 ServerTick.scheduleTask(19, () => {
                     if (this.inGUI) return chat(`Failed to swap back to your preivous helmet; you're in a GUI for some reason`)
