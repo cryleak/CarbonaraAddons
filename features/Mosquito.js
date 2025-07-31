@@ -29,19 +29,22 @@ export default new class MosquitoShooter {
         if (!Player?.getHeldItem()?.getName()?.includes("Awkward")) return chat(`You're not holding an Awkward bow.`)
         if (this.inGUI) return chat(`You're in a GUI!`)
         if (Player.getInventory().getItems()[39]?.getName()?.removeFormatting()?.includes("Warden Helmet")) return chat(`You have the wrong helmet on!`)
-        const result = swapFromName("Mosquito Shortbow")
-        if (result === itemSwapSuccess.FAIL) return chat(`Couldn't find Mosquito Shortbow!`)
-        SyncHeldItem.Post.scheduleTask(0, () => {
-            for (let i = 0; i < 140; i++) {
-                Client.sendPacket(packet)
-            }
-            Client.scheduleTask(0, () => swapFromName("Fabled End Sword"))
-            const wardenSlot = Player.getInventory().getItems().findIndex((item, index) => index < 36 && index >= 0 && item?.getName()?.removeFormatting()?.includes("Warden Helmet"))
-            if (wardenSlot === -1) return
-            swapHelmets(wardenSlot)
-            ServerTick.scheduleTask(19, () => {
-                if (this.inGUI) return chat(`Failed to swap back to your preivous helmet; you're in a GUI for some reason`)
+        swapFromName("Mosquito Shortbow", result => {
+            if (result === itemSwapSuccess.FAIL) return chat(`Couldn't find Mosquito Shortbow!`)
+            let start = Date.now()
+            SyncHeldItem.Post.scheduleTask(1, () => {
+                ChatLib.chat(Date.now() - start)
+                for (let i = 0; i < 140; i++) {
+                    Client.sendPacket(packet)
+                }
+                Client.scheduleTask(0, () => swapFromName("Fabled End Sword"))
+                const wardenSlot = Player.getInventory().getItems().findIndex((item, index) => index < 36 && index >= 0 && item?.getName()?.removeFormatting()?.includes("Warden Helmet"))
+                if (wardenSlot === -1) return
                 swapHelmets(wardenSlot)
+                ServerTick.scheduleTask(19, () => {
+                    if (this.inGUI) return chat(`Failed to swap back to your preivous helmet; you're in a GUI for some reason`)
+                    swapHelmets(wardenSlot)
+                })
             })
         })
     }
