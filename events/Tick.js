@@ -1,14 +1,5 @@
-import { Event } from "./CustomEvents"
+import WrappedJavaEvent from "./WrappedJavaEvent"
 
-const PreTick = new Event()
-const PostTick = new Event()
-export default { Pre: PreTick, Post: PostTick };
+const events = Java.type("me.cryleak.carbonaraloader.event.Events")
 
-register("tick", () => {
-    PreTick.trigger()
-})
-
-register(net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent, (event) => {
-    if (event.phase !== net.minecraftforge.fml.common.gameevent.TickEvent.Phase.END) return
-    PostTick.trigger()
-})
+export default { Pre: new WrappedJavaEvent(events.TickPre), Post: new WrappedJavaEvent(events.TickPost) }

@@ -433,6 +433,9 @@ export function rotate(origYaw, origPitch) {
 
 
 let swappedThisTick = false
+export function hasSwappedThisTick() { // I was really lazy
+    return swappedThisTick
+}
 
 export const itemSwapSuccess = {
     FAIL: "CANT_FIND",
@@ -559,3 +562,24 @@ export const BlockCollisions = Java.type("me.cryleak.carbonaraloader.helpers.Blo
 
 global.System = Java.type("java.lang.System")
 global.loadct = ChatTriggers.loadCT // HEre cause im lazy
+
+
+const C0DPacketCloseWindow = Java.type("net.minecraft.network.play.client.C0DPacketCloseWindow")
+
+
+/**
+ * Swaps helmets via your inventory. do NOT use if you are already in a GUI.
+ * @param {Number} helmetSlot 
+ */
+export function swapHelmets(helmetSlot) {
+    const playerController = Client.getMinecraft().field_71442_b
+    if (helmetSlot > 9) {
+        const alreadyHasHelmet = Player.getInventory().getItems()[39]
+        playerController.func_78753_a(0, helmetSlot, 0, 0, Player.getPlayer())
+        playerController.func_78753_a(0, 5, 0, 0, Player.getPlayer())
+        if (alreadyHasHelmet) playerController.func_78753_a(0, helmetSlot, 0, 0, Player.getPlayer())
+    } else if (helmetSlot < 9 && helmetSlot >= 0) {
+        playerController.func_78753_a(0, 5, helmetSlot, 2, Player.getPlayer())
+    }
+    Client.sendPacket(new C0DPacketCloseWindow(0))
+}
