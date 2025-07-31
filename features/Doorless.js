@@ -2,14 +2,16 @@ import Settings from "../config"
 import Vector3 from "../utils/Vector3";
 import Dungeons from "../utils/Dungeons";
 import FreezeManager from "./AutoRoutes/FreezeManager";
-import ServerTeleport from "../events/ServerTeleport"
 import ZeroPing from "./ZeroPing";
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
-import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess } from "../utils/utils";
-import { UpdateWalkingPlayer } from "../events/JavaEvents";
+import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess, rotate } from "../utils/utils";
+import { PostPacketReceive, UpdateWalkingPlayer } from "../events/JavaEvents";
+import Tick from "../events/Tick";
+import ServerTeleport from "../events/ServerTeleport";
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
 const allowed = [73, 72.5, 72, 71];
 let cooldown = Date.now()
@@ -164,55 +166,62 @@ class Doorless {
     }
 
     doDoorless(xOffset, zOffset, offsetTimes, holding = null) {
-        const trigger = ServerTeleport.register(event => {
-            const data = event.data;
-            const frozenFor = FreezeManager.setFreezing(false);
-            const { x, y, z } = data;
+        let oldYaw
+        let oldPitch
+        ServerTeleport.register(() => { // Store yaw and pitch from before teleport type shit
+            oldYaw = Player.yaw
+            oldPitch = Player.pitch
+        }, -10)
+        const trigger = PostPacketReceive.register(packet => {
+            if (!(packet instanceof S08PacketPlayerPosLook)) return
+            const [x, y, z] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()];
             trigger.unregister();
+            const frozenFor = FreezeManager.setFreezing(false);
             if (!allowed.includes(y)) {
                 this.trigger.register();
                 return;
             }
+            Tick.Pre.scheduleTask(0, () => { // Why do I need to wait for this?
+                setPlayerPosition(x, y, z, true)
+                rotate(oldYaw, oldPitch)
+                // Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, data.yaw, data.pitch, true));
 
+                let amount = 0;
+                let done = false;
 
-            event.cancelled = true
-            Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, data.yaw, data.pitch, true));
-
-            let amount = 0;
-            let done = false;
-
-            const sendNextPacket = () => {
-                const pos = [x + xOffset * offsetTimes[amount], 69, z + zOffset * offsetTimes[amount]];
-                Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(...pos, Player.yaw, Player.pitch, true));
-                if (++amount === offsetTimes.length) {
-                    this.trigger.register();
-                    setPlayerPosition(...pos, true);
-                    done = true;
-                }
-            };
-
-            const amountToSend = Math.min(frozenFor, offsetTimes.length);
-            for (let i = 0; i < amountToSend; i++) {
-                sendNextPacket();
-            }
-
-            if (!done) {
-                const triggered = UpdateWalkingPlayer.Pre.register(event => {
-                    event.cancelled = true;
-                    event.breakChain = true;
-
-                    sendNextPacket();
-                    if (done) {
-                        triggered.unregister();
+                const sendNextPacket = () => {
+                    const pos = [x + xOffset * offsetTimes[amount], 69, z + zOffset * offsetTimes[amount]];
+                    Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(...pos, Player.yaw, Player.pitch, true));
+                    if (++amount === offsetTimes.length) {
+                        this.trigger.register();
+                        setPlayerPosition(...pos, true);
+                        done = true;
                     }
-                }, 100000);
-            }
+                };
 
-            debugMessage(`Gooned next to a door for ${amountToSend} blinked and ${offsetTimes.length - amountToSend} regular pos packets`);
+                const amountToSend = Math.min(frozenFor, offsetTimes.length);
+                for (let i = 0; i < amountToSend; i++) {
+                    sendNextPacket();
+                }
 
-            if (holding) {
-                swapToSlot(holding);
-            }
+                if (!done) {
+                    const triggered = UpdateWalkingPlayer.Pre.register(event => {
+                        event.cancelled = true;
+                        event.breakChain = true;
+
+                        sendNextPacket();
+                        if (done) {
+                            triggered.unregister();
+                        }
+                    }, 100000);
+                }
+
+                debugMessage(`Gooned next to a door for ${amountToSend} blinked and ${offsetTimes.length - amountToSend} regular pos packets`);
+
+                if (holding) {
+                    swapToSlot(holding);
+                }
+            })
         }, 10000000)
 
         sendAirClick();

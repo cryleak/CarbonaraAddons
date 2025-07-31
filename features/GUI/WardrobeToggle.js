@@ -30,11 +30,11 @@ registerModule(class WardrobeToggle extends Module {
 
         register("worldLoad", () => this._resetWindow())
 
-		register("packetReceived", (packet, _) => {
-			if (packet.func_149169_c() === "mi0-wd-close-gui") {
-				Client.getMinecraft().field_71462_r = null;
-			}
-		}).setFilteredClass(S3FPacketCustomPayload);
+        register("packetReceived", (packet, _) => {
+            if (packet.func_149169_c() === "mi0-wd-close-gui") {
+                Client.getMinecraft().field_71462_r = null;
+            }
+        }).setFilteredClass(S3FPacketCustomPayload);
 
         fakeKeybinds.onKeyPress("armorSetToggleKeybind", () => this._handleKeyBind())
     }
@@ -44,7 +44,7 @@ registerModule(class WardrobeToggle extends Module {
 
         ChatLib.command("wardrobe", false)
         if (this.isToggled()) {
-            this._phoenix.customPayload("mi0-wardrobe", {slots: [Settings().armorSetToggleSlot1, Settings().armorSetToggleSlot2]});
+            this._phoenix.customPayload("mi0-wardrobe", { slots: [Settings().armorSetToggleSlot1, Settings().armorSetToggleSlot2] });
             return;
         }
         this.awaitingWardrobe = true
