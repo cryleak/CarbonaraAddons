@@ -215,7 +215,7 @@ registerModule(class Teleport extends Module {
         const exec = () => {
             PlayerUpdateListener.unregister()
             setVelocity(0, 0, 0)
-            setPlayerPosition(x, y, z, true)
+            setPlayerPosition(x, y - (Settings().zpewOffset && info.ether ? 0.05 : 0), z, true)
         }
         if (Settings().zpewDelay) Tick.Pre.scheduleTask(Settings().zpewDelay - 1, exec)
         else exec()

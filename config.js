@@ -377,6 +377,13 @@ config
         category: "Zero Ping TP",
     })
     .addSwitch({
+        configName: "zpewOffset",
+        title: "Offset",
+        description: "Puts you on the ground instantly. This is buggy in some places.",
+        category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSwitch({
         configName: "listenForC08",
         title: "Listen for C08 Packets",
         description: "Detects teleports from AutoRoutes.",
