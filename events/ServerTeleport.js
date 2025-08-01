@@ -6,6 +6,7 @@ const ServerTeleport = new CancellableEvent();
 export default ServerTeleport;
 
 register("packetReceived", (packet, event) => {
+    if (global?.phoenixClassInstance?.isInPhoenix()) return
     const x = packet.func_148932_c()
     const y = packet.func_148928_d()
     const z = packet.func_148933_e()

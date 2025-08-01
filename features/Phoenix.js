@@ -14,8 +14,8 @@ const PacketBuffer = Java.type("net.minecraft.network.PacketBuffer");
 const InetAddress = Java.type("java.net.InetAddress");
 
 const allowed = [
-	"195.88.24.137",
-	"195.88.25.128"
+    "195.88.24.137",
+    "195.88.25.128"
 ];
 
 class Phoenix {
@@ -219,4 +219,5 @@ class Phoenix {
 }
 
 const phoenix = new Phoenix();
+global.phoenixClassInstance = phoenix // I was feeling lazy
 export default phoenix;

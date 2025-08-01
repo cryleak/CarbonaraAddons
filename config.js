@@ -377,10 +377,19 @@ config
         category: "Zero Ping TP",
     })
     .addSwitch({
-        configName: "singleplayer",
-        title: "Singleplayer mode",
-        description: "Detects Iron Sword and Diamond Shovel as teleport items. This mode also disables all failsafes so disable it before you log on Hypixel probably",
+        configName: "listenForC08",
+        title: "Listen for C08 Packets",
+        description: "Detects teleports from AutoRoutes.",
         category: "Zero Ping TP",
+        shouldShow: data => data.zpewEnabled
+    })
+    .addSlider({
+        configName: "zpewDelay",
+        title: "Teleport Delay",
+        description: "Delay in ticks before teleporting. If you're using AutoRoutes, you should probably use 1 or 2.",
+        category: "Zero Ping TP",
+        options: [0, 3],
+        value: 0,
         shouldShow: data => data.zpewEnabled
     })
     .addSlider({

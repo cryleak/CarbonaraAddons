@@ -2,18 +2,20 @@ import Settings from "../config"
 import Vector3 from "../utils/Vector3";
 import ServerTeleport from "../events/ServerTeleport";
 import MouseEvent from "../events/MouseEvent";
-import { PostUseItem, UpdateWalkingPlayer } from "../events/JavaEvents"
+import { PostPacketReceive, PostPacketSend, PostUseItem, UpdateWalkingPlayer } from "../events/JavaEvents"
 
 import { getEtherwarpBlock } from "../../BloomCore/utils/Utils"
 import { isWithinTolerence, rotate, sendAirClick, setPlayerPosition, setVelocity } from "../utils/utils";
 import { getTeleportInfo } from "../utils/TeleportItem";
 import Dungeons from "../utils/Dungeons";
 import Module, { modules, registerModule } from "./PhoenixModule";
+import Tick from "../events/Tick";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
-
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
+const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
+
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
 registerModule(class Teleport extends Module {
@@ -23,15 +25,19 @@ registerModule(class Teleport extends Module {
 
         register("packetReceived", (packet, event) => {
             if (!this.isToggled()) return
-            const enumflags = Object.values(packet.func_179834_f())
-            if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.X)) {
+            const enumFlags = Object.values(packet.func_179834_f())
+            if (enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X)) {
                 cancel(event)
-                setVelocity(0, 0, 0)
-                const [x, y, z] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()]
-                setPlayerPosition(x, y, z, false)
-                if (!enumflags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) rotate(packet.func_148931_f(), packet.func_148930_g())
-
+                const [x, y, z, yaw, pitch] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e(), packet.func_148931_f(), packet.func_148930_g()]
                 this._phoenix.customPayload("carbonara-zpew-acknowledge-force-teleport", { x, y, z })
+                if (ServerTeleport.trigger({ packet, x, y, z, yaw, pitch, enumFlags }).cancelled) return
+
+
+                setVelocity(0, 0, 0)
+                setPlayerPosition(x, y, z, false)
+                if (!enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) rotate(yaw, pitch)
+
+                PostPacketReceive.trigger(packet) // Simulate this for stuff to work properly
             }
         }).setFilteredClass(S08PacketPlayerPosLook)
 
@@ -58,6 +64,7 @@ registerModule(class Teleport extends Module {
         ]
 
         PostUseItem.register(() => {
+            if (Settings().listenForC08) return
             const objectMouseOver = Client.getMinecraft().field_71476_x
             const type = objectMouseOver.field_72313_a.toString()
             if (type === "ENTITY") return
@@ -66,7 +73,11 @@ registerModule(class Teleport extends Module {
                 const blockID = World.getBlockAt(...position.getPosition()).type.getID()
                 if (this.disallowedBlockIDS.includes(blockID)) return
             }
-            if (Dungeons.isIn7Boss() || !Settings().zpewEnabled || !this.isToggled()) return
+            this.doZeroPing()
+        })
+
+        PostPacketSend.register(packet => {
+            if (!(packet instanceof C08PacketPlayerBlockPlacement) || packet.func_149568_f() !== 255 || !Settings().listenForC08) return
             this.doZeroPing()
         })
 
@@ -75,10 +86,6 @@ registerModule(class Teleport extends Module {
 
             this._handleMouseEvent(event);
         }, 99)
-
-        ServerTeleport.register(event => {
-            this._handleServerTeleport(event);
-        }, 9999);
 
         register("packetSent", packet => {
             this._handleClientPlayerPacket(packet);
@@ -90,8 +97,7 @@ registerModule(class Teleport extends Module {
     }
 
     isSynced() {
-        while (this.desyncedTps.length && Date.now() - this.desyncedTps[0] > 1000) this.desyncedTps.shift()
-        return this.sent.length === 0 && this.desyncedTps.length === 0;
+        return true
     }
 
     updateLastTPed() {
@@ -105,40 +111,6 @@ registerModule(class Teleport extends Module {
         if (button === 0) {
             this.doRegularTeleport(event);
         }
-    }
-
-    _handleServerTeleport(event) {
-        if (!this.sent.length) {
-            if (this.desyncedTps.length) {
-                this.desyncedTps.shift();
-            }
-            return;
-        }
-
-        const { pitch, yaw, x, y, z } = this.sent.shift();
-        const { pitch: newPitch, yaw: newYaw, x: newX, y: newY, z: newZ } = event.data;
-
-        const lastPresetPacketComparison = {
-            x: x == newX,
-            y: y == newY,
-            z: z == newZ,
-            yaw: isWithinTolerence(yaw, newYaw) || newYaw == 0,
-            pitch: isWithinTolerence(pitch, newPitch) || newPitch == 0
-        };
-
-        const wasPredictionCorrect = Object.values(lastPresetPacketComparison).every(a => a);
-
-        if (wasPredictionCorrect) {
-            event.cancelled = true;
-            return;
-        }
-        else {
-            this.recentFails.push(Date.now());
-            while (this.recentFails.length && Date.now() - this.recentFails[0] > 20 * 1000) this.recentFails.shift();
-            ChatLib.chat(`§4Zero ping tp failed! ${this.recentFails.length} fails last 20 seconds`);
-        }
-
-        while (this.sent.length) this.sent.shift();
     }
 
     _handleClientPlayerPacket(packet) {
@@ -180,6 +152,7 @@ registerModule(class Teleport extends Module {
     }
 
     doZeroPing() {
+        if (Dungeons.isIn7Boss() || !Settings().zpewEnabled || !this.isToggled()) return
         const info = getTeleportInfo(Player.getHeldItem(), this.playerState);
         if (!info) {
             return;
@@ -201,18 +174,6 @@ registerModule(class Teleport extends Module {
                     return;
                 }
                 break;
-        }
-
-        while (this.recentFails.length && Date.now() - this.recentFails[0] > 20 * 1000) {
-            this.recentFails.shift()
-        }
-
-        if (this.recentFails.length >= Settings().maxFails && !Settings().singleplayer) {
-            return ChatLib.chat(`§c Zero Ping TP cancelled. ${this.recentFails.length} fails last 20 seconds.`)
-        }
-
-        if (this.sent.length >= 5 && !Settings().singleplayer) {
-            return ChatLib.chat(`§c Zero Ping TP cancelled. ${this.sent.length} packets queued.`)
         }
 
         if (Object.values(this.playerState).includes(null)) {
@@ -247,18 +208,17 @@ registerModule(class Teleport extends Module {
 
         this._phoenix.customPayload("carbonara-zpew-teleport-prediction", { x, y, z, yaw, pitch })
 
-        /*
         const PlayerUpdateListener = UpdateWalkingPlayer.Pre.register(event => {
             event.cancelled = true
             event.breakChain = true
         }, 2147483647)
-        Client.scheduleTask(0, () => {
+        const exec = () => {
             PlayerUpdateListener.unregister()
-            */
-        setVelocity(0, 0, 0)
-        setPlayerPosition(x, y, z, true)
-        // })
-        // Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, yaw, pitch, false))
+            setVelocity(0, 0, 0)
+            setPlayerPosition(x, y, z, true)
+        }
+        if (Settings().zpewDelay) Tick.Pre.scheduleTask(Settings().zpewDelay - 1, exec)
+        else exec()
 
         this.updateLastTPed();
         this.updatePosition = true;
