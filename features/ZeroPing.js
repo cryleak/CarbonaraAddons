@@ -5,17 +5,36 @@ import MouseEvent from "../events/MouseEvent";
 import { PostUseItem, UpdateWalkingPlayer } from "../events/JavaEvents"
 
 import { getEtherwarpBlock } from "../../BloomCore/utils/Utils"
-import { isWithinTolerence, sendAirClick, setPlayerPosition, setVelocity } from "../utils/utils";
+import { isWithinTolerence, rotate, sendAirClick, setPlayerPosition, setVelocity } from "../utils/utils";
 import { getTeleportInfo } from "../utils/TeleportItem";
 import Dungeons from "../utils/Dungeons";
+import Module, { modules, registerModule } from "./PhoenixModule";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
 
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
+const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
-const ZeroPing = new class {
-    constructor() {
+registerModule(class Teleport extends Module {
+    constructor(phoenix) {
+        super("Teleport", phoenix)
+        this._tryLoadConfig();
+
+        register("packetReceived", (packet, event) => {
+            if (!this.isToggled()) return
+            const enumflags = Object.values(packet.func_179834_f())
+            if (enumflags.includes(S08PacketPlayerPosLook.EnumFlags.X)) {
+                cancel(event)
+                setVelocity(0, 0, 0)
+                const [x, y, z] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e()]
+                setPlayerPosition(x, y, z, false)
+                if (!enumflags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) rotate(packet.func_148931_f(), packet.func_148930_g())
+
+                this._phoenix.customPayload("carbonara-zpew-acknowledge-force-teleport", { x, y, z })
+            }
+        }).setFilteredClass(S08PacketPlayerPosLook)
+
         this.recentFails = []
         this.playerState = {
             x: null,
@@ -47,7 +66,7 @@ const ZeroPing = new class {
                 const blockID = World.getBlockAt(...position.getPosition()).type.getID()
                 if (this.disallowedBlockIDS.includes(blockID)) return
             }
-            if (Dungeons.isIn7Boss() || !Settings().zpewEnabled) return
+            if (Dungeons.isIn7Boss() || !Settings().zpewEnabled || !this.isToggled()) return
             this.doZeroPing()
         })
 
@@ -224,36 +243,27 @@ const ZeroPing = new class {
         this.playerState.z = z;
         this.updatePosition = false;
 
-        this.sent.push({ x, y, z, yaw, pitch });
+        // this.sent.push({ x, y, z, yaw, pitch });
 
-        setPlayerPosition(x, y, z, true)
-        Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, yaw, pitch, Player.asPlayerMP().isOnGround()))
-        setVelocity(0, 0, 0)
-        this.updateLastTPed();
-        this.updatePosition = true;
+        this._phoenix.customPayload("carbonara-zpew-teleport-prediction", { x, y, z, yaw, pitch })
+
+        /*
         const PlayerUpdateListener = UpdateWalkingPlayer.Pre.register(event => {
-            PlayerUpdateListener.unregister()
             event.cancelled = true
             event.breakChain = true
         }, 2147483647)
+        Client.scheduleTask(0, () => {
+            PlayerUpdateListener.unregister()
+            */
+        setVelocity(0, 0, 0)
+        setPlayerPosition(x, y, z, true)
+        // })
+        // Client.sendPacket(new C03PacketPlayer.C06PacketPlayerPosLook(x, y, z, yaw, pitch, false))
 
-
-        /*
-        if (!Settings().fixStairs) return
-        const blockState = World.getBlockAt(Math.floor(x), Math.floor(y - 1), Math.floor(z)).getState()
-        const block = blockState.func_177230_c()
-        let halfValue
-        if (block instanceof net.minecraft.block.BlockStairs) halfValue = blockState.func_177229_b(block.field_176308_b)
-        else if (block instanceof net.minecraft.block.BlockSlab) halfValue = blockState.func_177229_b(block.field_176554_a)
-        else return
-        if (halfValue.toString() !== "bottom") return
-        Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, false))
-        setTimeout(() => Object.values(keybinds).forEach(keybind => KeyBinding.func_74510_a(keybind, KeyBoard.isKeyDown(keybind))), 60)
-        */
+        this.updateLastTPed();
+        this.updatePosition = true;
     }
-};
-
-export default ZeroPing;
+})
 
 const IGNORED = [0, 51, 8, 9, 10, 11, 171, 331, 39, 40, 115, 132, 77, 143, 66, 27, 28, 157];
 const IGNORED2 = [44, 182, 126]; // ignored blocks for selbox raycast

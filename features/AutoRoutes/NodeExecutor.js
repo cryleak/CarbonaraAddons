@@ -5,7 +5,7 @@ import Tick from "../../events/Tick"
 import Settings from "../../config"
 
 import { checkIntersection, releaseMovementKeys, movementKeys } from "../../utils/utils"
-import ZeroPing from "../ZeroPing"
+// import ZeroPing from "../ZeroPing"
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook")
 
@@ -48,7 +48,8 @@ class NodeExecutor {
         if (by) this.lowerConsumed();
         if (manager.editMode) return
 
-        if (!manager.active || !ZeroPing.isSynced()) return;
+        // if (!manager.active || !ZeroPing.isSynced()) return;
+        if (!manager.active) return;
 
 
         if (this.consumed > 0) {

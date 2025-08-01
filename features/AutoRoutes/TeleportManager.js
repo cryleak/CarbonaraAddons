@@ -3,7 +3,7 @@ import ServerTeleport from "../../events/ServerTeleport";
 import manager from "./NodeManager";
 import Rotations from "../../utils/Rotations"
 import execer from "./NodeExecutor"
-import ZeroPing from "../ZeroPing"
+// import ZeroPing from "../ZeroPing"
 
 import { setPlayerPosition, setVelocity, debugMessage, scheduleTask, isWithinTolerence, sendAirClick, setSneaking, itemSwapSuccess, clampYaw, swapToSlot } from "../../utils/utils"
 import { etherwarpFinder, findSlot } from "../../utils/TeleportItem"

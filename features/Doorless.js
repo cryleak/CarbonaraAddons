@@ -2,7 +2,7 @@ import Settings from "../config"
 import Vector3 from "../utils/Vector3";
 import Dungeons from "../utils/Dungeons";
 import FreezeManager from "./AutoRoutes/FreezeManager";
-import ZeroPing from "./ZeroPing";
+// import ZeroPing from "./ZeroPing";
 
 import { existsNorthDoor, existsWestDoor } from "./Doors";
 import { setPlayerPosition, sendAirClick, debugMessage, swapFromName, swapToSlot, itemSwapSuccess, rotate } from "../utils/utils";
@@ -34,7 +34,7 @@ class Doorless {
         if (y !== 69) return;
         if (!data.onGround) return
         if (Player.isSneaking()) return
-        if (!ZeroPing.isSynced()) return;
+        // if (!ZeroPing.isSynced()) return;
 
         let yaw = data.yaw;
         let xOffset = 0, zOffset = 0;
