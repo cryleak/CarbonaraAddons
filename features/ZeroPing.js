@@ -18,6 +18,10 @@ const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.clie
 
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
+const NetHandlerPLayClient = Java.type("net.minecraft.client.network.NetHandlerPlayClient");
+const doneLoadingTerrainField = NetHandlerPLayClient.class.getDeclaredField("field_147309_h")
+doneLoadingTerrainField.setAccessible(true)
+
 registerModule(class Teleport extends Module {
     constructor(phoenix) {
         super("Teleport", phoenix)
@@ -26,19 +30,27 @@ registerModule(class Teleport extends Module {
         register("packetReceived", (packet, event) => {
             if (!this.isToggled()) return
             const enumFlags = Object.values(packet.func_179834_f())
-            if (enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X)) {
-                cancel(event)
-                const [x, y, z, yaw, pitch] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e(), packet.func_148931_f(), packet.func_148930_g()]
-                this._phoenix.customPayload("carbonara-zpew-acknowledge-force-teleport", { x, y, z })
-                if (ServerTeleport.trigger({ packet, x, y, z, yaw, pitch, enumFlags }).cancelled) return
+            if (!enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X)) return
+            cancel(event)
+            const [x, y, z, yaw, pitch] = [packet.func_148932_c(), packet.func_148928_d(), packet.func_148933_e(), packet.func_148931_f(), packet.func_148930_g()]
+            this._phoenix.customPayload("carbonara-zpew-acknowledge-force-teleport", { x, y, z })
+            if (ServerTeleport.trigger({ packet, x, y, z, yaw, pitch, enumFlags }).cancelled) return
 
 
-                setVelocity(0, 0, 0)
-                setPlayerPosition(x, y, z, false)
-                if (!enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) rotate(yaw, pitch)
+            setVelocity(0, 0, 0)
+            setPlayerPosition(x, y, z, false)
+            if (!enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) rotate(yaw, pitch)
 
-                PostPacketReceive.trigger(packet) // Simulate this for stuff to work properly
-            }
+            PostPacketReceive.trigger(packet) // Simulate this for stuff to work properly
+            Client.getMinecraft().func_152343_a(() => {
+                const netHandler = Client.getConnection()
+                const doneLoadingTerrain = doneLoadingTerrainField.get(netHandler)
+                if (!doneLoadingTerrain) { // Recreate S08 handling from MC's source
+                    setPlayerPosition(x, y, z, true)
+                    doneLoadingTerrainField.set(netHandler, true)
+                    Client.getMinecraft().func_147108_a(null)
+                }
+            })
         }).setFilteredClass(S08PacketPlayerPosLook).setPriority(Priority.HIGHEST)
 
         this.recentFails = []
