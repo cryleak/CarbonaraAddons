@@ -10,12 +10,14 @@ import { getTeleportInfo } from "../utils/TeleportItem";
 import Dungeons from "../utils/Dungeons";
 import Module, { modules, registerModule } from "./PhoenixModule";
 import Tick from "../events/Tick";
+import { registerSubCommand } from "../utils/commands";
 
 const Vec3 = Java.type("net.minecraft.util.Vec3");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 const C0BPacketEntityAction = Java.type("net.minecraft.network.play.client.C0BPacketEntityAction");
 const C08PacketPlayerBlockPlacement = Java.type("net.minecraft.network.play.client.C08PacketPlayerBlockPlacement")
 
+const S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
 const S08PacketPlayerPosLook = Java.type("net.minecraft.network.play.server.S08PacketPlayerPosLook");
 
 const NetHandlerPLayClient = Java.type("net.minecraft.client.network.NetHandlerPlayClient");
@@ -106,6 +108,19 @@ registerModule(class Teleport extends Module {
         register("packetSent", packet => {
             this._handleClientEntityAction(packet);
         }).setFilteredClass(C0BPacketEntityAction);
+
+        register("packetReceived", packet => {
+            const message = ChatLib.removeFormatting(packet.func_148915_c().func_150260_c());
+            if (["[BOSS] Maxor:", "[BOSS] Storm:", "[BOSS] Goldor:", "[BOSS] Necron:"].some(bossname => message.startsWith(bossname))) {
+                this._phoenix.customPayload("carbonara-stop-responding", {});
+            } else if (message.startsWith("Sending to server")) {
+                this._phoenix.customPayload("carbonara-start-responding", {});
+            }
+        }).setFilteredClass(S02PacketChat);
+
+        registerSubCommand("startstuff", () => {
+            this._phoenix.customPayload("carbonara-start-responding", {});
+        });
     }
 
     isSynced() {
