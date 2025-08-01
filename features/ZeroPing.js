@@ -39,7 +39,7 @@ registerModule(class Teleport extends Module {
 
                 PostPacketReceive.trigger(packet) // Simulate this for stuff to work properly
             }
-        }).setFilteredClass(S08PacketPlayerPosLook)
+        }).setFilteredClass(S08PacketPlayerPosLook).setPriority(Priority.HIGHEST)
 
         this.recentFails = []
         this.playerState = {
@@ -206,7 +206,7 @@ registerModule(class Teleport extends Module {
 
         // this.sent.push({ x, y, z, yaw, pitch });
 
-        this._phoenix.customPayload("carbonara-zpew-teleport-prediction", { x, y, z, yaw, pitch })
+        this._phoenix.customPayload("carbonara-zpew-teleport-prediction", { x, y, z, yaw: Number(yaw.toFixed(5)), pitch: Number(pitch.toFixed(5)), playerX: Number(Player.x.toFixed(3)), playerY: Number(Player.y.toFixed(3)), playerZ: Number(Player.z.toFixed(3)), })
 
         const PlayerUpdateListener = UpdateWalkingPlayer.Pre.register(event => {
             event.cancelled = true
@@ -222,6 +222,12 @@ registerModule(class Teleport extends Module {
 
         this.updateLastTPed();
         this.updatePosition = true;
+    }
+
+    _defaultConfig() {
+        return {
+            blink: false
+        }
     }
 })
 
