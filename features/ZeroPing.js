@@ -40,7 +40,7 @@ registerModule(class Teleport extends Module {
 
 
             setVelocity(0, 0, 0)
-            setPlayerPosition(x, y, z, false)
+            setPlayerPosition(x, y, z, true)
             if (!enumFlags.includes(S08PacketPlayerPosLook.EnumFlags.X_ROT)) rotate(yaw, pitch)
 
             PostPacketReceive.trigger(packet) // Simulate this for stuff to work properly
